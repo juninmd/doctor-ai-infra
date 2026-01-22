@@ -1,36 +1,14 @@
+from langchain_ollama import ChatOllama
 import os
-from langchain_openai import ChatOpenAI
-from langchain_google_genai import ChatGoogleGenerativeAI
-from dotenv import load_dotenv
 
-load_dotenv()
+# Default to llama3 if not specified, user can override via env var
+MODEL_NAME = os.getenv("OLLAMA_MODEL", "llama3")
+BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 
 def get_llm():
-    """
-    Returns the configured LLM instance based on environment variables.
-    Defaults to Ollama (via ChatOpenAI compatible endpoint) if not specified.
-    """
-    llm_provider = os.getenv("LLM_PROVIDER", "ollama").lower()
-
-    if llm_provider == "gemini":
-        google_api_key = os.getenv("GOOGLE_API_KEY")
-        if not google_api_key:
-            raise ValueError("GOOGLE_API_KEY is required for Gemini provider")
-
-        return ChatGoogleGenerativeAI(
-            model="gemini-pro",
-            google_api_key=google_api_key,
-            temperature=0
-        )
-
-    elif llm_provider == "ollama":
-        base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1")
-        return ChatOpenAI(
-            base_url=base_url,
-            api_key="ollama", # required but ignored
-            model=os.getenv("OLLAMA_MODEL", "llama3"),
-            temperature=0
-        )
-
-    else:
-        raise ValueError(f"Unsupported LLM provider: {llm_provider}")
+    """Returns the configured ChatOllama instance."""
+    return ChatOllama(
+        model=MODEL_NAME,
+        base_url=BASE_URL,
+        temperature=0.7,
+    )
