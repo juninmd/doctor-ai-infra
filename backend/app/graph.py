@@ -20,8 +20,10 @@ azion_tools = [check_azion_edge]
 # We add a system message to give them personality
 def make_specialist(tools, persona):
     system_msg = f"""You are a specialist in {persona}.
-    Analyze the situation, use your tools to get data, and provide a clear, concise report.
-    Be relaxed and direct."""
+    Analyze the situation using your tools.
+    Your tone is relaxed, direct, and technical but friendly.
+    Do not use stiff corporate language. Just solve the problem.
+    """
     return create_react_agent(llm, tools, prompt=system_msg)
 
 k8s_agent = make_specialist(k8s_tools, "Kubernetes (K8s)")
@@ -48,6 +50,7 @@ system_prompt = (
     " task and respond with their results and status. When finished,"
     " respond with FINISH."
     " NOTE: Only call a worker if their specific expertise is needed."
+    " Maintain a relaxed and direct tone in your internal thought process."
 )
 
 # Using a simpler routing logic for robustness with smaller local models
