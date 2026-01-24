@@ -49,7 +49,8 @@ system_prompt = (
     " respond with the worker to act next. Each worker will perform a"
     " task and respond with their results and status. When finished,"
     " respond with FINISH."
-    " NOTE: Only call a worker if their specific expertise is needed."
+    " NOTE: If a worker reports an error involving another service (e.g., K8s logs show a DB error),"
+    " you MUST call the relevant specialist (e.g., GCP_Specialist for Cloud SQL) to investigate."
     " Maintain a relaxed and direct tone in your internal thought process."
 )
 

@@ -6,7 +6,8 @@ def list_k8s_pods(namespace: str = "default") -> str:
     """Lists all pods in the specified Kubernetes namespace."""
     # Mock implementation
     if namespace == "default":
-        return "Pods in default: [frontend-7d6f, backend-9s8d, db-postgres-1a2b]"
+        # Simulate a crashing frontend pod
+        return "Pods in default: [frontend-7d6f (CrashLoopBackOff), backend-9s8d (Running), db-postgres-1a2b (Running)]"
     elif namespace == "kube-system":
         return "Pods in kube-system: [coredns-1, coredns-2, kube-proxy-x, etcd-0]"
     return f"No pods found in namespace {namespace}."
@@ -18,12 +19,25 @@ def describe_pod(pod_name: str) -> str:
     if "backend" in pod_name:
         return f"Name: {pod_name}\nStatus: Running\nRestarts: 0\nEvents: Pulled image successfully."
     elif "frontend" in pod_name:
-        return f"Name: {pod_name}\nStatus: CrashLoopBackOff\nRestarts: 5\nEvents: Back-off restarting failed container."
+        # Simulate a database connection error in the logs
+        return (
+            f"Name: {pod_name}\n"
+            "Status: CrashLoopBackOff\n"
+            "Restarts: 5\n"
+            "Events: Back-off restarting failed container\n"
+            "Logs:\n"
+            "[INFO] Starting server...\n"
+            "[ERROR] ConnectionRefusedError: POST https://postgres-db:5432 - Connection refused\n"
+            "[FATAL] Unable to connect to database. Exiting."
+        )
     return f"Pod {pod_name} not found."
 
 @tool
 def check_gcp_status(service: str = "compute") -> str:
     """Checks the status of Google Cloud Platform services."""
+    # Simulate maintenance mode for Cloud SQL
+    if "sql" in service.lower() or "db" in service.lower() or "postgres" in service.lower():
+        return "GCP Service Cloud SQL (postgres-db) is in MAINTENANCE mode. Scheduled update in progress."
     return f"GCP Service {service} is OPERATIONAL. No incidents reported."
 
 @tool
