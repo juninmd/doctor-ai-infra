@@ -1,0 +1,44 @@
+
+> frontend@0.1.0 dev
+> next dev
+
+▲ Next.js 16.1.4 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.2:3000
+
+✓ Starting...
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+✓ Ready in 1049ms
+○ Compiling / ...
+⨯ ReferenceError: window is not defined
+    at <unknown> (components/agent-network.tsx:62:27)
+    at Array.map (<anonymous>)
+    at AgentNetwork (components/agent-network.tsx:51:17)
+  60 |                  x1="50%"
+  61 |                  y1="50%"
+> 62 |                  x2={x + (window.innerWidth < 500 ? 0 : 0)} // simplified centering logic
+     |                           ^
+  63 |                  y2={y}
+  64 |                  stroke={isActive ? "cyan" : "#334155"}
+  65 |                  strokeWidth={isActive ? "2" : "1"} {
+  digest: '3455705663'
+}
+ GET / 500 in 5.1s (compile: 4.7s, render: 388ms)
+⨯ ReferenceError: window is not defined
+    at <unknown> (components/agent-network.tsx:62:27)
+    at Array.map (<anonymous>)
+    at AgentNetwork (components/agent-network.tsx:51:17)
+  60 |                  x1="50%"
+  61 |                  y1="50%"
+> 62 |                  x2={x + (window.innerWidth < 500 ? 0 : 0)} // simplified centering logic
+     |                           ^
+  63 |                  y2={y}
+  64 |                  stroke={isActive ? "cyan" : "#334155"}
+  65 |                  strokeWidth={isActive ? "2" : "1"} {
+  digest: '3455705663'
+}
+ GET / 500 in 86ms (compile: 6ms, render: 79ms)

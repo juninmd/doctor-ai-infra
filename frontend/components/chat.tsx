@@ -5,49 +5,26 @@ import { Send, Bot, User, Terminal, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { AgentNetwork } from "@/components/agent-network"
 
 interface Message {
   role: "user" | "assistant"
   content: string
-  thoughts?: Thought[]
-}
-
-interface Thought {
-  type: "tool_call" | "tool_result" | "thought"
-  content: string
-  agent?: string
-}
-
-interface Step {
-  type: string
-  content?: string
-  name?: string
-  tool_calls?: ToolCall[]
-}
-
-interface ToolCall {
-  name: string
-  args: unknown
 }
 
 export function Chat() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [activeAgent, setActiveAgent] = useState<string | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollIntoView({ behavior: "smooth" })
     }
-  }, [messages])
+  }, [messages, activeAgent]) // Scroll on updates
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -58,182 +35,151 @@ export function Chat() {
     setInput("")
     setIsLoading(true)
 
+    // Add placeholder for assistant
+    setMessages((prev) => [...prev, { role: "assistant", content: "" }])
+
     try {
-      const response = await fetch("/api/chat", {
+      const response = await fetch("/chat", { // Updated to match backend route
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: userMessage.content,
-          history: messages.map(m => ({ role: m.role, content: m.content })),
         }),
       })
 
-      if (!response.ok) throw new Error("Failed to send message")
+      if (!response.ok || !response.body) throw new Error("Failed to send message")
 
-      const data = await response.json()
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ""
 
-      // Parse steps to extract thoughts
-      // We assume the last message is the final answer.
-      // Everything between the last user message and the last message are "thoughts".
-      const allSteps = data.steps || []
-      const thoughts: Thought[] = []
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
 
-      // We process steps carefully.
-      // Typically, we want to see what happened AFTER the user's message.
-      // We can count how many messages we sent (history + 1) and look at the suffix.
-      const previousCount = messages.length + 1 // history + current user message
-      // Note: Backend might return logic that doesn't strictly 1-to-1 map if it summarizes.
-      // But LangGraph usually appends.
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split("\n")
 
-      const newSteps = allSteps.slice(previousCount)
+        // Keep the last possibly incomplete line in buffer
+        buffer = lines.pop() || ""
 
-      // The last one is the final answer (Assistant Message)
-      const thoughtSteps = newSteps.slice(0, newSteps.length - 1)
+        for (const line of lines) {
+          if (!line.trim()) continue
+          try {
+            const event = JSON.parse(line)
 
-      thoughtSteps.forEach((step: Step) => {
-        // Identify type
-        const type = step.type
-        // LangChain serialization:
-        // human, ai, tool, etc.
+            if (event.type === "activity") {
+              setActiveAgent(event.agent)
+            } else if (event.type === "message") {
+              // Append to last message
+              const content = event.content
+              const agentName = event.agent
 
-        const content = step.content || ""
-        let agentName = "System"
+              // We'll format the content to show who is speaking if it's not the final answer
+              // Or just append it directly.
+              // To make it look like a log: `[Agent]: message`
 
-        // Try to guess agent from content or metadata if available
-        // In our setup, we didn't explicitly attach agent names to messages except via "name" field if set.
-        if (step.name) agentName = step.name
+              setMessages((prev) => {
+                const newMsgs = [...prev]
+                const lastMsg = newMsgs[newMsgs.length - 1]
 
-        if (type === "ai") {
-           // Check for tool calls
-           if (step.tool_calls && step.tool_calls.length > 0) {
-             step.tool_calls.forEach((tc: ToolCall) => {
-               thoughts.push({
-                 type: "tool_call",
-                 content: `Calling tool: ${tc.name} with args: ${JSON.stringify(tc.args)}`,
-                 agent: agentName
-               })
-             })
-           } else {
-             thoughts.push({
-               type: "thought",
-               content: content,
-               agent: agentName
-             })
-           }
-        } else if (type === "tool") {
-           thoughts.push({
-             type: "tool_result",
-             content: `Result: ${content}`,
-             agent: "Tool"
-           })
+                let textToAppend = content
+                if (agentName && agentName !== "Supervisor" && content.trim().length > 0) {
+                   textToAppend = `**[${agentName.replace('_Specialist', '')}]**: ${content}\n\n`
+                }
+
+                lastMsg.content += textToAppend
+                return newMsgs
+              })
+            } else if (event.type === "final") {
+              setActiveAgent(null)
+            }
+          } catch (err) {
+            console.error("Error parsing JSON chunk", err)
+          }
         }
-      })
-
-      // Just in case the final answer logic is tricky (e.g. Supervisor returns FINISH but the text is in previous msg)
-      // Our backend returns "response" field explicitly.
-
-      const botMessage: Message = {
-        role: "assistant",
-        content: data.response,
-        thoughts: thoughts.length > 0 ? thoughts : undefined
       }
 
-      setMessages((prev) => [...prev, botMessage])
     } catch (error) {
       console.error(error)
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: "Sorry, I encountered an error. Please try again." },
-      ])
+      setMessages((prev) => {
+         const newMsgs = [...prev]
+         const lastMsg = newMsgs[newMsgs.length - 1]
+         lastMsg.content += "\n\n*Error: Failed to complete request.*"
+         return newMsgs
+      })
     } finally {
       setIsLoading(false)
+      setActiveAgent(null)
     }
   }
 
   return (
-    <div className="flex flex-col h-[80vh] w-full max-w-4xl mx-auto border rounded-xl overflow-hidden shadow-xl bg-background">
-      <div className="bg-slate-900 text-white p-4 flex items-center gap-2">
-        <Terminal className="w-5 h-5" />
-        <h1 className="font-bold">Infra Agent Manager</h1>
+    <div className="flex flex-col h-[90vh] w-full max-w-5xl mx-auto border border-slate-800 rounded-xl overflow-hidden shadow-2xl bg-slate-950 text-slate-100">
+      <div className="bg-slate-900 border-b border-slate-800 p-4 flex items-center gap-2 shadow-lg z-10">
+        <Terminal className="w-5 h-5 text-blue-500" />
+        <h1 className="font-bold font-mono tracking-wider text-blue-400">INFRA_AGENT_NET // v2.0</h1>
       </div>
 
-      <ScrollArea className="flex-1 p-4 bg-slate-50/50">
-        <div className="space-y-6">
-          {messages.map((msg, index) => (
-            <div
-              key={index}
-              className={`flex gap-3 ${
-                msg.role === "user" ? "justify-end" : "justify-start"
-              }`}
-            >
-              {msg.role === "assistant" && (
-                <Avatar className="w-8 h-8 mt-1">
-                   <AvatarFallback className="bg-blue-600 text-white"><Bot size={16}/></AvatarFallback>
-                </Avatar>
-              )}
+      <div className="flex-1 overflow-hidden relative flex flex-col">
+        {/* Network Visualizer Overlay/Section */}
+        <div className="w-full bg-slate-950/50 backdrop-blur-sm border-b border-slate-800 z-0">
+          <AgentNetwork activeAgent={activeAgent} />
+        </div>
 
-              <div className={`max-w-[80%] space-y-2`}>
-                <div
-                  className={`p-3 rounded-lg text-sm ${
-                    msg.role === "user"
-                      ? "bg-blue-600 text-white"
-                      : "bg-white border shadow-sm text-slate-800"
-                  }`}
-                >
-                  {msg.content}
+        <ScrollArea className="flex-1 p-4">
+          <div className="space-y-6 max-w-3xl mx-auto pb-4">
+            {messages.map((msg, index) => (
+              <div
+                key={index}
+                className={`flex gap-3 ${
+                  msg.role === "user" ? "justify-end" : "justify-start"
+                }`}
+              >
+                {msg.role === "assistant" && (
+                  <Avatar className="w-8 h-8 mt-1 border border-blue-500/50">
+                     <AvatarFallback className="bg-slate-900 text-blue-400"><Bot size={16}/></AvatarFallback>
+                  </Avatar>
+                )}
+
+                <div className={`max-w-[85%] space-y-2`}>
+                  <div
+                    className={`p-4 rounded-lg text-sm font-mono whitespace-pre-wrap ${
+                      msg.role === "user"
+                        ? "bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.3)]"
+                        : "bg-slate-900 border border-slate-800 text-slate-300 shadow-lg"
+                    }`}
+                  >
+                    {msg.content}
+                    {msg.role === "assistant" && isLoading && index === messages.length - 1 && (
+                       <span className="inline-block w-2 h-4 ml-1 bg-blue-500 animate-pulse align-middle" />
+                    )}
+                  </div>
                 </div>
 
-                {msg.thoughts && (
-                  <Accordion type="single" collapsible className="w-full">
-                    <AccordionItem value="item-1" className="border rounded-md bg-slate-100 px-3">
-                      <AccordionTrigger className="text-xs text-slate-500 py-2">
-                        View Process
-                      </AccordionTrigger>
-                      <AccordionContent className="text-xs text-slate-600 font-mono space-y-2">
-                        {msg.thoughts.map((t, i) => (
-                          <div key={i} className="border-b border-slate-200 last:border-0 pb-2 mb-2">
-                            <span className="font-bold text-slate-700">[{t.agent || t.type}]</span>: {t.content}
-                          </div>
-                        ))}
-                      </AccordionContent>
-                    </AccordionItem>
-                  </Accordion>
+                {msg.role === "user" && (
+                  <Avatar className="w-8 h-8 mt-1 border border-slate-600">
+                     <AvatarFallback className="bg-slate-800 text-slate-300"><User size={16}/></AvatarFallback>
+                  </Avatar>
                 )}
               </div>
+            ))}
+            <div ref={scrollRef} />
+          </div>
+        </ScrollArea>
+      </div>
 
-              {msg.role === "user" && (
-                <Avatar className="w-8 h-8 mt-1">
-                   <AvatarFallback className="bg-slate-700 text-white"><User size={16}/></AvatarFallback>
-                </Avatar>
-              )}
-            </div>
-          ))}
-          {isLoading && (
-             <div className="flex gap-3 justify-start">
-               <Avatar className="w-8 h-8 mt-1">
-                  <AvatarFallback className="bg-blue-600 text-white"><Bot size={16}/></AvatarFallback>
-               </Avatar>
-               <div className="bg-white border shadow-sm p-3 rounded-lg flex items-center gap-2">
-                 <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
-                 <span className="text-xs text-slate-500">Thinking...</span>
-               </div>
-             </div>
-          )}
-          <div ref={scrollRef} />
-        </div>
-      </ScrollArea>
-
-      <div className="p-4 bg-white border-t">
-        <form onSubmit={handleSubmit} className="flex gap-2">
+      <div className="p-4 bg-slate-900 border-t border-slate-800">
+        <form onSubmit={handleSubmit} className="flex gap-2 max-w-3xl mx-auto">
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Describe your infrastructure issue..."
+            placeholder="Initialize infrastructure analysis..."
             disabled={isLoading}
-            className="flex-1"
+            className="flex-1 bg-slate-950 border-slate-700 text-slate-100 placeholder:text-slate-500 focus-visible:ring-blue-500"
           />
-          <Button type="submit" disabled={isLoading} className="bg-blue-600 hover:bg-blue-700">
-            <Send className="w-4 h-4" />
+          <Button type="submit" disabled={isLoading} className="bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_10px_rgba(37,99,235,0.5)] transition-all">
+            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
           </Button>
         </form>
       </div>
