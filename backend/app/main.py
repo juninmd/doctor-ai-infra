@@ -1,10 +1,12 @@
 
+import json
 import requests
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from langchain_core.messages import HumanMessage
-from app.agents.supervisor import build_graph
+from app.graph import app_graph as graph
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -22,38 +24,42 @@ app.add_middleware(
 class ChatRequest(BaseModel):
     message: str
 
-class ChatResponse(BaseModel):
-    response: str
-    history: list
-
-# Initialize the graph
-graph = build_graph()
-
 @app.get("/")
 def read_root():
     return {"message": "Infra Agent Manager API is running"}
 
-@app.post("/chat", response_model=ChatResponse)
+@app.post("/chat")
 async def chat(request: ChatRequest):
-    try:
-        inputs = {"messages": [HumanMessage(content=request.message)]}
-        result = graph.invoke(inputs)
+    inputs = {"messages": [HumanMessage(content=request.message)]}
 
-        # Extract the final response
-        messages = result["messages"]
-        last_message = messages[-1].content if messages else "No response generated."
+    async def event_generator():
+        # Using astream to stream updates from the graph
+        async for event in graph.astream(inputs):
+            for node_name, state_update in event.items():
+                # Notify frontend which agent is working
+                yield json.dumps({"type": "activity", "agent": node_name}) + "\n"
 
-        # Serialize history for frontend (simplified)
-        # Map "human" role to "user" for the frontend
-        history = []
-        for m in messages:
-            role = getattr(m, "name", m.type)
-            if role == "human":
-                role = "user"
-            history.append({"role": role, "content": m.content})
+                # If the agent produced a message, send it
+                if "messages" in state_update:
+                    messages = state_update["messages"]
+                    if messages:
+                        # LangGraph appends messages. Depending on the update,
+                        # 'messages' might be the full list or just the new ones if 'messages' key in state is configured with add.
+                        # In the provided graph.py, state uses operator.add, so state_update usually contains the delta (the new message).
+                        # Let's handle both list or single item just in case.
+                        latest = messages[-1] if isinstance(messages, list) else messages
 
-        return ChatResponse(response=last_message, history=history)
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
+                        content = latest.content if hasattr(latest, "content") else str(latest)
+                        role = getattr(latest, "name", "assistant")
+
+                        yield json.dumps({
+                            "type": "message",
+                            "role": role,
+                            "content": content,
+                            "agent": node_name
+                        }) + "\n"
+
+        # Signal finish
+        yield json.dumps({"type": "final"}) + "\n"
+
+    return StreamingResponse(event_generator(), media_type="application/x-ndjson")
