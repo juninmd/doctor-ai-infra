@@ -54,3 +54,39 @@ def get_datadog_metrics(query: str) -> str:
 def check_azion_edge(domain: str) -> str:
     """Checks the status of an Azion Edge Application."""
     return f"Azion Edge for {domain}: Cache Hit Ratio 85%, Status Active."
+
+# --- NEW TOOLS FOR 2026 DEVOPS AGENTS ---
+
+@tool
+def check_github_repos(org: str = "my-org") -> str:
+    """Checks the status of GitHub repositories and recent commits."""
+    return f"GitHub Org {org}: 5 active repos. Latest commit on 'frontend-repo': 'fix: typo in header' by dev-alex."
+
+@tool
+def get_pr_status(pr_id: int) -> str:
+    """Checks the status of a specific Pull Request."""
+    return f"PR #{pr_id}: Open. CI checks pending. 2 approvals."
+
+@tool
+def check_pipeline_status(service: str) -> str:
+    """Checks the status of CI/CD pipelines (GitHub Actions/Jenkins)."""
+    if "frontend" in service:
+        return f"Pipeline for {service}: FAILED. Step 'Build Docker Image' failed. Error: 'npm run build' exited with code 1."
+    return f"Pipeline for {service}: SUCCEEDED. Deployed to staging 5m ago."
+
+@tool
+def get_argocd_sync_status(app_name: str) -> str:
+    """Checks ArgoCD sync status."""
+    return f"ArgoCD App '{app_name}': Synced. Health: Healthy."
+
+@tool
+def check_vulnerabilities(image: str) -> str:
+    """Scans a container image for security vulnerabilities (Trivy/Snyk)."""
+    if "frontend" in image:
+        return f"Scan for {image}: 2 CRITICAL, 5 HIGH vulnerabilities found. CVE-2026-1234 (Node.js)."
+    return f"Scan for {image}: Passed. No critical vulnerabilities."
+
+@tool
+def analyze_iam_policy(user: str) -> str:
+    """Analyzes IAM policies for least privilege compliance."""
+    return f"IAM Analysis for {user}: Warning. User has 'Owner' permission on project. Recommend downgrading to 'Editor'."

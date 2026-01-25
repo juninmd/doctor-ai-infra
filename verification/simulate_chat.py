@@ -24,18 +24,18 @@ class SmartMockLLM(BaseChatModel):
             print(f"\n[MockLLM] Acting as Supervisor")
 
             # Detect state based on conversation history
-            has_k8s_acted = "I checked the pods" in text
-            has_gcp_acted = "Cloud SQL is currently in maintenance mode" in text
+            has_cicd_acted = "Pipeline for frontend: FAILED" in text
+            has_git_acted = "fix: typo in header" in text
 
-            # 1. User complains about crash -> Call K8s
-            if "frontend crashing" in text and not has_k8s_acted:
-                print("[MockLLM] Decision: K8s_Specialist")
-                content = "K8s_Specialist"
+            # 1. User complains about build -> Call CI/CD
+            if "build fail" in text and not has_cicd_acted:
+                print("[MockLLM] Decision: CICD_Specialist")
+                content = "CICD_Specialist"
 
-            # 2. K8s found CrashLoop -> Call GCP
-            elif "CrashLoopBackOff" in text and not has_gcp_acted:
-                 print("[MockLLM] Decision: GCP_Specialist")
-                 content = "GCP_Specialist"
+            # 2. CI/CD found failure -> Call Git to check recent commits
+            elif "npm run build" in text and not has_git_acted:
+                 print("[MockLLM] Decision: Git_Specialist")
+                 content = "Git_Specialist"
 
             # 3. Done
             else:
@@ -43,13 +43,13 @@ class SmartMockLLM(BaseChatModel):
                 content = "FINISH"
 
         # Specialist Logic
-        elif "Kubernetes (K8s)" in text:
-            print(f"\n[MockLLM] Acting as K8s Agent")
-            content = "I checked the pods. The 'frontend' pod is in CrashLoopBackOff. It seems to be a DB connection error."
+        elif "CI/CD Pipelines" in text:
+            print(f"\n[MockLLM] Acting as CICD Agent")
+            content = "Pipeline for frontend: FAILED. Step 'Build Docker Image' failed. Error: 'npm run build' exited with code 1."
 
-        elif "Google Cloud Platform" in text:
-             print(f"\n[MockLLM] Acting as GCP Agent")
-             content = "I checked GCP. Cloud SQL is currently in maintenance mode. That explains the connection error."
+        elif "Git, GitHub" in text:
+             print(f"\n[MockLLM] Acting as Git Agent")
+             content = "GitHub Org my-org: 5 active repos. Latest commit on 'frontend-repo': 'fix: typo in header' by dev-alex."
 
         return ChatResult(generations=[ChatGeneration(message=AIMessage(content=content))])
 
@@ -73,7 +73,7 @@ from app.graph import app_graph
 
 # Run
 print("Starting Verification Simulation...")
-inputs = {"messages": [HumanMessage(content="Why is my frontend crashing?")]}
+inputs = {"messages": [HumanMessage(content="Why did the build fail?")]}
 
 try:
     # Run the graph
