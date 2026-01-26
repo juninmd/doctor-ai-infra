@@ -1,45 +1,57 @@
 from playwright.sync_api import sync_playwright, expect
+import time
 
-def run(playwright):
-    print("Launching browser...")
-    browser = playwright.chromium.launch(headless=True)
-    page = browser.new_page()
+def test_frontend(page):
+    # Mock the chat endpoint
+    def handle_chat(route):
+        response_body = (
+            '{"type": "activity", "agent": "Supervisor"}\n'
+            '{"type": "activity", "agent": "K8s_Specialist"}\n'
+            '{"type": "message", "agent": "K8s_Specialist", "content": "I am checking the pods now. Everything looks healthy."}\n'
+            '{"type": "final"}\n'
+        )
+        route.fulfill(
+            status=200,
+            content_type="application/x-ndjson",
+            body=response_body
+        )
 
-    # Mock the API response
-    print("Setting up API mock...")
-    page.route("**/api/chat", lambda route: route.fulfill(
-        status=200,
-        content_type="application/json",
-        body='{"response": "I have checked the system.", "steps": [{"type": "human", "content": "Hello"}, {"type": "ai", "content": "Thinking...", "tool_calls": [{"name": "list_k8s_pods", "args": {"namespace": "default"}}]}, {"type": "tool", "content": "Pod frontend-123 is CrashLoopBackOff"}, {"type": "ai", "content": "I have checked the system."}]}'
-    ))
+    page.route("**/chat", handle_chat)
 
-    print("Navigating to localhost:3000...")
-    page.goto("http://localhost:3000")
+    # Go to app
+    page.goto("http://localhost:5173")
 
     # Check title
-    expect(page.get_by_text("Infra Agent Manager")).to_be_visible()
+    expect(page.get_by_role("heading", name="SRE Intelligent Agent")).to_be_visible()
 
-    # Type message
-    print("Typing message...")
-    page.get_by_placeholder("Describe your infrastructure issue...").fill("Hello")
+    # Type a message
+    page.get_by_placeholder("Describe the infrastructure issue...").fill("Check my pods")
+
+    # Click send
+    # The button has a Send icon, might not have text. Using locator with class or role button
     page.get_by_role("button").click()
 
     # Wait for response
-    print("Waiting for response...")
-    expect(page.get_by_text("I have checked the system.")).to_be_visible()
+    expect(page.get_by_text("I am checking the pods now")).to_be_visible()
 
-    # Check Accordion (View Process)
-    print("Checking accordion...")
-    page.get_by_text("View Process").click()
+    # Expand thinking process (it auto expands, but ensuring it is visible)
+    # The thinking process shows "K8s Specialist"
+    expect(page.get_by_text("K8s Specialist")).to_be_visible()
 
-    # Check if tool call is visible
-    expect(page.get_by_text("list_k8s_pods")).to_be_visible()
-
-    print("Taking screenshot...")
-    page.screenshot(path="verification/frontend_screenshot.png")
-    browser.close()
-    print("Done.")
+    # Take screenshot
+    time.sleep(1) # Wait for animations
+    page.screenshot(path="verification/frontend_chat.png")
 
 if __name__ == "__main__":
-    with sync_playwright() as playwright:
-        run(playwright)
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
+        try:
+            test_frontend(page)
+            print("Verification successful")
+        except Exception as e:
+            print(f"Verification failed: {e}")
+            page.screenshot(path="verification/frontend_error.png")
+            raise e
+        finally:
+            browser.close()
