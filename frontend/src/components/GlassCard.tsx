@@ -1,8 +1,8 @@
 import React from 'react';
 import { cn } from '../lib/utils';
-import { motion } from 'framer-motion';
+import { motion, HTMLMotionProps } from 'framer-motion';
 
-interface GlassCardProps extends React.HTMLAttributes<HTMLDivElement> {
+interface GlassCardProps extends HTMLMotionProps<"div"> {
   children: React.ReactNode;
   className?: string;
   hoverEffect?: boolean;
@@ -19,7 +19,7 @@ export function GlassCard({ children, className, hoverEffect = false, ...props }
         hoverEffect && "hover:bg-white/10 transition-colors duration-300",
         className
       )}
-      {...props as any}
+      {...props}
     >
       {children}
     </motion.div>

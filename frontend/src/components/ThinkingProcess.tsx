@@ -19,9 +19,10 @@ export function ThinkingProcess({ steps, isProcessing }: ThinkingProcessProps) {
 
   // Auto-expand when new steps arrive if processing
   useEffect(() => {
-    if (isProcessing && steps.length > 0) {
+    if (isProcessing && steps.length > 0 && !isOpen) {
       setIsOpen(true);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [steps.length, isProcessing]);
 
   if (steps.length === 0 && !isProcessing) return null;
