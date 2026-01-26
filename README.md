@@ -34,6 +34,20 @@ uv run uvicorn main:app --reload --port 8000
 ```
 Backend will be available at `http://localhost:8000`.
 
+### Configuration (Real Infrastructure)
+By default, the agents run in **Mock Mode** for safety and demonstration. To enable **Real Infrastructure** interaction:
+
+1.  Set the environment variable:
+    ```bash
+    export USE_REAL_TOOLS=true
+    ```
+2.  Provide the necessary credentials in `.env` or your shell:
+    *   **Kubernetes**: Ensure `~/.kube/config` is valid or run inside a cluster with ServiceAccount.
+    *   **GCP**: `export GOOGLE_APPLICATION_CREDENTIALS="path/to/key.json"`
+    *   **Datadog**: `export DD_API_KEY=...` and `export DD_APP_KEY=...`
+    *   **Azion**: `export AZION_TOKEN=...`
+    *   **GitHub**: `export GITHUB_TOKEN=...`
+
 ### 3. Frontend Setup
 ```bash
 cd frontend

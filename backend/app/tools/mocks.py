@@ -13,7 +13,7 @@ def list_k8s_pods(namespace: str = "default") -> str:
     return f"No pods found in namespace {namespace}."
 
 @tool
-def describe_pod(pod_name: str) -> str:
+def describe_pod(pod_name: str, namespace: str = "default") -> str:
     """Describes a specific pod to get details about its status and events."""
     # Mock implementation
     if "backend" in pod_name:
