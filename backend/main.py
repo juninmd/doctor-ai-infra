@@ -1,6 +1,10 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
+import json
+import asyncio
+
 from app.graph import app_graph
 from langchain_core.messages import HumanMessage, AIMessage
 
@@ -10,10 +14,6 @@ class ChatRequest(BaseModel):
     message: str
     history: Optional[List[Dict[str, str]]] = []
 
-class ChatResponse(BaseModel):
-    response: str
-    steps: List[Any] = []
-
 @app.get("/")
 def read_root():
     return {"message": "Infrastructure Agent Manager is Running"}
@@ -21,48 +21,60 @@ def read_root():
 @app.post("/chat")
 async def chat_endpoint(request: ChatRequest):
     """
-    Endpoint to interact with the Agent Graph.
+    Streamed Endpoint to interact with the Agent Graph.
+    Returns a stream of JSON events:
+    - {"type": "activity", "agent": "AgentName"}
+    - {"type": "message", "agent": "AgentName", "content": "..."}
+    - {"type": "final"}
     """
-    try:
-        # Convert simple history to LangChain messages
-        # In a real app, we'd load this from a DB using a session_id
-        messages = []
-        for msg in request.history:
-            if msg["role"] == "user":
-                messages.append(HumanMessage(content=msg["content"]))
-            elif msg["role"] == "assistant":
-                messages.append(AIMessage(content=msg["content"]))
 
-        messages.append(HumanMessage(content=request.message))
+    # Convert simple history to LangChain messages
+    messages = []
+    for msg in request.history:
+        if msg["role"] == "user":
+            messages.append(HumanMessage(content=msg["content"]))
+        elif msg["role"] == "assistant":
+            messages.append(AIMessage(content=msg["content"]))
 
-        inputs = {"messages": messages}
+    messages.append(HumanMessage(content=request.message))
+    inputs = {"messages": messages}
 
-        # Run the graph
-        # stream() or invoke()
-        # For simplicity in this first pass, we use invoke (blocking)
-        # To support "Thought Process" visualization, we need to capture intermediate steps.
-        # LangGraph invoke returns the final state.
+    async def event_stream():
+        try:
+            # Use astream to get updates from the graph
+            async for event in app_graph.astream(inputs):
+                for node, output in event.items():
+                    # Check if it's the Supervisor routing
+                    if node == "Supervisor":
+                        next_agent = output.get("next")
+                        if next_agent and next_agent != "FINISH":
+                            yield json.dumps({"type": "activity", "agent": next_agent}) + "\n"
+                        elif next_agent == "FINISH":
+                            # We are done.
+                            yield json.dumps({"type": "final"}) + "\n"
 
-        final_state = app_graph.invoke(inputs)
+                    # Check if it's a Specialist acting
+                    elif "_Specialist" in node:
+                        # output usually contains "messages"
+                        msgs = output.get("messages", [])
+                        if msgs:
+                            # It could be a single message or list
+                            if isinstance(msgs, list):
+                                content = msgs[-1].content
+                            else:
+                                content = msgs.content
 
-        # Extract the final response
-        final_messages = final_state["messages"]
-        last_message = final_messages[-1]
+                            yield json.dumps({
+                                "type": "message",
+                                "agent": node,
+                                "content": content
+                            }) + "\n"
 
-        # Extract steps (this is a simplification, ideally we stream events)
-        # For now, we return the entire message history as "steps" so the UI can parse it
-        # or we just return the final text.
-        # To show "thoughts", we can look at the messages from the specialized agents.
+        except Exception as e:
+            yield json.dumps({"type": "message", "agent": "System", "content": f"Error: {str(e)}"}) + "\n"
+            yield json.dumps({"type": "final"}) + "\n"
 
-        return {
-            "response": last_message.content,
-            "steps": [m.model_dump() for m in final_messages]
-        }
-
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
+    return StreamingResponse(event_stream(), media_type="application/x-ndjson")
 
 if __name__ == "__main__":
     import uvicorn
