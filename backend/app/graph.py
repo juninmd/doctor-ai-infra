@@ -13,8 +13,9 @@ from .tools import (
     check_pipeline_status, get_argocd_sync_status,
     check_vulnerabilities, analyze_iam_policy
 )
-from .tools.incident import create_incident, update_incident_status, list_incidents, get_incident_details
-from .tools.runbooks import list_runbooks, execute_runbook, lookup_service
+from .tools.incident import create_incident, update_incident_status, list_incidents, get_incident_details, generate_postmortem
+from .tools.runbooks import list_runbooks, execute_runbook, lookup_service, get_service_dependencies, get_service_topology
+from .tools.knowledge import search_knowledge_base
 from .state import AgentState
 
 # 1. Initialize LLM
@@ -28,9 +29,9 @@ azion_tools = [check_azion_edge]
 git_tools = [check_github_repos, get_pr_status]
 cicd_tools = [check_pipeline_status, get_argocd_sync_status]
 sec_tools = [check_vulnerabilities, analyze_iam_policy]
-incident_tools = [create_incident, update_incident_status, list_incidents, get_incident_details]
+incident_tools = [create_incident, update_incident_status, list_incidents, get_incident_details, generate_postmortem, search_knowledge_base]
 automation_tools = [list_runbooks, execute_runbook, lookup_service]
-
+topology_tools = [get_service_dependencies, get_service_topology, lookup_service]
 
 # 3. Create Specialist Agents
 def make_specialist(tools, persona, heuristics=""):
@@ -67,6 +68,7 @@ cicd_agent = make_specialist(cicd_tools, "CI/CD Pipelines & ArgoCD")
 sec_agent = make_specialist(sec_tools, "DevSecOps, Vulnerability Scanning & IAM")
 incident_agent = make_specialist(incident_tools, "Incident Management & Post-Mortems")
 automation_agent = make_specialist(automation_tools, "Runbook Automation & Site Reliability Engineering")
+topology_agent = make_specialist(topology_tools, "Service Topology & Dependency Mapping")
 
 # 4. Define the Supervisor (Router)
 members = [
@@ -78,7 +80,8 @@ members = [
     "CICD_Specialist",
     "Security_Specialist",
     "Incident_Specialist",
-    "Automation_Specialist"
+    "Automation_Specialist",
+    "Topology_Specialist"
 ]
 options = ["FINISH"] + members
 
@@ -95,10 +98,11 @@ supervisor_system_prompt = (
     "   - Repos/PRs/Code -> Git_Specialist\n"
     "   - Builds/Pipelines/ArgoCD -> CICD_Specialist\n"
     "   - Vulnerabilities/IAM -> Security_Specialist\n"
-    "   - Incidents/Outages/Status updates -> Incident_Specialist\n"
+    "   - Incidents/Outages/Status updates/Post-Mortems -> Incident_Specialist\n"
     "   - Runbooks/Remediation/Scripts -> Automation_Specialist\n"
+    "   - Service Dependencies/Topology/Who calls what -> Topology_Specialist\n"
     "3. CRITICAL: If a specialist reports a dependency error (e.g. 'ConnectionRefused' or 'Database down'), "
-    "IMMEDIATELY route to the specialist responsible for that dependency (e.g. GCP_Specialist for DBs).\n"
+    "IMMEDIATELY route to the specialist responsible for that dependency (e.g. GCP_Specialist for DBs) or Topology_Specialist to verify impact.\n"
     "4. Always summarize the key findings from the last agent before making the next move.\n"
     "5. If the issue is resolved or you have a final answer, respond with FINISH.\n"
     "Tone: Confident, relaxed, concise. No fluff."
@@ -148,6 +152,7 @@ workflow.add_node("CICD_Specialist", cicd_agent)
 workflow.add_node("Security_Specialist", sec_agent)
 workflow.add_node("Incident_Specialist", incident_agent)
 workflow.add_node("Automation_Specialist", automation_agent)
+workflow.add_node("Topology_Specialist", topology_agent)
 
 workflow.add_edge(START, "Supervisor")
 
@@ -167,6 +172,7 @@ workflow.add_conditional_edges(
         "Security_Specialist": "Security_Specialist",
         "Incident_Specialist": "Incident_Specialist",
         "Automation_Specialist": "Automation_Specialist",
+        "Topology_Specialist": "Topology_Specialist",
         "FINISH": END
     }
 )
