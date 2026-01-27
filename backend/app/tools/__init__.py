@@ -1,6 +1,6 @@
 import os
 
-if os.getenv("USE_REAL_TOOLS", "false").lower() == "true":
+if os.getenv("USE_REAL_TOOLS", "true").lower() == "true":
     from .real import (
         list_k8s_pods, describe_pod,
         check_gcp_status, query_gmp_prometheus,
