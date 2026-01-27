@@ -1,25 +1,47 @@
 from langchain_core.tools import tool
 from typing import List, Dict
 
-# Mock Service Catalog
+# Mock Service Catalog with Topology Info
 SERVICE_CATALOG = {
     "payment-api": {
         "owner": "Team Checkout",
         "description": "Handles payment processing.",
         "runbooks": ["restart_service", "scale_up", "rollback_deploy"],
-        "tier": "Tier-1"
+        "tier": "Tier-1",
+        "dependencies": ["auth-service", "fraud-detection", "payment-db"],
+        "telemetry": "https://app.datadoghq.com/dashboard/payment-api"
     },
     "auth-service": {
         "owner": "Team Identity",
-        "description": "Handles user authentication.",
+        "description": "Handles user authentication (OAuth2/JWT).",
         "runbooks": ["restart_service", "flush_cache"],
-        "tier": "Tier-0"
+        "tier": "Tier-0",
+        "dependencies": ["users-db", "redis-cache"],
+        "telemetry": "https://app.datadoghq.com/dashboard/auth-service"
     },
     "frontend-web": {
         "owner": "Team Frontend",
         "description": "Next.js public facing site.",
         "runbooks": ["clear_cdn_cache", "rollback_deploy"],
-        "tier": "Tier-2"
+        "tier": "Tier-2",
+        "dependencies": ["payment-api", "product-api"],
+        "telemetry": "https://app.datadoghq.com/dashboard/frontend"
+    },
+    "fraud-detection": {
+        "owner": "Team Security",
+        "description": "Analyzes transactions for fraud patterns.",
+        "runbooks": ["restart_service"],
+        "tier": "Tier-2",
+        "dependencies": ["analysis-db"],
+        "telemetry": "https://app.datadoghq.com/dashboard/fraud"
+    },
+    "product-api": {
+        "owner": "Team Catalog",
+        "description": "Serves product details.",
+        "runbooks": ["restart_service"],
+        "tier": "Tier-1",
+        "dependencies": ["product-db"],
+        "telemetry": "https://app.datadoghq.com/dashboard/product-api"
     }
 }
 
@@ -51,7 +73,7 @@ def execute_runbook(runbook_name: str, target_service: str) -> str:
 
     # Validation against catalog
     if target_service in SERVICE_CATALOG:
-        allowed = SERVICE_CATALOG[target_service]["runbooks"]
+        allowed = SERVICE_CATALOG[target_service].get("runbooks", [])
         if runbook_name not in allowed:
             return f"Warning: Runbook '{runbook_name}' is not explicitly listed for '{target_service}', but executing anyway via Admin override..."
 
@@ -74,3 +96,45 @@ def lookup_service(service_name: str) -> str:
         return f"Service '{service_name}' not found in catalog."
 
     return f"Service: {service_name}\nDetails: {service}"
+
+@tool
+def get_service_dependencies(service_name: str) -> str:
+    """
+    Returns the list of downstream dependencies (services/DBs called by this service).
+    Use this to understand what might be breaking the service.
+    """
+    service = SERVICE_CATALOG.get(service_name)
+    if not service:
+        return f"Service '{service_name}' not found."
+
+    deps = service.get("dependencies", [])
+    if not deps:
+        return f"Service '{service_name}' has no registered dependencies."
+
+    return f"Dependencies for {service_name}: {', '.join(deps)}"
+
+@tool
+def get_service_topology(service_name: str) -> str:
+    """
+    Returns the full immediate topology (upstream callers and downstream dependencies).
+    Use this to identify impact (who calls me?) and root cause (who do I call?).
+    """
+    if service_name not in SERVICE_CATALOG:
+        return f"Service '{service_name}' not found."
+
+    downstream = SERVICE_CATALOG[service_name].get("dependencies", [])
+
+    # Find upstream (who calls this service?)
+    upstream = []
+    for name, details in SERVICE_CATALOG.items():
+        if service_name in details.get("dependencies", []):
+            upstream.append(name)
+
+    return (
+        f"Topology for {service_name}:\n"
+        f"  [Upstream/Callers]: {', '.join(upstream) if upstream else 'None'}\n"
+        f"  ↓\n"
+        f"  [{service_name}]\n"
+        f"  ↓\n"
+        f"  [Downstream/Dependencies]: {', '.join(downstream) if downstream else 'None'}"
+    )
