@@ -14,6 +14,7 @@ except ImportError:
 try:
     from google.cloud import resourcemanager_v3, monitoring_v3
     from google.auth import default
+    from google.auth.transport.requests import Request as GoogleAuthRequest
 except ImportError:
     resourcemanager_v3 = None
     monitoring_v3 = None
@@ -21,6 +22,7 @@ except ImportError:
 try:
     from datadog_api_client import ApiClient, Configuration
     from datadog_api_client.v1.api.metrics_api import MetricsApi
+    from datadog_api_client.v1.api.monitors_api import MonitorsApi
 except ImportError:
     ApiClient = None
 
@@ -80,6 +82,41 @@ def describe_pod(pod_name: str, namespace: str = "default") -> str:
         return "\n".join(info)
     except Exception as e:
         return f"Error describing pod {pod_name}: {str(e)}"
+
+@tool
+def get_pod_logs(pod_name: str, namespace: str = "default", lines: int = 50) -> str:
+    """Retrieves the last N lines of logs from a pod."""
+    v1 = _get_k8s_client()
+    if not v1:
+        return "Error: Could not load Kubernetes configuration."
+
+    try:
+        logs = v1.read_namespaced_pod_log(name=pod_name, namespace=namespace, tail_lines=lines)
+        return logs if logs else f"No logs found for pod {pod_name}."
+    except Exception as e:
+        return f"Error retrieving logs for {pod_name}: {str(e)}"
+
+@tool
+def get_cluster_events(namespace: str = "default") -> str:
+    """Lists recent events in the cluster (or namespace) to identify systemic issues."""
+    v1 = _get_k8s_client()
+    if not v1:
+        return "Error: Could not load Kubernetes configuration."
+
+    try:
+        events = v1.list_namespaced_event(namespace)
+        event_list = []
+        for e in events.items:
+            # Format: [Warning] Pod/my-pod: Failed to pull image
+            event_list.append(f"[{e.type}] {e.involved_object.kind}/{e.involved_object.name}: {e.message}")
+
+        if not event_list:
+             return f"No events found in namespace {namespace}."
+
+        # Return last 20 events
+        return "\n".join(event_list[-20:])
+    except Exception as e:
+        return f"Error listing events: {str(e)}"
 
 # --- GCP Tools ---
 @tool
@@ -148,6 +185,86 @@ def query_gmp_prometheus(query: str) -> str:
     except Exception as e:
         return f"Error querying GMP: {str(e)}"
 
+@tool
+def list_compute_instances(zone: str = "us-central1-a") -> str:
+    """Lists Google Cloud Compute Engine instances in a zone."""
+    if not resourcemanager_v3:
+        return "GCP libraries not installed."
+
+    try:
+        credentials, project = default()
+        if not project:
+            project = os.getenv("GOOGLE_CLOUD_PROJECT")
+
+        if not project:
+            return "Error: Could not determine GCP Project ID."
+
+        # Refresh creds to get token
+        credentials.refresh(GoogleAuthRequest())
+        token = credentials.token
+
+        headers = {"Authorization": f"Bearer {token}"}
+        url = f"https://compute.googleapis.com/compute/v1/projects/{project}/zones/{zone}/instances"
+
+        resp = requests.get(url, headers=headers, timeout=10)
+        resp.raise_for_status()
+
+        data = resp.json()
+        instances = data.get("items", [])
+
+        if not instances:
+            return f"No instances found in {zone}."
+
+        result = []
+        for inst in instances:
+            name = inst.get("name")
+            status = inst.get("status")
+            network_ip = inst.get("networkInterfaces", [{}])[0].get("networkIP", "N/A")
+            result.append(f"{name} ({status}) - IP: {network_ip}")
+
+        return "\n".join(result)
+
+    except Exception as e:
+        return f"Error listing compute instances: {str(e)}"
+
+@tool
+def get_gcp_sql_instances() -> str:
+    """Lists Google Cloud SQL instances."""
+    if not resourcemanager_v3:
+        return "GCP libraries not installed."
+
+    try:
+        credentials, project = default()
+        if not project:
+            project = os.getenv("GOOGLE_CLOUD_PROJECT")
+
+        credentials.refresh(GoogleAuthRequest())
+        token = credentials.token
+
+        headers = {"Authorization": f"Bearer {token}"}
+        url = f"https://sqladmin.googleapis.com/sql/v1beta4/projects/{project}/instances"
+
+        resp = requests.get(url, headers=headers, timeout=10)
+        resp.raise_for_status()
+
+        data = resp.json()
+        instances = data.get("items", [])
+
+        if not instances:
+            return "No Cloud SQL instances found."
+
+        result = []
+        for inst in instances:
+            name = inst.get("name")
+            state = inst.get("state")
+            db_version = inst.get("databaseVersion")
+            result.append(f"{name} ({state}) - {db_version}")
+
+        return "\n".join(result)
+
+    except Exception as e:
+        return f"Error listing SQL instances: {str(e)}"
+
 # --- Datadog Tools ---
 @tool
 def get_datadog_metrics(query: str) -> str:
@@ -176,6 +293,47 @@ def get_datadog_metrics(query: str) -> str:
             return str(response)
     except Exception as e:
         return f"Error querying Datadog: {str(e)}"
+
+@tool
+def get_active_alerts(tags: str = "") -> str:
+    """Gets active Datadog alerts (monitors in Alert state)."""
+    if not ApiClient:
+        return "Datadog library not installed."
+
+    api_key = os.getenv("DD_API_KEY")
+    app_key = os.getenv("DD_APP_KEY")
+
+    if not api_key or not app_key:
+        return "Error: DD_API_KEY and DD_APP_KEY must be set."
+
+    configuration = Configuration()
+    try:
+        with ApiClient(configuration) as api_client:
+            api_instance = MonitorsApi(api_client)
+            # Search for triggered monitors
+            query = "status:alert"
+            if tags:
+                query += f" tags:{tags}"
+
+            # search_monitors returns metadata
+            # list_monitors allows filtering
+            response = api_instance.list_monitors(
+                group_states="alert",
+                tags=tags,
+                page_size=5
+            )
+
+            alerts = []
+            for monitor in response:
+                alerts.append(f"[Alert] {monitor.name} (ID: {monitor.id}) - Status: {monitor.overall_state}")
+
+            if not alerts:
+                return "No active alerts found."
+
+            return "\n".join(alerts)
+
+    except Exception as e:
+        return f"Error fetching Datadog alerts: {str(e)}"
 
 # --- Azion Tools ---
 @tool

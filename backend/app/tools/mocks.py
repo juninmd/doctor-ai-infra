@@ -34,12 +34,55 @@ def describe_pod(pod_name: str, namespace: str = "default") -> str:
     return f"Pod {pod_name} not found."
 
 @tool
+def get_pod_logs(pod_name: str, namespace: str = "default", lines: int = 50) -> str:
+    """Retrieves the last N lines of logs from a pod."""
+    if "frontend" in pod_name:
+         return (
+             "[INFO] Application starting...\n"
+             "[INFO] Connected to Redis cache\n"
+             "[ERROR] ConnectionRefusedError: POST https://postgres-db:5432 - Connection refused\n"
+             "[FATAL] Database connection failed after 3 retries.\n"
+             "Process exited with code 1"
+         )
+    elif "backend" in pod_name:
+         return (
+             "[INFO] Worker process started\n"
+             "[INFO] Processing job #1023\n"
+             "[INFO] Job #1023 completed successfully"
+         )
+    return f"Logs for {pod_name} (mock):\n[INFO] Service running normally."
+
+@tool
+def get_cluster_events(namespace: str = "default") -> str:
+    """Lists recent events in the cluster (or namespace) to identify systemic issues."""
+    return (
+        "[Normal] Pod/backend-9s8d: Scheduled\n"
+        "[Normal] Pod/backend-9s8d: Pulled image 'backend:v2'\n"
+        "[Warning] Pod/frontend-7d6f: Failed to pull image 'frontend:v3.1' (image not found)\n"
+        "[Warning] Pod/frontend-7d6f: Back-off restarting failed container"
+    )
+
+@tool
 def check_gcp_status(service: str = "compute") -> str:
     """Checks the status of Google Cloud Platform services."""
     # Simulate maintenance mode for Cloud SQL
     if "sql" in service.lower() or "db" in service.lower() or "postgres" in service.lower():
         return "GCP Service Cloud SQL (postgres-db) is in MAINTENANCE mode. Scheduled update in progress."
     return f"GCP Service {service} is OPERATIONAL. No incidents reported."
+
+@tool
+def list_compute_instances(zone: str = "us-central1-a") -> str:
+    """Lists Google Cloud Compute Engine instances in a zone."""
+    return (
+        "web-server-1 (RUNNING) - IP: 10.0.0.4\n"
+        "worker-node-1 (RUNNING) - IP: 10.0.0.5\n"
+        "worker-node-2 (RUNNING) - IP: 10.0.0.6"
+    )
+
+@tool
+def get_gcp_sql_instances() -> str:
+    """Lists Google Cloud SQL instances."""
+    return "postgres-db (MAINTENANCE) - POSTGRES_15"
 
 @tool
 def query_gmp_prometheus(query: str) -> str:
@@ -50,6 +93,13 @@ def query_gmp_prometheus(query: str) -> str:
 def get_datadog_metrics(query: str) -> str:
     """Queries Datadog for specific metrics."""
     return f"Datadog Metric for '{query}': Avg 45ms latency, 99.9% availability."
+
+@tool
+def get_active_alerts(tags: str = "") -> str:
+    """Gets active Datadog alerts (monitors in Alert state)."""
+    if "payment" in tags or not tags:
+        return "[Alert] Payment API High Latency (ID: 12345) - Status: Alert"
+    return "No active alerts found."
 
 @tool
 def check_azion_edge(domain: str) -> str:
