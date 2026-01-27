@@ -28,7 +28,8 @@ def describe_pod(pod_name: str, namespace: str = "default") -> str:
             "Logs:\n"
             "[INFO] Starting server...\n"
             "[ERROR] ConnectionRefusedError: POST https://postgres-db:5432 - Connection refused\n"
-            "[FATAL] Unable to connect to database. Exiting."
+            "[FATAL] Unable to connect to database. Exiting.\n"
+            "Caused by: ConnectionRefusedError: POST https://postgres-db:5432 - Connection refused"
         )
     return f"Pod {pod_name} not found."
 
