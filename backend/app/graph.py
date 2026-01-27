@@ -33,7 +33,7 @@ automation_tools = [list_runbooks, execute_runbook, lookup_service]
 
 
 # 3. Create Specialist Agents
-def make_specialist(tools, persona):
+def make_specialist(tools, persona, heuristics=""):
     system_msg = (
         f"You are a top-tier Infrastructure Specialist focusing on {{persona}}.\n"
         "Your goal is to troubleshoot issues efficiently and proactively.\n"
@@ -41,13 +41,26 @@ def make_specialist(tools, persona):
         "If you see an error related to another domain, mention it clearly so the Supervisor can route it.\n"
         "Your tone is relaxed, direct, and technical (hacker-chic, not corporate).\n"
         "Current Year: 2026.\n"
-    ).format(persona=persona)
+        f"{{heuristics}}\n"
+    ).format(persona=persona, heuristics=heuristics)
 
     return create_react_agent(llm, tools, prompt=system_msg)
 
-k8s_agent = make_specialist(k8s_tools, "Kubernetes (K8s) & Container Orchestration")
-gcp_agent = make_specialist(gcp_tools, "Google Cloud Platform (GCP) & Cloud Infrastructure")
-datadog_agent = make_specialist(datadog_tools, "Datadog Observability & Metrics")
+k8s_agent = make_specialist(
+    k8s_tools,
+    "Kubernetes (K8s) & Container Orchestration",
+    heuristics="SRE TIP: If a pod is not 'Running' (e.g. CrashLoopBackOff), IMMEDIATELY call `describe_pod` to check events and logs. Logs often contain the root cause (e.g. connection errors)."
+)
+gcp_agent = make_specialist(
+    gcp_tools,
+    "Google Cloud Platform (GCP) & Cloud Infrastructure",
+    heuristics="SRE TIP: If a service is down or unreachable, check `check_gcp_status` for maintenance windows or outages first."
+)
+datadog_agent = make_specialist(
+    datadog_tools,
+    "Datadog Observability & Metrics",
+    heuristics="SRE TIP: Correlate high latency spikes with error logs. Check for recent alerts."
+)
 azion_agent = make_specialist(azion_tools, "Azion Edge Computing & CDNs")
 git_agent = make_specialist(git_tools, "Git, GitHub & Source Code Management")
 cicd_agent = make_specialist(cicd_tools, "CI/CD Pipelines & ArgoCD")
@@ -84,9 +97,10 @@ supervisor_system_prompt = (
     "   - Vulnerabilities/IAM -> Security_Specialist\n"
     "   - Incidents/Outages/Status updates -> Incident_Specialist\n"
     "   - Runbooks/Remediation/Scripts -> Automation_Specialist\n"
-    "3. If a specialist reports an error in another domain (e.g. CI failed, check code), "
-    "IMMEDIATELY route to the specialist for that domain.\n"
-    "4. If the issue is resolved or you have a final answer, respond with FINISH.\n"
+    "3. CRITICAL: If a specialist reports a dependency error (e.g. 'ConnectionRefused' or 'Database down'), "
+    "IMMEDIATELY route to the specialist responsible for that dependency (e.g. GCP_Specialist for DBs).\n"
+    "4. Always summarize the key findings from the last agent before making the next move.\n"
+    "5. If the issue is resolved or you have a final answer, respond with FINISH.\n"
     "Tone: Confident, relaxed, concise. No fluff."
 )
 
