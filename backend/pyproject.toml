@@ -24,4 +24,8 @@ dependencies = [
     "google-cloud-monitoring>=2.14.0",
     "datadog-api-client>=2.25.0",
     "requests>=2.31.0",
+    "chromadb>=0.4.24",
+    "langchain-chroma>=0.1.0",
+    "langchain-huggingface>=0.0.1",
+    "sentence-transformers>=2.2.0",
 ]
