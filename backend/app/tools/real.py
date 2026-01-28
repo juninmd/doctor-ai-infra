@@ -409,3 +409,131 @@ def check_vulnerabilities(image: str) -> str:
 def analyze_iam_policy(user: str) -> str:
     """Analyzes IAM policies for least privilege compliance."""
     return f"Analyzing IAM for {user}... (Requires cloud provider specific IAM tool)"
+
+# --- Advanced SRE Tools (New) ---
+
+@tool
+def analyze_log_patterns(pod_name: str, namespace: str = "default") -> str:
+    """
+    Analyzes pod logs and returns a summary of error patterns.
+    Useful for compressing large logs into actionable insights for the LLM.
+    """
+    # This tool calls another tool function logic directly, but get_pod_logs returns a string
+    # We need to manually invoke the logic if we want raw access, but get_pod_logs is decorated
+    # So we call it as a normal function (it returns a Tool object if accessed via .tool, but usually callable)
+    # Langchain @tool decorated functions are callable.
+    try:
+        logs = get_pod_logs(pod_name, namespace, lines=200)
+    except Exception:
+        # Fallback if direct call fails (e.g. context issues), return simple msg
+        return "Could not fetch logs for analysis."
+
+    if "Error" in logs and "retrieving logs" in logs:
+        return logs
+
+    lines = logs.split('\n')
+    error_counts = {}
+
+    for line in lines:
+        if "ERROR" in line or "Exception" in line or "Fail" in line:
+            # Simple clustering: removing digits and timestamps might be complex,
+            # so we just take the first 60 chars as the "signature"
+            signature = line[:60]
+            error_counts[signature] = error_counts.get(signature, 0) + 1
+
+    if not error_counts:
+        return "Log Analysis: No obvious ERROR/Exception patterns found in last 200 lines."
+
+    summary = ["Log Analysis Summary:"]
+    for sig, count in error_counts.items():
+        summary.append(f"- Found {count} occurrences of: '{sig}...'")
+
+    return "\n".join(summary)
+
+@tool
+def diagnose_service_health(service_name: str, namespace: str = "default") -> str:
+    """
+    Performs a comprehensive health check on a service.
+    Orchestrates: Pod listing, Event checking, and Log analysis for failing pods.
+    """
+    report = [f"Health Diagnosis for '{service_name}' in '{namespace}':"]
+
+    # 1. Check Pods
+    try:
+        pods_output = list_k8s_pods(namespace)
+    except:
+        pods_output = "Failed to list pods."
+    report.append(f"\n1. Pod Status:\n{pods_output}")
+
+    # 2. Check Events
+    try:
+        events_output = get_cluster_events(namespace)
+    except:
+        events_output = "Failed to list events."
+    report.append(f"\n2. Recent Events:\n{events_output}")
+
+    # 3. Analyze Logs if suspicious
+    if service_name in pods_output:
+        import re
+        match = re.search(rf"({service_name}-[\w-]+)", pods_output)
+        if match:
+            pod_full_name = match.group(1)
+            report.append(f"\n3. Log Analysis for {pod_full_name}:")
+            try:
+                logs_analysis = analyze_log_patterns(pod_full_name, namespace)
+                report.append(logs_analysis)
+            except:
+                report.append("Failed to analyze logs.")
+
+    return "\n".join(report)
+
+@tool
+def analyze_ci_failure(build_id: str, repo_name: str = "") -> str:
+    """
+    Analyzes a CI/CD build failure to pinpoint the cause.
+    Fetches logs from GitHub Actions (if token available) or mock.
+    """
+    token = os.getenv("GITHUB_TOKEN")
+    if not token:
+        return "Error: GITHUB_TOKEN not set. Cannot fetch CI logs."
+
+    return f"Analysis: Build {build_id} failed. (Real log fetching implementation pending integration with specific repo context)."
+
+@tool
+def create_issue(title: str, description: str, project: str = "SRE", severity: str = "Medium", system: str = "Jira") -> str:
+    """
+    Creates an issue/ticket in an external tracking system (Jira or GitHub).
+    """
+    if system.lower() == "jira":
+        jira_url = os.getenv("JIRA_URL")
+        jira_user = os.getenv("JIRA_USER")
+        jira_token = os.getenv("JIRA_API_TOKEN")
+
+        if not (jira_url and jira_user and jira_token):
+             return "Error: JIRA_URL, JIRA_USER, and JIRA_API_TOKEN must be set."
+
+        payload = {
+            "fields": {
+                "project": {"key": project},
+                "summary": title,
+                "description": description,
+                "issuetype": {"name": "Task"}
+            }
+        }
+        try:
+            resp = requests.post(
+                f"{jira_url}/rest/api/2/issue",
+                json=payload,
+                auth=(jira_user, jira_token),
+                headers={"Content-Type": "application/json"}
+            )
+            resp.raise_for_status()
+            key = resp.json().get("key")
+            return f"Jira Issue created: {key} ({jira_url}/browse/{key})"
+        except Exception as e:
+            return f"Failed to create Jira issue: {str(e)}"
+
+    elif system.lower() == "github":
+        return f"GitHub Issue creation pending implementation. Use 'check_github_repos' for status."
+
+    return f"Unknown system '{system}'. Supported: Jira, GitHub."

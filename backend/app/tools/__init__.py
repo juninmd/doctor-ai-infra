@@ -7,7 +7,8 @@ if os.getenv("USE_REAL_TOOLS", "true").lower() == "true":
         get_datadog_metrics, get_active_alerts, check_azion_edge,
         check_github_repos, get_pr_status,
         check_pipeline_status, get_argocd_sync_status,
-        check_vulnerabilities, analyze_iam_policy
+        check_vulnerabilities, analyze_iam_policy,
+        analyze_log_patterns, diagnose_service_health, analyze_ci_failure, create_issue
     )
 else:
     from .mocks import (
@@ -16,5 +17,6 @@ else:
         get_datadog_metrics, get_active_alerts, check_azion_edge,
         check_github_repos, get_pr_status,
         check_pipeline_status, get_argocd_sync_status,
-        check_vulnerabilities, analyze_iam_policy
+        check_vulnerabilities, analyze_iam_policy,
+        analyze_log_patterns, diagnose_service_health, analyze_ci_failure, create_issue
     )
