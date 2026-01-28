@@ -11,7 +11,8 @@ from .tools import (
     get_datadog_metrics, get_active_alerts, check_azion_edge,
     check_github_repos, get_pr_status,
     check_pipeline_status, get_argocd_sync_status,
-    check_vulnerabilities, analyze_iam_policy
+    check_vulnerabilities, analyze_iam_policy,
+    analyze_log_patterns, diagnose_service_health, analyze_ci_failure, create_issue
 )
 from .tools.incident import create_incident, update_incident_status, list_incidents, get_incident_details, generate_postmortem
 from .tools.runbooks import list_runbooks, execute_runbook, lookup_service, get_service_dependencies, get_service_topology
@@ -22,14 +23,14 @@ from .state import AgentState
 llm = get_llm()
 
 # 2. Define Tools for each specialist
-k8s_tools = [list_k8s_pods, describe_pod, get_pod_logs, get_cluster_events]
+k8s_tools = [list_k8s_pods, describe_pod, get_pod_logs, get_cluster_events, analyze_log_patterns, diagnose_service_health]
 gcp_tools = [check_gcp_status, query_gmp_prometheus, list_compute_instances, get_gcp_sql_instances]
 datadog_tools = [get_datadog_metrics, get_active_alerts]
 azion_tools = [check_azion_edge]
 git_tools = [check_github_repos, get_pr_status]
-cicd_tools = [check_pipeline_status, get_argocd_sync_status]
+cicd_tools = [check_pipeline_status, get_argocd_sync_status, analyze_ci_failure]
 sec_tools = [check_vulnerabilities, analyze_iam_policy]
-incident_tools = [create_incident, update_incident_status, list_incidents, get_incident_details, generate_postmortem, search_knowledge_base]
+incident_tools = [create_incident, update_incident_status, list_incidents, get_incident_details, generate_postmortem, search_knowledge_base, create_issue]
 automation_tools = [list_runbooks, execute_runbook, lookup_service]
 topology_tools = [get_service_dependencies, get_service_topology, lookup_service]
 
@@ -50,7 +51,7 @@ def make_specialist(tools, persona, heuristics=""):
 k8s_agent = make_specialist(
     k8s_tools,
     "Kubernetes (K8s) & Container Orchestration",
-    heuristics="SRE TIP: If a pod is not 'Running' (e.g. CrashLoopBackOff), IMMEDIATELY call `describe_pod` to check events and logs. Logs often contain the root cause (e.g. connection errors)."
+    heuristics="SRE TIP: Start by calling `diagnose_service_health` for a full picture. If a pod is crashing, `analyze_log_patterns` is more efficient than reading raw logs."
 )
 gcp_agent = make_specialist(
     gcp_tools,

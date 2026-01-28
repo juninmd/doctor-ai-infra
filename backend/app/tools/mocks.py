@@ -141,3 +141,56 @@ def check_vulnerabilities(image: str) -> str:
 def analyze_iam_policy(user: str) -> str:
     """Analyzes IAM policies for least privilege compliance."""
     return f"IAM Analysis for {user}: Warning. User has 'Owner' permission on project. Recommend downgrading to 'Editor'."
+
+# --- Advanced SRE Tools (New - Mocks) ---
+
+@tool
+def analyze_log_patterns(pod_name: str, namespace: str = "default") -> str:
+    """
+    Analyzes pod logs and returns a summary of error patterns (Mock).
+    """
+    if "frontend" in pod_name:
+        return (
+            "Log Analysis Summary:\n"
+            "- Found 15 occurrences of: '[ERROR] ConnectionRefusedError: POST https://postgres-db:5432...'\n"
+            "- Found 3 occurrences of: '[FATAL] Database connection failed...'\n"
+            "Recommendation: Check 'postgres-db' service."
+        )
+    return "Log Analysis: No significant error patterns found."
+
+@tool
+def diagnose_service_health(service_name: str, namespace: str = "default") -> str:
+    """
+    Performs a comprehensive health check on a service (Mock).
+    """
+    if "frontend" in service_name:
+        return (
+            f"Health Diagnosis for '{service_name}' in '{namespace}':\n"
+            "\n1. Pod Status:\nfrontend-7d6f (CrashLoopBackOff)\n"
+            "\n2. Recent Events:\n[Warning] Pod/frontend-7d6f: Back-off restarting failed container\n"
+            "\n3. Log Analysis for frontend-7d6f:\n"
+            "- Found 15 occurrences of: '[ERROR] ConnectionRefusedError: POST https://postgres-db:5432...'\n"
+            "Summary: Service is crashing due to Database Connection Errors."
+        )
+    return f"Health Diagnosis for '{service_name}': All Systems Operational. Pods Running. No Alerts."
+
+@tool
+def analyze_ci_failure(build_id: str, repo_name: str = "") -> str:
+    """
+    Analyzes a CI/CD build failure (Mock).
+    """
+    return (
+        f"Analysis: Build {build_id} failed.\n"
+        "Reason: Test Failure in 'tests/unit/test_auth.py'.\n"
+        "Error: 'AssertionError: Expected 200 OK, got 500 Internal Server Error'\n"
+        "Commit Author: dev-alex"
+    )
+
+@tool
+def create_issue(title: str, description: str, project: str = "SRE", severity: str = "Medium", system: str = "Jira") -> str:
+    """
+    Creates an issue/ticket (Mock).
+    """
+    import random
+    fake_id = f"{project}-{random.randint(1000, 9999)}"
+    return f"[{system} Mock] Issue created successfully. Key: {fake_id}. (Title: {title})"
