@@ -10,8 +10,19 @@ import asyncio
 
 from app.graph import app_graph
 from langchain_core.messages import HumanMessage, AIMessage
+from app.rag import initialize_rag
+from contextlib import asynccontextmanager
 
-app = FastAPI(title="Infra Agent Manager", version="1.0")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Initialize RAG Knowledge Base on startup
+    try:
+        initialize_rag()
+    except Exception as e:
+        print(f"Warning: Failed to initialize RAG: {e}")
+    yield
+
+app = FastAPI(title="Infra Agent Manager", version="1.0", lifespan=lifespan)
 
 class ChatRequest(BaseModel):
     message: str
