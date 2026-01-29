@@ -16,6 +16,7 @@ from .tools import (
 )
 from .tools.incident import create_incident, update_incident_status, list_incidents, get_incident_details, generate_postmortem
 from .tools.runbooks import list_runbooks, execute_runbook, lookup_service, get_service_dependencies, get_service_topology
+from .tools.visualizer import generate_topology_diagram
 from .tools.knowledge import search_knowledge_base
 from .state import AgentState
 
@@ -32,7 +33,7 @@ cicd_tools = [check_pipeline_status, get_argocd_sync_status, analyze_ci_failure]
 sec_tools = [check_vulnerabilities, analyze_iam_policy]
 incident_tools = [create_incident, update_incident_status, list_incidents, get_incident_details, generate_postmortem, search_knowledge_base, create_issue]
 automation_tools = [list_runbooks, execute_runbook, lookup_service]
-topology_tools = [get_service_dependencies, get_service_topology, lookup_service]
+topology_tools = [get_service_dependencies, get_service_topology, lookup_service, generate_topology_diagram]
 
 # 3. Create Specialist Agents
 def make_specialist(tools, persona, heuristics=""):
@@ -69,7 +70,11 @@ cicd_agent = make_specialist(cicd_tools, "CI/CD Pipelines & ArgoCD")
 sec_agent = make_specialist(sec_tools, "DevSecOps, Vulnerability Scanning & IAM")
 incident_agent = make_specialist(incident_tools, "Incident Management & Post-Mortems")
 automation_agent = make_specialist(automation_tools, "Runbook Automation & Site Reliability Engineering")
-topology_agent = make_specialist(topology_tools, "Service Topology & Dependency Mapping")
+topology_agent = make_specialist(
+    topology_tools,
+    "Service Topology & Dependency Mapping",
+    heuristics="SRE TIP: When the user asks for an architecture overview or dependency map, ALWAYS use `generate_topology_diagram` to provide a visual aid."
+)
 
 # 4. Define the Supervisor (Router)
 members = [
