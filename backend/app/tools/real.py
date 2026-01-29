@@ -3,6 +3,7 @@ import os
 import requests
 import json
 from typing import List, Dict
+from app.tools.runbooks import get_service_dependencies
 
 # Infrastructure Libraries
 try:
@@ -423,7 +424,8 @@ def analyze_log_patterns(pod_name: str, namespace: str = "default") -> str:
     # So we call it as a normal function (it returns a Tool object if accessed via .tool, but usually callable)
     # Langchain @tool decorated functions are callable.
     try:
-        logs = get_pod_logs(pod_name, namespace, lines=200)
+        # FIX: Use invoke for nested tool call
+        logs = get_pod_logs.invoke({"pod_name": pod_name, "namespace": namespace, "lines": 200})
     except Exception:
         # Fallback if direct call fails (e.g. context issues), return simple msg
         return "Could not fetch logs for analysis."
@@ -460,14 +462,16 @@ def diagnose_service_health(service_name: str, namespace: str = "default") -> st
 
     # 1. Check Pods
     try:
-        pods_output = list_k8s_pods(namespace)
+        # FIX: Use invoke
+        pods_output = list_k8s_pods.invoke({"namespace": namespace})
     except:
         pods_output = "Failed to list pods."
     report.append(f"\n1. Pod Status:\n{pods_output}")
 
     # 2. Check Events
     try:
-        events_output = get_cluster_events(namespace)
+        # FIX: Use invoke
+        events_output = get_cluster_events.invoke({"namespace": namespace})
     except:
         events_output = "Failed to list events."
     report.append(f"\n2. Recent Events:\n{events_output}")
@@ -480,7 +484,8 @@ def diagnose_service_health(service_name: str, namespace: str = "default") -> st
             pod_full_name = match.group(1)
             report.append(f"\n3. Log Analysis for {pod_full_name}:")
             try:
-                logs_analysis = analyze_log_patterns(pod_full_name, namespace)
+                # FIX: Use invoke
+                logs_analysis = analyze_log_patterns.invoke({"pod_name": pod_full_name, "namespace": namespace})
                 report.append(logs_analysis)
             except:
                 report.append("Failed to analyze logs.")
@@ -498,6 +503,59 @@ def analyze_ci_failure(build_id: str, repo_name: str = "") -> str:
         return "Error: GITHUB_TOKEN not set. Cannot fetch CI logs."
 
     return f"Analysis: Build {build_id} failed. (Real log fetching implementation pending integration with specific repo context)."
+
+@tool
+def trace_service_health(service_name: str, depth: int = 1) -> str:
+    """
+    Diagnoses the health of a service and its immediate dependencies.
+    Useful for root cause analysis to see if a failure is cascading.
+    Args:
+        service_name: The root service to check.
+        depth: How deep to traverse dependencies (default 1).
+    """
+    report = [f"Dependency Health Trace for '{service_name}' (Depth: {depth}):"]
+
+    # 1. Check Root Service
+    report.append(f"\n--- Root: {service_name} ---")
+    try:
+        # Assuming namespace "default" for simplicity, or we could look it up
+        # FIX: Use invoke
+        root_health = diagnose_service_health.invoke({"service_name": service_name, "namespace": "default"})
+        report.append(root_health)
+    except Exception as e:
+        report.append(f"Error checking root service: {str(e)}")
+
+    if depth > 0:
+        # 2. Get Dependencies
+        try:
+            deps_str = get_service_dependencies.invoke({"service_name": service_name})
+            if "Dependencies for" in deps_str:
+                # Parse string "Dependencies for X: a, b, c"
+                # This is a bit brittle if get_service_dependencies changes format
+                # Ideally, we'd have a function returning list, but the tool returns str.
+                # Let's try to extract.
+                if ":" in deps_str:
+                    deps_list_str = deps_str.split(":", 1)[1].strip()
+                    if deps_list_str:
+                        dependencies = [d.strip() for d in deps_list_str.split(",")]
+
+                        report.append(f"\n--- Dependencies ({len(dependencies)}) ---")
+                        for dep in dependencies:
+                            report.append(f"\n[Dependency: {dep}]")
+                            try:
+                                # FIX: Use invoke
+                                dep_health = diagnose_service_health.invoke({"service_name": dep, "namespace": "default"})
+                                # Indent or simplify
+                                report.append(dep_health)
+                            except Exception as e:
+                                report.append(f"Error checking dependency {dep}: {str(e)}")
+            else:
+                report.append(f"\nDependency check: {deps_str}")
+
+        except Exception as e:
+            report.append(f"Error fetching dependencies: {str(e)}")
+
+    return "\n".join(report)
 
 @tool
 def create_issue(title: str, description: str, project: str = "SRE", severity: str = "Medium", system: str = "Jira") -> str:

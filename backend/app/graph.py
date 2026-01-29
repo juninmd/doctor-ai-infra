@@ -12,9 +12,13 @@ from .tools import (
     check_github_repos, get_pr_status,
     check_pipeline_status, get_argocd_sync_status,
     check_vulnerabilities, analyze_iam_policy,
-    analyze_log_patterns, diagnose_service_health, analyze_ci_failure, create_issue
+    analyze_log_patterns, diagnose_service_health, analyze_ci_failure, create_issue,
+    trace_service_health
 )
-from .tools.incident import create_incident, update_incident_status, list_incidents, get_incident_details, generate_postmortem
+from .tools.incident import (
+    create_incident, update_incident_status, list_incidents, get_incident_details,
+    generate_postmortem, log_incident_event, build_incident_timeline, manage_incident_channels
+)
 from .tools.runbooks import list_runbooks, execute_runbook, lookup_service, get_service_dependencies, get_service_topology
 from .tools.visualizer import generate_topology_diagram
 from .tools.knowledge import search_knowledge_base
@@ -24,16 +28,20 @@ from .state import AgentState
 llm = get_llm()
 
 # 2. Define Tools for each specialist
-k8s_tools = [list_k8s_pods, describe_pod, get_pod_logs, get_cluster_events, analyze_log_patterns, diagnose_service_health]
+k8s_tools = [list_k8s_pods, describe_pod, get_pod_logs, get_cluster_events, analyze_log_patterns, diagnose_service_health, trace_service_health]
 gcp_tools = [check_gcp_status, query_gmp_prometheus, list_compute_instances, get_gcp_sql_instances]
 datadog_tools = [get_datadog_metrics, get_active_alerts]
 azion_tools = [check_azion_edge]
 git_tools = [check_github_repos, get_pr_status]
 cicd_tools = [check_pipeline_status, get_argocd_sync_status, analyze_ci_failure]
 sec_tools = [check_vulnerabilities, analyze_iam_policy]
-incident_tools = [create_incident, update_incident_status, list_incidents, get_incident_details, generate_postmortem, search_knowledge_base, create_issue]
+incident_tools = [
+    create_incident, update_incident_status, list_incidents, get_incident_details,
+    generate_postmortem, search_knowledge_base, create_issue,
+    log_incident_event, build_incident_timeline, manage_incident_channels
+]
 automation_tools = [list_runbooks, execute_runbook, lookup_service]
-topology_tools = [get_service_dependencies, get_service_topology, lookup_service, generate_topology_diagram]
+topology_tools = [get_service_dependencies, get_service_topology, lookup_service, generate_topology_diagram, trace_service_health]
 
 # 3. Create Specialist Agents
 def make_specialist(tools, persona, heuristics=""):
@@ -52,7 +60,7 @@ def make_specialist(tools, persona, heuristics=""):
 k8s_agent = make_specialist(
     k8s_tools,
     "Kubernetes (K8s) & Container Orchestration",
-    heuristics="SRE TIP: Start by calling `diagnose_service_health` for a full picture. If a pod is crashing, `analyze_log_patterns` is more efficient than reading raw logs."
+    heuristics="SRE TIP: Start by calling `diagnose_service_health` for a full picture. If a pod is crashing, `analyze_log_patterns` is more efficient than reading raw logs. Use `trace_service_health` to check dependencies if the issue seems external."
 )
 gcp_agent = make_specialist(
     gcp_tools,
@@ -68,12 +76,22 @@ azion_agent = make_specialist(azion_tools, "Azion Edge Computing & CDNs")
 git_agent = make_specialist(git_tools, "Git, GitHub & Source Code Management")
 cicd_agent = make_specialist(cicd_tools, "CI/CD Pipelines & ArgoCD")
 sec_agent = make_specialist(sec_tools, "DevSecOps, Vulnerability Scanning & IAM")
-incident_agent = make_specialist(incident_tools, "Incident Management & Post-Mortems")
+incident_agent = make_specialist(
+    incident_tools,
+    "Incident Management & Post-Mortems",
+    heuristics=(
+        "SRE TIP: You are the Incident Commander. \n"
+        "1. Create a channel with `manage_incident_channels`.\n"
+        "2. Use `log_incident_event` to record your Hypotheses, Evidence, and Actions in real-time. This builds the timeline.\n"
+        "3. Use `build_incident_timeline` to summarize the state for the user.\n"
+        "4. Always act on facts, not assumptions."
+    )
+)
 automation_agent = make_specialist(automation_tools, "Runbook Automation & Site Reliability Engineering")
 topology_agent = make_specialist(
     topology_tools,
     "Service Topology & Dependency Mapping",
-    heuristics="SRE TIP: When the user asks for an architecture overview or dependency map, ALWAYS use `generate_topology_diagram` to provide a visual aid."
+    heuristics="SRE TIP: Use `trace_service_health` to visualize cascading failures across the stack. Use `generate_topology_diagram` for architectural overviews."
 )
 
 # 4. Define the Supervisor (Router)
