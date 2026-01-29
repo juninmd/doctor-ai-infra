@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Send, Terminal, Cpu, ShieldCheck, Activity } from 'lucide-react';
 import { GlassCard } from './GlassCard';
 import { ThinkingProcess, type AgentStep } from './ThinkingProcess';
+import { MarkdownRenderer } from './MarkdownRenderer';
 import { cn } from '../lib/utils';
 
 interface Message {
@@ -152,7 +153,7 @@ export function ChatInterface() {
                                 {msg.agent}
                             </div>
                         )}
-                        <div className="whitespace-pre-wrap">{msg.content}</div>
+                        <MarkdownRenderer content={msg.content} />
                     </div>
                 </div>
             ))}
