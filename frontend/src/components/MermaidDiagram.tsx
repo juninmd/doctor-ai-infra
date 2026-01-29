@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import mermaid from 'mermaid';
 
 mermaid.initialize({
@@ -15,12 +15,12 @@ interface MermaidProps {
 export function MermaidDiagram({ chart }: MermaidProps) {
   const [svg, setSvg] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const idRef = useRef(`mermaid-${Math.random().toString(36).substr(2, 9)}`);
+  const [id] = useState(() => `mermaid-${Math.random().toString(36).substr(2, 9)}`);
 
   useEffect(() => {
     const renderChart = async () => {
       try {
-        const { svg } = await mermaid.render(idRef.current, chart);
+        const { svg } = await mermaid.render(id, chart);
         setSvg(svg);
         setError(null);
       } catch (err) {
@@ -32,7 +32,7 @@ export function MermaidDiagram({ chart }: MermaidProps) {
     if (chart) {
       renderChart();
     }
-  }, [chart]);
+  }, [chart, id]);
 
   if (error) {
     return (
