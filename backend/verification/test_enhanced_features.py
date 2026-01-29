@@ -8,7 +8,8 @@ sys.path.append(os.getcwd())
 os.environ["USE_REAL_TOOLS"] = "false"
 
 from app.tools.incident import create_incident, log_incident_event, build_incident_timeline
-from app.tools import trace_service_health
+# Import directly from mocks to ensure we test the mock logic regardless of env vars/import caching
+from app.tools.mocks import trace_service_health
 
 def test_incident_flow():
     print("--- Testing Incident Flow ---")
