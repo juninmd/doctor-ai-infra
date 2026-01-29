@@ -21,6 +21,7 @@ class Incident(Base):
     updates = Column(Text, default="[]")  # JSON string of updates
 
     post_mortem = relationship("PostMortem", back_populates="incident", uselist=False)
+    events = relationship("IncidentEvent", back_populates="incident", order_by="IncidentEvent.created_at")
 
     def add_update(self, message: str):
         updates_list = json.loads(self.updates)
@@ -47,6 +48,18 @@ class PostMortem(Base):
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
     incident = relationship("Incident", back_populates="post_mortem")
+
+class IncidentEvent(Base):
+    __tablename__ = "incident_events"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    incident_id = Column(String, ForeignKey("incidents.id"))
+    source = Column(String)  # e.g., "Supervisor", "K8s_Specialist", "Human"
+    event_type = Column(String)  # e.g., "Hypothesis", "Action", "StatusChange", "Evidence"
+    content = Column(Text)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    incident = relationship("Incident", back_populates="events")
 
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

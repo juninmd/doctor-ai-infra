@@ -3,7 +3,7 @@ from typing import List, Dict, Optional
 import datetime
 import uuid
 import json
-from app.db import init_db, SessionLocal, Incident, PostMortem
+from app.db import init_db, SessionLocal, Incident, PostMortem, IncidentEvent
 from app.llm import get_llm
 from langchain_core.prompts import ChatPromptTemplate
 
@@ -30,11 +30,52 @@ def create_incident(title: str, severity: str, description: str) -> str:
             status="OPEN"
         )
         db.add(new_inc)
+
+        # Log creation event
+        event = IncidentEvent(
+            incident_id=inc_id,
+            source="System",
+            event_type="Creation",
+            content=f"Incident created: {title}"
+        )
+        db.add(event)
+
         db.commit()
         return f"Incident created successfully. ID: {inc_id}"
     except Exception as e:
         db.rollback()
         return f"Error creating incident: {str(e)}"
+    finally:
+        db.close()
+
+@tool
+def log_incident_event(incident_id: str, event_type: str, content: str, source: str = "Agent") -> str:
+    """
+    Logs a significant event for an incident timeline.
+    Args:
+        incident_id: The ID of the incident.
+        event_type: The category of event (e.g., 'Hypothesis', 'Evidence', 'Action', 'StatusChange', 'Observation').
+        content: The description of what happened or what was found.
+        source: Who is logging this (e.g., 'K8s_Specialist', 'Supervisor', 'Human').
+    """
+    db = SessionLocal()
+    try:
+        inc = db.query(Incident).filter(Incident.id == incident_id).first()
+        if not inc:
+            return f"Incident {incident_id} not found."
+
+        event = IncidentEvent(
+            incident_id=incident_id,
+            source=source,
+            event_type=event_type,
+            content=content
+        )
+        db.add(event)
+        db.commit()
+        return f"Logged '{event_type}' event for incident {incident_id}."
+    except Exception as e:
+        db.rollback()
+        return f"Error logging event: {str(e)}"
     finally:
         db.close()
 
@@ -53,9 +94,21 @@ def update_incident_status(incident_id: str, status: str, update_message: str = 
         if not inc:
             return f"Incident {incident_id} not found."
 
+        old_status = inc.status
         inc.status = status
+
+        # Log to legacy updates field
         if update_message:
             inc.add_update(update_message)
+
+        # Log granular event
+        event = IncidentEvent(
+            incident_id=incident_id,
+            source="System",
+            event_type="StatusChange",
+            content=f"Status changed from {old_status} to {status}. Message: {update_message}"
+        )
+        db.add(event)
 
         db.commit()
         return f"Incident {incident_id} updated to {status}."
@@ -64,6 +117,53 @@ def update_incident_status(incident_id: str, status: str, update_message: str = 
         return f"Error updating incident: {str(e)}"
     finally:
         db.close()
+
+@tool
+def build_incident_timeline(incident_id: str) -> str:
+    """
+    Constructs a Markdown-formatted timeline of the incident based on logged events.
+    Useful for catching up on context or generating reports.
+    """
+    db = SessionLocal()
+    try:
+        inc = db.query(Incident).filter(Incident.id == incident_id).first()
+        if not inc:
+            return f"Incident {incident_id} not found."
+
+        # Fetch events sorted by time
+        events = db.query(IncidentEvent).filter(IncidentEvent.incident_id == incident_id).order_by(IncidentEvent.created_at).all()
+
+        timeline = [f"# Incident Timeline: {inc.title} ({inc.id})"]
+        timeline.append(f"**Severity:** {inc.severity} | **Status:** {inc.status}\n")
+
+        for e in events:
+            timestamp = e.created_at.strftime("%Y-%m-%d %H:%M:%S")
+            icon = "ℹ️"
+            if e.event_type == "Hypothesis": icon = "🤔"
+            elif e.event_type == "Evidence": icon = "🔍"
+            elif e.event_type == "Action": icon = "⚡"
+            elif e.event_type == "StatusChange": icon = "🔄"
+            elif e.event_type == "Creation": icon = "🚨"
+
+            timeline.append(f"- **{timestamp}** {icon} [{e.source}] **{e.event_type}**: {e.content}")
+
+        if not events:
+            timeline.append("No events logged yet.")
+
+        return "\n".join(timeline)
+    finally:
+        db.close()
+
+@tool
+def manage_incident_channels(action: str, channel_name: str, platform: str = "Slack") -> str:
+    """
+    Manages communication channels for incidents (Mock).
+    Args:
+        action: 'create', 'archive', 'invite'.
+        channel_name: Name of the channel (e.g., '#inc-123').
+        platform: 'Slack' or 'Zoom'.
+    """
+    return f"MOCK: Successfully performed '{action}' on {platform} channel '{channel_name}'."
 
 @tool
 def list_incidents(status: Optional[str] = None) -> str:
@@ -125,15 +225,17 @@ def generate_postmortem(incident_id: str) -> str:
         if inc.post_mortem:
             return f"Post-Mortem already exists for {incident_id}. (ID: {inc.post_mortem.id})"
 
-        # Prepare context
-        updates_str = inc.updates
+        # Prepare context (include new events)
+        events = db.query(IncidentEvent).filter(IncidentEvent.incident_id == incident_id).order_by(IncidentEvent.created_at).all()
+        events_str = "\n".join([f"[{e.created_at}] {e.event_type} ({e.source}): {e.content}" for e in events])
+
         context = (
             f"Title: {inc.title}\n"
             f"Severity: {inc.severity}\n"
             f"Description: {inc.description}\n"
             f"Status: {inc.status}\n"
             f"Created At: {inc.created_at}\n"
-            f"Updates: {updates_str}\n"
+            f"Timeline Log:\n{events_str}\n"
         )
 
         llm = get_llm()
@@ -144,7 +246,7 @@ def generate_postmortem(incident_id: str) -> str:
                 "Include:\n"
                 "- Executive Summary\n"
                 "- Root Cause Analysis (inference based on logs)\n"
-                "- Timeline\n"
+                "- Timeline (Use the provided Timeline Log)\n"
                 "- Action Items\n"
             )),
             ("human", "{context}")

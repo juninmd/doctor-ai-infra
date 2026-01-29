@@ -187,6 +187,30 @@ def analyze_ci_failure(build_id: str, repo_name: str = "") -> str:
     )
 
 @tool
+def trace_service_health(service_name: str, depth: int = 1) -> str:
+    """
+    Diagnoses the health of a service and its immediate dependencies.
+    Useful for root cause analysis to see if a failure is cascading.
+    (Mock Implementation)
+    """
+    report = [f"Dependency Health Trace for '{service_name}' (Depth: {depth}):"]
+
+    # 1. Check Root
+    report.append(f"\n--- Root: {service_name} ---")
+    if "frontend" in service_name:
+        report.append(diagnose_service_health.invoke({"service_name": service_name}))
+        if depth > 0:
+            report.append("\n--- Dependencies (2) ---")
+            report.append("\n[Dependency: payment-api]")
+            report.append(diagnose_service_health.invoke({"service_name": "payment-api"}))
+            report.append("\n[Dependency: product-api]")
+            report.append(diagnose_service_health.invoke({"service_name": "product-api"}))
+    else:
+        report.append(diagnose_service_health.invoke({"service_name": service_name}))
+
+    return "\n".join(report)
+
+@tool
 def create_issue(title: str, description: str, project: str = "SRE", severity: str = "Medium", system: str = "Jira") -> str:
     """
     Creates an issue/ticket (Mock).
