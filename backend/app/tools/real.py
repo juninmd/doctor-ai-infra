@@ -528,7 +528,7 @@ def trace_service_health(service_name: str, depth: int = 1) -> str:
     if depth > 0:
         # 2. Get Dependencies
         try:
-            deps_str = get_service_dependencies(service_name)
+            deps_str = get_service_dependencies.invoke({"service_name": service_name})
             if "Dependencies for" in deps_str:
                 # Parse string "Dependencies for X: a, b, c"
                 # This is a bit brittle if get_service_dependencies changes format
