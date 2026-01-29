@@ -74,15 +74,27 @@ async def chat_endpoint(request: ChatRequest):
                         if msgs:
                             # It could be a single message or list
                             if isinstance(msgs, list):
-                                content = msgs[-1].content
+                                last_msg = msgs[-1]
                             else:
-                                content = msgs.content
+                                last_msg = msgs
 
-                            yield json.dumps({
-                                "type": "message",
-                                "agent": node,
-                                "content": content
-                            }) + "\n"
+                            # Check for tool calls
+                            if hasattr(last_msg, 'tool_calls') and last_msg.tool_calls:
+                                for tool_call in last_msg.tool_calls:
+                                    yield json.dumps({
+                                        "type": "tool_call",
+                                        "agent": node,
+                                        "tool": tool_call.get('name', 'unknown'),
+                                        "args": tool_call.get('args', {})
+                                    }) + "\n"
+
+                            content = last_msg.content
+                            if content:
+                                yield json.dumps({
+                                    "type": "message",
+                                    "agent": node,
+                                    "content": content
+                                }) + "\n"
 
         except Exception as e:
             yield json.dumps({"type": "message", "agent": "System", "content": f"Error: {str(e)}"}) + "\n"

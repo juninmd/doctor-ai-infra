@@ -78,6 +78,17 @@ export function ChatInterface() {
                 });
                 return newSteps;
               });
+            } else if (event.type === 'tool_call') {
+                setSteps(prev => {
+                    const newSteps = [...prev];
+                    const activeIndex = newSteps.length - 1;
+                    if (activeIndex >= 0) {
+                        const step = { ...newSteps[activeIndex] };
+                        step.toolCalls = [...(step.toolCalls || []), { tool: event.tool, args: event.args }];
+                        newSteps[activeIndex] = step;
+                    }
+                    return newSteps;
+                });
             } else if (event.type === 'message') {
               setMessages(prev => {
                 // If the last message is from the same agent, append to it (optional, but cleaner)

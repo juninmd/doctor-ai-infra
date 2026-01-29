@@ -7,6 +7,8 @@ export interface AgentStep {
   agent: string;
   status: 'pending' | 'active' | 'completed';
   timestamp: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  toolCalls?: { tool: string; args: any }[];
 }
 
 interface ThinkingProcessProps {
@@ -96,6 +98,17 @@ export function ThinkingProcess({ steps, isProcessing }: ThinkingProcessProps) {
                       )}>
                         {step.agent.replace('_', ' ')}
                       </span>
+                      {step.toolCalls && step.toolCalls.length > 0 && (
+                        <div className="mt-1 flex flex-col gap-1 pl-2 border-l border-white/10">
+                            {step.toolCalls.map((call, idx) => (
+                                <span key={idx} className="text-xs font-mono text-white/50 flex items-center gap-1.5">
+                                    <span className="text-blue-400/70">{'>'}</span>
+                                    <span className="text-blue-200/80">{call.tool}</span>
+                                    <span className="text-white/30 truncate max-w-[250px]">{JSON.stringify(call.args)}</span>
+                                </span>
+                            ))}
+                        </div>
+                      )}
                     </div>
 
                     {index < steps.length - 1 && (
