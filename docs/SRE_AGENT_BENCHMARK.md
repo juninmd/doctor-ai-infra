@@ -9,7 +9,7 @@ Com base nas tendências de 2025 (Gartner, Datadog, incident.io), um Agente SRE 
 ### A. Observabilidade Contextual e Topológica
 *   **O que é:** Não apenas ler logs, mas entender o *mapa* de dependências (ex: Service A chama Service B, que usa DB C).
 *   **Por que:** Para diferenciar sintomas de causas raiz.
-*   **Nosso Status:** Parcial (O Supervisor roteia baseado em domínio, mas falta um grafo de dependência explícito).
+*   **Nosso Status:** **Alto** (Implementado `trace_service_health` e `generate_topology_diagram` com visualização Mermaid).
 
 ### B. Investigação Autônoma (Zero-Touch Triage)
 *   **O que é:** Capacidade de buscar logs, correlacionar métricas e eventos sem intervenção humana inicial.
@@ -19,17 +19,17 @@ Com base nas tendências de 2025 (Gartner, Datadog, incident.io), um Agente SRE 
 ### C. Memória de Longo Prazo e Aprendizado (RAG)
 *   **O que é:** Capacidade de consultar Post-Mortems passados e Runbooks para sugerir correções baseadas em histórico.
 *   **Por que:** Evita "reinventar a roda" em incidentes recorrentes.
-*   **Nosso Status:** **Ausente** (Usamos armazenamento em memória volátil).
+*   **Nosso Status:** **Completo** (Implementado via `backend/app/rag.py` usando ChromaDB e Sentence Transformers).
 
 ### D. Integração ChatOps (Slack/Teams)
 *   **O que é:** O agente deve viver onde o time conversa, não em um dashboard isolado.
 *   **Por que:** Colaboração em tempo real.
-*   **Nosso Status:** Ausente (Interface atual é via API/Stream).
+*   **Nosso Status:** Parcial (Interface Web moderna, integração Slack pendente).
 
 ### E. "Human-in-the-loop" para Ações Destrutivas
 *   **O que é:** O agente sugere o fix, o humano aprova. Nunca reiniciar produção sem permissão.
 *   **Por que:** Segurança e confiança.
-*   **Nosso Status:** Implementado via Tool Logic (mock), mas precisa de reforço no fluxo do Supervisor.
+*   **Nosso Status:** **Alto/Implementado** (Agentes configurados para solicitar confirmação antes de ações como Purge ou Restart).
 
 ---
 
@@ -39,7 +39,7 @@ Com base nas tendências de 2025 (Gartner, Datadog, incident.io), um Agente SRE 
 | :--- | :--- | :--- | :--- |
 | **LLM Orchestration** | LangChain / LangGraph / AutoGen | **LangGraph** | ✅ Alinhado |
 | **LLM Model** | GPT-4o, Claude 3.5 Sonnet, Llama 3 | **Ollama / Gemini** | ✅ Alinhado (Híbrido) |
-| **Vector Database** | Pinecone, Chroma, Weaviate | **Nenhum** | ❌ Ponto Crítico |
+| **Vector Database** | Pinecone, Chroma, Weaviate | **ChromaDB** | ✅ Resolvido |
 | **Observability** | OpenTelemetry (OTel), Prometheus | **Prometheus (GMP), Datadog** | ✅ Alinhado |
 | **Runtime** | Kubernetes | **Kubernetes** | ✅ Alinhado |
 | **Context Window** | 128k+ tokens | Depende do modelo | ⚠️ Monitorar |

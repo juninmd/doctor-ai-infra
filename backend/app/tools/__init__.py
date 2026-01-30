@@ -9,7 +9,7 @@ if os.getenv("USE_REAL_TOOLS", "true").lower() == "true":
         check_pipeline_status, get_argocd_sync_status,
         check_vulnerabilities, analyze_iam_policy,
         analyze_log_patterns, diagnose_service_health, analyze_ci_failure, create_issue,
-        trace_service_health
+        trace_service_health, purge_azion_cache
     )
 else:
     from .mocks import (
@@ -20,5 +20,5 @@ else:
         check_pipeline_status, get_argocd_sync_status,
         check_vulnerabilities, analyze_iam_policy,
         analyze_log_patterns, diagnose_service_health, analyze_ci_failure, create_issue,
-        trace_service_health
+        trace_service_health, purge_azion_cache
     )

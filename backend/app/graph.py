@@ -13,7 +13,7 @@ from .tools import (
     check_pipeline_status, get_argocd_sync_status,
     check_vulnerabilities, analyze_iam_policy,
     analyze_log_patterns, diagnose_service_health, analyze_ci_failure, create_issue,
-    trace_service_health
+    trace_service_health, purge_azion_cache
 )
 from .tools.incident import (
     create_incident, update_incident_status, list_incidents, get_incident_details,
@@ -31,7 +31,7 @@ llm = get_llm()
 k8s_tools = [list_k8s_pods, describe_pod, get_pod_logs, get_cluster_events, analyze_log_patterns, diagnose_service_health, trace_service_health]
 gcp_tools = [check_gcp_status, query_gmp_prometheus, list_compute_instances, get_gcp_sql_instances]
 datadog_tools = [get_datadog_metrics, get_active_alerts]
-azion_tools = [check_azion_edge]
+azion_tools = [check_azion_edge, purge_azion_cache]
 git_tools = [check_github_repos, get_pr_status]
 cicd_tools = [check_pipeline_status, get_argocd_sync_status, analyze_ci_failure]
 sec_tools = [check_vulnerabilities, analyze_iam_policy]

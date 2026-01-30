@@ -364,6 +364,45 @@ def check_azion_edge(domain: str) -> str:
     except Exception as e:
         return f"Error checking Azion: {str(e)}"
 
+@tool
+def purge_azion_cache(domain: str, wildcards: List[str]) -> str:
+    """Purges the Azion Edge Cache for a list of wildcard URLs."""
+    token = os.getenv("AZION_TOKEN")
+    if not token:
+        return "Error: AZION_TOKEN environment variable is missing."
+
+    headers = {
+        "Accept": "application/json; version=3",
+        "Authorization": f"Token {token}",
+        "Content-Type": "application/json"
+    }
+
+    try:
+        # Construct full URLs if needed
+        full_urls = []
+        for w in wildcards:
+            if w.startswith("http"):
+                full_urls.append(w)
+            else:
+                # Prepend domain, assume https
+                clean_domain = domain.replace("https://", "").replace("http://", "").strip("/")
+                # Ensure w starts with /
+                path = w if w.startswith("/") else f"/{w}"
+                full_urls.append(f"https://{clean_domain}{path}")
+
+        payload = {
+            "items": full_urls,
+            "layer": "edge_caching"
+        }
+
+        # Note: Azion API endpoint for wildcard purge
+        resp = requests.post("https://api.azionapi.net/purge/wildcard", json=payload, headers=headers, timeout=10)
+        resp.raise_for_status()
+
+        return f"Purge request successful for {len(full_urls)} URLs. ID: {resp.json().get('id', 'N/A')}"
+    except Exception as e:
+        return f"Error purging Azion cache: {str(e)}"
+
 # --- DevOps / Git / Security Tools (Simplified wrappers) ---
 
 @tool
