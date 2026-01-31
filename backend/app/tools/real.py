@@ -338,8 +338,8 @@ def get_active_alerts(tags: str = "") -> str:
 
 # --- Azion Tools ---
 @tool
-def check_azion_edge(domain: str) -> str:
-    """Checks the status of an Azion Edge Application via API."""
+def check_azion_edge(domain: str = "") -> str:
+    """Checks the status of Azion Edge Applications. If domain is provided, checks that specific app."""
     token = os.getenv("AZION_TOKEN")
     if not token:
         return "Error: AZION_TOKEN environment variable is missing."
@@ -354,6 +354,13 @@ def check_azion_edge(domain: str) -> str:
         resp = requests.get("https://api.azionapi.net/edge_applications", headers=headers, timeout=10)
         resp.raise_for_status()
         apps = resp.json().get("results", [])
+
+        if not domain:
+            # List summary of first few apps
+            if not apps:
+                return "No Azion Edge Applications found."
+            names = [a.get("name", "Unknown") for a in apps[:5]]
+            return f"Azion Active. Found {len(apps)} apps. Top 5: {', '.join(names)}"
 
         target_app = next((a for a in apps if domain in a.get("name", "")), None)
 

@@ -102,8 +102,10 @@ def get_active_alerts(tags: str = "") -> str:
     return "No active alerts found."
 
 @tool
-def check_azion_edge(domain: str) -> str:
+def check_azion_edge(domain: str = "") -> str:
     """Checks the status of an Azion Edge Application."""
+    if not domain:
+        return "Azion Active. Found 3 apps (Mock)."
     return f"Azion Edge for {domain}: Cache Hit Ratio 85%, Status Active."
 
 @tool
