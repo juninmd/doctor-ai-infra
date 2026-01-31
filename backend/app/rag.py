@@ -3,8 +3,7 @@ from typing import List, Dict, Optional
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.documents import Document
-from app.db import SessionLocal, Incident
-from app.tools.runbooks import RUNBOOKS, SERVICE_CATALOG
+from app.db import SessionLocal, Incident, Service, Runbook
 
 CHROMA_DB_DIR = "./chroma_db"
 
@@ -51,33 +50,35 @@ def initialize_rag():
     rag_engine.reset()
 
     docs = []
-
-    # 1. Index Runbooks
-    for name, desc in RUNBOOKS.items():
-        doc = Document(
-            page_content=f"Runbook: {name}\nDescription: {desc}",
-            metadata={"type": "runbook", "name": name, "source": "automation_library"}
-        )
-        docs.append(doc)
-
-    # 2. Index Service Catalog
-    for name, details in SERVICE_CATALOG.items():
-        content = (
-            f"Service: {name}\n"
-            f"Description: {details.get('description')}\n"
-            f"Owner: {details.get('owner')}\n"
-            f"Tier: {details.get('tier')}\n"
-            f"Dependencies: {', '.join(details.get('dependencies', []))}"
-        )
-        doc = Document(
-            page_content=content,
-            metadata={"type": "service", "name": name, "source": "service_catalog"}
-        )
-        docs.append(doc)
-
-    # 3. Index Past Incidents (from SQLite)
     db = SessionLocal()
     try:
+        # 1. Index Runbooks
+        runbooks = db.query(Runbook).all()
+        for r in runbooks:
+            doc = Document(
+                page_content=f"Runbook: {r.name}\nDescription: {r.description}",
+                metadata={"type": "runbook", "name": r.name, "source": "automation_library"}
+            )
+            docs.append(doc)
+
+        # 2. Index Service Catalog
+        services = db.query(Service).all()
+        for s in services:
+            deps = [d.name for d in s.dependencies]
+            content = (
+                f"Service: {s.name}\n"
+                f"Description: {s.description}\n"
+                f"Owner: {s.owner}\n"
+                f"Tier: {s.tier}\n"
+                f"Dependencies: {', '.join(deps)}"
+            )
+            doc = Document(
+                page_content=content,
+                metadata={"type": "service", "name": s.name, "source": "service_catalog"}
+            )
+            docs.append(doc)
+
+        # 3. Index Past Incidents (from SQLite)
         incidents = db.query(Incident).filter(Incident.status != 'OPEN').all()
         for inc in incidents:
             content = (
@@ -93,7 +94,7 @@ def initialize_rag():
             )
             docs.append(doc)
     except Exception as e:
-        print(f"Error indexing incidents: {e}")
+        print(f"Error indexing for RAG: {e}")
     finally:
         db.close()
 

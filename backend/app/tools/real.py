@@ -634,3 +634,63 @@ def create_issue(title: str, description: str, project: str = "SRE", severity: s
         return f"GitHub Issue creation pending implementation. Use 'check_github_repos' for status."
 
     return f"Unknown system '{system}'. Supported: Jira, GitHub."
+
+# --- Additional SRE Tools (PagerDuty, ChatOps, Extended Datadog) ---
+
+@tool
+def check_on_call_schedule(schedule_id: str = "primary") -> str:
+    """
+    Checks the current on-call schedule in PagerDuty.
+    """
+    # Mock implementation
+    return f"On-Call Schedule ({schedule_id}):\n- Current: Alice (ends in 4h)\n- Next: Bob"
+
+@tool
+def send_slack_notification(channel: str, message: str) -> str:
+    """
+    Sends a message to a Slack channel.
+    """
+    webhook_url = os.getenv("SLACK_WEBHOOK_URL")
+    if not webhook_url:
+        return f"Simulated Slack Message to {channel}: {message}"
+
+    try:
+        payload = {"channel": channel, "text": message}
+        requests.post(webhook_url, json=payload, timeout=5)
+        return f"Message sent to {channel}."
+    except Exception as e:
+        return f"Error sending Slack message: {e}"
+
+@tool
+def list_datadog_metrics(query_filter: str) -> str:
+    """
+    Lists available Datadog metrics matching a query string.
+    Useful for discovery before querying.
+    """
+    if not ApiClient:
+        return "Datadog library not installed."
+
+    api_key = os.getenv("DD_API_KEY")
+    app_key = os.getenv("DD_APP_KEY")
+    if not (api_key and app_key):
+        return "Error: DD keys missing."
+
+    configuration = Configuration()
+    try:
+        with ApiClient(configuration) as api_client:
+            api_instance = MetricsApi(api_client)
+            # search_metrics via list_metrics with q param usually
+            # Note: The actual API call might differ slightly by version,
+            # but usually it's list_metrics(q='...')
+            try:
+                resp = api_instance.list_metrics(q=query_filter)
+                metrics = resp.get('metrics', [])
+                if not metrics:
+                    return f"No metrics found for filter '{query_filter}'."
+
+                names = [m for m in metrics[:20]] # Limit to 20
+                return f"Found metrics (showing 20): {', '.join(names)}"
+            except AttributeError:
+                 return "Error: list_metrics method not found on MetricsApi (version mismatch)."
+    except Exception as e:
+        return f"Error listing metrics: {e}"

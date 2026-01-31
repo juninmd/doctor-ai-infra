@@ -1,8 +1,11 @@
 from langchain_core.tools import tool
 from typing import List, Dict
+import json
+from sqlalchemy.orm import Session
+from app.db import SessionLocal, Service, Runbook
 
-# Mock Service Catalog with Topology Info
-SERVICE_CATALOG = {
+# --- Mock Data for Bootstrap ---
+INITIAL_SERVICE_CATALOG = {
     "payment-api": {
         "owner": "Team Checkout",
         "description": "Handles payment processing.",
@@ -45,8 +48,7 @@ SERVICE_CATALOG = {
     }
 }
 
-# Mock Runbook Library
-RUNBOOKS = {
+INITIAL_RUNBOOKS = {
     "restart_service": "Restarts the Kubernetes deployment for the service. Safe to run during outages.",
     "scale_up": "Increases replica count by 2. Use when CPU is > 80%.",
     "rollback_deploy": "Reverts to the previous stable docker image tag.",
@@ -54,11 +56,89 @@ RUNBOOKS = {
     "clear_cdn_cache": "Purges Azion/Cloudflare Edge cache."
 }
 
+def bootstrap_catalog():
+    """Populates the database with initial services and runbooks if empty."""
+    db = SessionLocal()
+    try:
+        if db.query(Service).first():
+            return # Already populated
+
+        print("Bootstrapping Service Catalog and Runbooks...")
+
+        # 1. Create Runbooks
+        r_objects = {}
+        for name, desc in INITIAL_RUNBOOKS.items():
+            r = Runbook(name=name, description=desc, implementation_key=name)
+            db.add(r)
+            r_objects[name] = r
+
+        db.commit()
+
+        # 2. Create Services (First pass: ensure all exist)
+        # Collect all unique service names including dependencies
+        all_services = set(INITIAL_SERVICE_CATALOG.keys())
+        for details in INITIAL_SERVICE_CATALOG.values():
+            all_services.update(details.get("dependencies", []))
+
+        s_objects = {}
+        for s_name in all_services:
+            if s_name in INITIAL_SERVICE_CATALOG:
+                d = INITIAL_SERVICE_CATALOG[s_name]
+                s = Service(
+                    name=s_name,
+                    owner=d["owner"],
+                    description=d["description"],
+                    tier=d["tier"],
+                    telemetry_url=d.get("telemetry")
+                )
+            else:
+                # Inferred external service (DBs, etc)
+                s = Service(
+                    name=s_name,
+                    owner="Unknown",
+                    description="Inferred dependency",
+                    tier="External",
+                    telemetry_url=None
+                )
+            db.add(s)
+            s_objects[s_name] = s
+
+        db.commit()
+
+        # 3. Link Dependencies and Runbooks
+        for s_name, details in INITIAL_SERVICE_CATALOG.items():
+            service = s_objects[s_name]
+
+            # Link Runbooks
+            for r_name in details.get("runbooks", []):
+                if r_name in r_objects:
+                    service.runbooks.append(r_objects[r_name])
+
+            # Link Dependencies
+            for dep_name in details.get("dependencies", []):
+                if dep_name in s_objects:
+                    service.dependencies.append(s_objects[dep_name])
+
+        db.commit()
+        print("Bootstrap complete.")
+
+    except Exception as e:
+        db.rollback()
+        print(f"Error bootstrapping catalog: {e}")
+    finally:
+        db.close()
+
+
 @tool
 def list_runbooks() -> str:
     """Lists all available automated runbooks and their descriptions."""
-    results = [f"- {name}: {desc}" for name, desc in RUNBOOKS.items()]
-    return "\n".join(results)
+    db = SessionLocal()
+    try:
+        runbooks = db.query(Runbook).all()
+        results = [f"- {r.name}: {r.description}" for r in runbooks]
+        return "\n".join(results)
+    finally:
+        db.close()
 
 @tool
 def execute_runbook(runbook_name: str, target_service: str) -> str:
@@ -68,17 +148,26 @@ def execute_runbook(runbook_name: str, target_service: str) -> str:
         runbook_name: The name of the runbook to run.
         target_service: The service to target (e.g., payment-api).
     """
-    if runbook_name not in RUNBOOKS:
-        return f"Error: Runbook '{runbook_name}' does not exist. Use list_runbooks() to see available options."
+    db = SessionLocal()
+    try:
+        service = db.query(Service).filter(Service.name == target_service).first()
+        if not service:
+             # Check if it's an external service?
+             return f"Error: Service '{target_service}' not found in catalog."
 
-    # Validation against catalog
-    if target_service in SERVICE_CATALOG:
-        allowed = SERVICE_CATALOG[target_service].get("runbooks", [])
-        if runbook_name not in allowed:
-            return f"Warning: Runbook '{runbook_name}' is not explicitly listed for '{target_service}', but executing anyway via Admin override..."
+        runbook = db.query(Runbook).filter(Runbook.name == runbook_name).first()
+        if not runbook:
+            return f"Error: Runbook '{runbook_name}' does not exist."
 
-    # Mock execution logic
-    return f"SUCCESS: Executed runbook '{runbook_name}' on '{target_service}'. Operation completed in 2.4s."
+        # Verify association
+        allowed_runbooks = [r.name for r in service.runbooks]
+        if runbook_name not in allowed_runbooks:
+             return f"Warning: Runbook '{runbook_name}' is not linked to '{target_service}'. Executing anyway via override..."
+
+        # Mock execution logic (The implementation would go here, dispatching by runbook.implementation_key)
+        return f"SUCCESS: Executed runbook '{runbook_name}' on '{target_service}'. Operation completed."
+    finally:
+        db.close()
 
 @tool
 def lookup_service(service_name: str) -> str:
@@ -87,54 +176,60 @@ def lookup_service(service_name: str) -> str:
     Args:
         service_name: The name of the service to look up.
     """
-    service = SERVICE_CATALOG.get(service_name)
-    if not service:
-        # Fuzzy match
-        for name, details in SERVICE_CATALOG.items():
-            if service_name in name:
-                return f"Did you mean '{name}'? \n{details}"
-        return f"Service '{service_name}' not found in catalog."
+    db = SessionLocal()
+    try:
+        service = db.query(Service).filter(Service.name == service_name).first()
+        if not service:
+            # Fuzzy search
+            partial = db.query(Service).filter(Service.name.contains(service_name)).first()
+            if partial:
+                return f"Did you mean '{partial.name}'? \n{json.dumps(partial.to_dict(), indent=2)}"
+            return f"Service '{service_name}' not found."
 
-    return f"Service: {service_name}\nDetails: {service}"
+        return f"Service: {service.name}\nDetails: {json.dumps(service.to_dict(), indent=2)}"
+    finally:
+        db.close()
 
 @tool
 def get_service_dependencies(service_name: str) -> str:
     """
     Returns the list of downstream dependencies (services/DBs called by this service).
-    Use this to understand what might be breaking the service.
     """
-    service = SERVICE_CATALOG.get(service_name)
-    if not service:
-        return f"Service '{service_name}' not found."
+    db = SessionLocal()
+    try:
+        service = db.query(Service).filter(Service.name == service_name).first()
+        if not service:
+            return f"Service '{service_name}' not found."
 
-    deps = service.get("dependencies", [])
-    if not deps:
-        return f"Service '{service_name}' has no registered dependencies."
+        deps = [d.name for d in service.dependencies]
+        if not deps:
+            return f"Service '{service_name}' has no registered dependencies."
 
-    return f"Dependencies for {service_name}: {', '.join(deps)}"
+        return f"Dependencies for {service_name}: {', '.join(deps)}"
+    finally:
+        db.close()
 
 @tool
 def get_service_topology(service_name: str) -> str:
     """
     Returns the full immediate topology (upstream callers and downstream dependencies).
-    Use this to identify impact (who calls me?) and root cause (who do I call?).
     """
-    if service_name not in SERVICE_CATALOG:
-        return f"Service '{service_name}' not found."
+    db = SessionLocal()
+    try:
+        service = db.query(Service).filter(Service.name == service_name).first()
+        if not service:
+            return f"Service '{service_name}' not found."
 
-    downstream = SERVICE_CATALOG[service_name].get("dependencies", [])
+        downstream = [d.name for d in service.dependencies]
+        upstream = [u.name for u in service.callers] # Relies on backref="callers"
 
-    # Find upstream (who calls this service?)
-    upstream = []
-    for name, details in SERVICE_CATALOG.items():
-        if service_name in details.get("dependencies", []):
-            upstream.append(name)
-
-    return (
-        f"Topology for {service_name}:\n"
-        f"  [Upstream/Callers]: {', '.join(upstream) if upstream else 'None'}\n"
-        f"  ↓\n"
-        f"  [{service_name}]\n"
-        f"  ↓\n"
-        f"  [Downstream/Dependencies]: {', '.join(downstream) if downstream else 'None'}"
-    )
+        return (
+            f"Topology for {service_name}:\n"
+            f"  [Upstream/Callers]: {', '.join(upstream) if upstream else 'None'}\n"
+            f"  ↓\n"
+            f"  [{service_name}]\n"
+            f"  ↓\n"
+            f"  [Downstream/Dependencies]: {', '.join(downstream) if downstream else 'None'}"
+        )
+    finally:
+        db.close()
