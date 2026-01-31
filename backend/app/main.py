@@ -6,12 +6,30 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from langchain_core.messages import HumanMessage
+from contextlib import asynccontextmanager
 from app.graph import app_graph as graph
+from app.rag import initialize_rag
+from app.tools.runbooks import bootstrap_catalog
 from dotenv import load_dotenv
 
 load_dotenv()
 
-app = FastAPI(title="Infrastructure Agent Manager")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Initialize DB Content (Bootstrap)
+    try:
+        bootstrap_catalog()
+    except Exception as e:
+        print(f"Startup Warning: Catalog bootstrap failed: {e}")
+
+    # Initialize RAG on startup (indexes DB content)
+    try:
+        initialize_rag()
+    except Exception as e:
+        print(f"Startup Warning: RAG initialization failed: {e}")
+    yield
+
+app = FastAPI(title="Infrastructure Agent Manager", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

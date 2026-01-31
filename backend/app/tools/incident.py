@@ -6,6 +6,7 @@ import json
 from app.db import init_db, SessionLocal, Incident, PostMortem, IncidentEvent
 from app.llm import get_llm
 from langchain_core.prompts import ChatPromptTemplate
+from app.rag import rag_engine
 
 # Ensure DB is initialized
 init_db()
@@ -212,6 +213,7 @@ def generate_postmortem(incident_id: str) -> str:
     """
     Generates a Post-Mortem report for a resolved incident using AI.
     It reads the incident history and updates, then writes a Markdown report.
+    It also uses RAG (Retrieval Augmented Generation) to fetch relevant past incidents or runbooks.
     Args:
         incident_id: The ID of the resolved incident.
     """
@@ -229,13 +231,24 @@ def generate_postmortem(incident_id: str) -> str:
         events = db.query(IncidentEvent).filter(IncidentEvent.incident_id == incident_id).order_by(IncidentEvent.created_at).all()
         events_str = "\n".join([f"[{e.created_at}] {e.event_type} ({e.source}): {e.content}" for e in events])
 
+        # RAG Search for Context
+        try:
+            rag_results = rag_engine.search(f"{inc.title} {inc.description}")
+            rag_context_list = []
+            for doc in rag_results:
+                rag_context_list.append(f"--- [Source: {doc.metadata.get('source', 'unknown')}] ---\n{doc.page_content[:300]}...")
+            rag_context_str = "\n".join(rag_context_list)
+        except Exception as e:
+            rag_context_str = f"Warning: RAG Search failed: {str(e)}"
+
         context = (
             f"Title: {inc.title}\n"
             f"Severity: {inc.severity}\n"
             f"Description: {inc.description}\n"
             f"Status: {inc.status}\n"
-            f"Created At: {inc.created_at}\n"
-            f"Timeline Log:\n{events_str}\n"
+            f"Created At: {inc.created_at}\n\n"
+            f"Timeline Log:\n{events_str}\n\n"
+            f"Relevant Knowledge Base Context (Past Incidents/Runbooks):\n{rag_context_str}\n"
         )
 
         llm = get_llm()
@@ -243,11 +256,12 @@ def generate_postmortem(incident_id: str) -> str:
             ("system", (
                 "You are an SRE Incident Commander. "
                 "Write a blameless post-mortem report in Markdown based on the following incident log.\n"
+                "Use the provided Knowledge Base Context to identify patterns or suggest better remediations if applicable.\n"
                 "Include:\n"
                 "- Executive Summary\n"
                 "- Root Cause Analysis (inference based on logs)\n"
                 "- Timeline (Use the provided Timeline Log)\n"
-                "- Action Items\n"
+                "- Action Items / Lessons Learned (Reference Knowledge Base if relevant)\n"
             )),
             ("human", "{context}")
         ])
