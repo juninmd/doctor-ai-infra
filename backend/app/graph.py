@@ -15,6 +15,7 @@ from .tools import (
     analyze_log_patterns, diagnose_service_health, analyze_ci_failure, create_issue,
     trace_service_health, purge_azion_cache
 )
+from .tools.dashboard import analyze_infrastructure_health
 from .tools.incident import (
     create_incident, update_incident_status, list_incidents, get_incident_details,
     generate_postmortem, log_incident_event, build_incident_timeline, manage_incident_channels
@@ -41,7 +42,10 @@ incident_tools = [
     log_incident_event, build_incident_timeline, manage_incident_channels
 ]
 automation_tools = [list_runbooks, execute_runbook, lookup_service]
-topology_tools = [get_service_dependencies, get_service_topology, lookup_service, generate_topology_diagram, trace_service_health]
+topology_tools = [
+    get_service_dependencies, get_service_topology, lookup_service,
+    generate_topology_diagram, trace_service_health, analyze_infrastructure_health
+]
 
 # 3. Create Specialist Agents
 def make_specialist(tools, persona, heuristics=""):
@@ -91,7 +95,12 @@ automation_agent = make_specialist(automation_tools, "Runbook Automation & Site 
 topology_agent = make_specialist(
     topology_tools,
     "Service Topology & Dependency Mapping",
-    heuristics="SRE TIP: Use `trace_service_health` to visualize cascading failures across the stack. Use `generate_topology_diagram` for architectural overviews."
+    heuristics=(
+        "SRE TIP: You hold the map of the entire system.\n"
+        "Use `analyze_infrastructure_health` to provide a global status report when asked about general health.\n"
+        "Use `trace_service_health` to visualize cascading failures across the stack.\n"
+        "Use `generate_topology_diagram` for architectural overviews."
+    )
 )
 
 # 4. Define the Supervisor (Router)
@@ -113,8 +122,10 @@ supervisor_system_prompt = (
     "You are the Supervisor Agent of a futuristic (2026) DevOps & Infrastructure Operations Team.\n"
     "Your team consists of: {members}.\n"
     "Your job is to orchestrate the troubleshooting session from Code to Deploy.\n"
+    "If the user speaks Portuguese, reply in Portuguese.\n"
     "1. Analyze the user's request or the previous agent's findings.\n"
     "2. Decide which specialist is best suited to take the NEXT step.\n"
+    "   - General Status / Dashboard / 'How is the system?' / 'Troubleshoot' (no specific target) -> Topology_Specialist\n"
     "   - Issues with pods/clusters -> K8s_Specialist\n"
     "   - Issues with Cloud/VMs -> GCP_Specialist\n"
     "   - Metrics/Alerts -> Datadog_Specialist\n"

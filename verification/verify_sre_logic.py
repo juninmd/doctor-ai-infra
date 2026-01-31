@@ -14,6 +14,9 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "..", "backend"))
 sys.modules["langchain_ollama"] = MagicMock()
 sys.modules["langchain_google_genai"] = MagicMock()
 
+# Ensure we use MOCK tools to avoid real connection errors
+os.environ["USE_REAL_TOOLS"] = "false"
+
 class SmartMockLLM(BaseChatModel):
     def _generate(
         self,
