@@ -13,7 +13,7 @@ from .tools import (
     check_pipeline_status, get_argocd_sync_status,
     check_vulnerabilities, analyze_iam_policy,
     analyze_log_patterns, diagnose_service_health, analyze_ci_failure, create_issue,
-    trace_service_health, list_recent_builds
+    trace_service_health, purge_azion_cache
 )
 from .tools.incident import (
     create_incident, update_incident_status, list_incidents, get_incident_details,
@@ -31,9 +31,9 @@ llm = get_llm()
 k8s_tools = [list_k8s_pods, describe_pod, get_pod_logs, get_cluster_events, analyze_log_patterns, diagnose_service_health, trace_service_health]
 gcp_tools = [check_gcp_status, query_gmp_prometheus, list_compute_instances, get_gcp_sql_instances]
 datadog_tools = [get_datadog_metrics, get_active_alerts]
-azion_tools = [check_azion_edge]
+azion_tools = [check_azion_edge, purge_azion_cache]
 git_tools = [check_github_repos, get_pr_status]
-cicd_tools = [check_pipeline_status, get_argocd_sync_status, analyze_ci_failure, list_recent_builds]
+cicd_tools = [check_pipeline_status, get_argocd_sync_status, analyze_ci_failure]
 sec_tools = [check_vulnerabilities, analyze_iam_policy]
 incident_tools = [
     create_incident, update_incident_status, list_incidents, get_incident_details,
@@ -82,10 +82,9 @@ incident_agent = make_specialist(
     heuristics=(
         "SRE TIP: You are the Incident Commander. \n"
         "1. Create a channel with `manage_incident_channels`.\n"
-        "2. SRE HYPOTHESIS: Before taking action, explicitly state your hypothesis about the failure. Test it using tools. Only then propose a fix.\n"
-        "3. Use `log_incident_event` to record your Hypotheses, Evidence, and Actions in real-time. This builds the timeline.\n"
-        "4. Use `build_incident_timeline` to summarize the state for the user.\n"
-        "5. Always act on facts, not assumptions."
+        "2. Use `log_incident_event` to record your Hypotheses, Evidence, and Actions in real-time. This builds the timeline.\n"
+        "3. Use `build_incident_timeline` to summarize the state for the user.\n"
+        "4. Always act on facts, not assumptions."
     )
 )
 automation_agent = make_specialist(automation_tools, "Runbook Automation & Site Reliability Engineering")

@@ -106,6 +106,21 @@ def check_azion_edge(domain: str) -> str:
     """Checks the status of an Azion Edge Application."""
     return f"Azion Edge for {domain}: Cache Hit Ratio 85%, Status Active."
 
+@tool
+def purge_azion_cache(domain: str, wildcards: List[str]) -> str:
+    """Purges the Azion Edge Cache for a list of wildcard URLs (Mock)."""
+    # Simulate URL construction logic
+    full_urls = []
+    for w in wildcards:
+        if w.startswith("http"):
+            full_urls.append(w)
+        else:
+            clean_domain = domain.replace("https://", "").replace("http://", "").strip("/")
+            path = w if w.startswith("/") else f"/{w}"
+            full_urls.append(f"https://{clean_domain}{path}")
+
+    return f"Purge request for {domain} (URLs: {full_urls}) created successfully. Mock ID: 998877."
+
 # --- NEW TOOLS FOR 2026 DEVOPS AGENTS ---
 
 @tool

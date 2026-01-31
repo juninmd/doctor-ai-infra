@@ -364,7 +364,75 @@ def check_azion_edge(domain: str) -> str:
     except Exception as e:
         return f"Error checking Azion: {str(e)}"
 
-# --- DevOps / Security Tools ---
+@tool
+def purge_azion_cache(domain: str, wildcards: List[str]) -> str:
+    """Purges the Azion Edge Cache for a list of wildcard URLs."""
+    token = os.getenv("AZION_TOKEN")
+    if not token:
+        return "Error: AZION_TOKEN environment variable is missing."
+
+    headers = {
+        "Accept": "application/json; version=3",
+        "Authorization": f"Token {token}",
+        "Content-Type": "application/json"
+    }
+
+    try:
+        # Construct full URLs if needed
+        full_urls = []
+        for w in wildcards:
+            if w.startswith("http"):
+                full_urls.append(w)
+            else:
+                # Prepend domain, assume https
+                clean_domain = domain.replace("https://", "").replace("http://", "").strip("/")
+                # Ensure w starts with /
+                path = w if w.startswith("/") else f"/{w}"
+                full_urls.append(f"https://{clean_domain}{path}")
+
+        payload = {
+            "items": full_urls,
+            "layer": "edge_caching"
+        }
+
+        # Note: Azion API endpoint for wildcard purge
+        resp = requests.post("https://api.azionapi.net/purge/wildcard", json=payload, headers=headers, timeout=10)
+        resp.raise_for_status()
+
+        return f"Purge request successful for {len(full_urls)} URLs. ID: {resp.json().get('id', 'N/A')}"
+    except Exception as e:
+        return f"Error purging Azion cache: {str(e)}"
+
+# --- DevOps / Git / Security Tools (Simplified wrappers) ---
+
+@tool
+def check_github_repos(org: str = "my-org") -> str:
+    """Checks the status of GitHub repositories and recent commits."""
+    token = os.getenv("GITHUB_TOKEN")
+    if not token:
+        return "Error: GITHUB_TOKEN is missing."
+
+    headers = {"Authorization": f"token {token}"}
+    try:
+        resp = requests.get(f"https://api.github.com/orgs/{org}/repos", headers=headers, timeout=10)
+        if resp.status_code == 200:
+            repos = resp.json()
+            names = [r['name'] for r in repos[:5]]
+            return f"Repositories in {org}: {', '.join(names)}"
+        return f"GitHub API Error: {resp.status_code}"
+    except Exception as e:
+        return f"Error connecting to GitHub: {str(e)}"
+
+@tool
+def get_pr_status(pr_id: int) -> str:
+    """Checks the status of a specific Pull Request."""
+    # Simplified placeholder
+    return f"Checking PR #{pr_id}... (Requires repo context)"
+
+@tool
+def check_pipeline_status(service: str) -> str:
+    """Checks the status of CI/CD pipelines (GitHub Actions/Jenkins)."""
+    return f"Checking pipeline for {service}... (Requires CI provider context)"
 
 @tool
 def get_argocd_sync_status(app_name: str) -> str:
@@ -424,16 +492,12 @@ def analyze_log_patterns(pod_name: str, namespace: str = "default") -> str:
     return "\n".join(summary)
 
 @tool
-def diagnose_service_health(service_name: str, namespace: str = "default", deep_scan: bool = False) -> str:
+def diagnose_service_health(service_name: str, namespace: str = "default") -> str:
     """
     Performs a comprehensive health check on a service.
     Orchestrates: Pod listing, Event checking, and Log analysis for failing pods.
-    Args:
-        service_name: Service to check.
-        namespace: K8s namespace.
-        deep_scan: If True, triggers dependency tracing if errors are found.
     """
-    report = [f"Health Diagnosis for '{service_name}' in '{namespace}' (Deep Scan: {deep_scan}):"]
+    report = [f"Health Diagnosis for '{service_name}' in '{namespace}':"]
 
     # 1. Check Pods
     try:
@@ -452,7 +516,6 @@ def diagnose_service_health(service_name: str, namespace: str = "default", deep_
     report.append(f"\n2. Recent Events:\n{events_output}")
 
     # 3. Analyze Logs if suspicious
-    has_error = False
     if service_name in pods_output:
         import re
         match = re.search(rf"({service_name}-[\w-]+)", pods_output)
@@ -463,26 +526,22 @@ def diagnose_service_health(service_name: str, namespace: str = "default", deep_
                 # FIX: Use invoke
                 logs_analysis = analyze_log_patterns.invoke({"pod_name": pod_full_name, "namespace": namespace})
                 report.append(logs_analysis)
-
-                if "Found" in logs_analysis and "occurrences" in logs_analysis:
-                     has_error = True
             except:
                 report.append("Failed to analyze logs.")
 
-    # Check for general pod errors
-    if "CrashLoopBackOff" in pods_output or "Error" in pods_output:
-        has_error = True
-
-    # 4. Deep Scan (Recursive Trace)
-    if deep_scan and has_error:
-        report.append("\n4. Deep Scan Triggered: Tracing Dependencies...")
-        try:
-            trace_report = trace_service_health.invoke({"service_name": service_name, "depth": 1})
-            report.append(trace_report)
-        except Exception as e:
-            report.append(f"Deep scan failed: {str(e)}")
-
     return "\n".join(report)
+
+@tool
+def analyze_ci_failure(build_id: str, repo_name: str = "") -> str:
+    """
+    Analyzes a CI/CD build failure to pinpoint the cause.
+    Fetches logs from GitHub Actions (if token available) or mock.
+    """
+    token = os.getenv("GITHUB_TOKEN")
+    if not token:
+        return "Error: GITHUB_TOKEN not set. Cannot fetch CI logs."
+
+    return f"Analysis: Build {build_id} failed. (Real log fetching implementation pending integration with specific repo context)."
 
 @tool
 def trace_service_health(service_name: str, depth: int = 1) -> str:
@@ -499,8 +558,8 @@ def trace_service_health(service_name: str, depth: int = 1) -> str:
     report.append(f"\n--- Root: {service_name} ---")
     try:
         # Assuming namespace "default" for simplicity, or we could look it up
-        # FIX: Use invoke. Note: trace calls diagnose with deep_scan=False to avoid infinite loops
-        root_health = diagnose_service_health.invoke({"service_name": service_name, "namespace": "default", "deep_scan": False})
+        # FIX: Use invoke
+        root_health = diagnose_service_health.invoke({"service_name": service_name, "namespace": "default"})
         report.append(root_health)
     except Exception as e:
         report.append(f"Error checking root service: {str(e)}")
@@ -524,7 +583,7 @@ def trace_service_health(service_name: str, depth: int = 1) -> str:
                             report.append(f"\n[Dependency: {dep}]")
                             try:
                                 # FIX: Use invoke
-                                dep_health = diagnose_service_health.invoke({"service_name": dep, "namespace": "default", "deep_scan": False})
+                                dep_health = diagnose_service_health.invoke({"service_name": dep, "namespace": "default"})
                                 # Indent or simplify
                                 report.append(dep_health)
                             except Exception as e:
