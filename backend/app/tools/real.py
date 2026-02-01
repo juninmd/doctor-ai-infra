@@ -1,5 +1,6 @@
 from langchain_core.tools import tool
 import os
+import datetime
 import requests
 import json
 from typing import List, Dict
@@ -462,6 +463,47 @@ def purge_azion_cache(domain: str, wildcards: List[str]) -> str:
         return f"Error purging Azion cache: {str(e)}"
 
 # --- DevOps / Git / Security Tools (Simplified wrappers) ---
+
+@tool
+def list_recent_commits(owner: str, repo: str, hours: int = 24) -> str:
+    """
+    Lists recent commits for a GitHub repository.
+    Args:
+        owner: GitHub organization or username.
+        repo: Repository name.
+        hours: How many hours back to check (default 24).
+    """
+    token = os.getenv("GITHUB_TOKEN")
+    if not token:
+        return "Error: GITHUB_TOKEN is missing."
+
+    headers = {"Authorization": f"token {token}"}
+    since = (datetime.datetime.utcnow() - datetime.timedelta(hours=hours)).isoformat()
+
+    try:
+        url = f"https://api.github.com/repos/{owner}/{repo}/commits?since={since}"
+        resp = requests.get(url, headers=headers, timeout=10)
+
+        if resp.status_code == 404:
+             return f"Repository {owner}/{repo} not found."
+
+        resp.raise_for_status()
+        commits = resp.json()
+
+        if not commits:
+            return f"No commits found in {owner}/{repo} in the last {hours} hours."
+
+        summary = [f"Recent commits for {owner}/{repo} (Last {hours}h):"]
+        for c in commits[:10]: # Limit to 10
+            sha = c['sha'][:7]
+            msg = c['commit']['message'].split('\n')[0]
+            author = c['commit']['author']['name']
+            date = c['commit']['author']['date']
+            summary.append(f"- [{date}] {sha} {author}: {msg}")
+
+        return "\n".join(summary)
+    except Exception as e:
+        return f"Error fetching commits: {str(e)}"
 
 @tool
 def check_github_repos(org: str = "my-org") -> str:

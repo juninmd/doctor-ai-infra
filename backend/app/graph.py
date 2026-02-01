@@ -9,7 +9,7 @@ from .tools import (
     list_k8s_pods, describe_pod, get_pod_logs, get_cluster_events,
     check_gcp_status, query_gmp_prometheus, list_compute_instances, get_gcp_sql_instances,
     get_datadog_metrics, get_active_alerts, check_azion_edge,
-    check_github_repos, get_pr_status,
+    check_github_repos, get_pr_status, list_recent_commits,
     check_pipeline_status, get_argocd_sync_status,
     check_vulnerabilities, analyze_iam_policy,
     analyze_log_patterns, diagnose_service_health, analyze_ci_failure, create_issue,
@@ -18,7 +18,8 @@ from .tools import (
 from .tools.dashboard import analyze_infrastructure_health
 from .tools.incident import (
     create_incident, update_incident_status, list_incidents, get_incident_details,
-    generate_postmortem, log_incident_event, build_incident_timeline, manage_incident_channels
+    generate_postmortem, log_incident_event, build_incident_timeline, manage_incident_channels,
+    suggest_remediation
 )
 from .tools.runbooks import list_runbooks, execute_runbook, lookup_service, get_service_dependencies, get_service_topology
 from .tools.visualizer import generate_topology_diagram
@@ -39,12 +40,14 @@ sec_tools = [check_vulnerabilities, analyze_iam_policy]
 incident_tools = [
     create_incident, update_incident_status, list_incidents, get_incident_details,
     generate_postmortem, search_knowledge_base, create_issue,
-    log_incident_event, build_incident_timeline, manage_incident_channels
+    log_incident_event, build_incident_timeline, manage_incident_channels,
+    suggest_remediation
 ]
 automation_tools = [list_runbooks, execute_runbook, lookup_service]
 topology_tools = [
     get_service_dependencies, get_service_topology, lookup_service,
-    generate_topology_diagram, trace_service_health, analyze_infrastructure_health
+    generate_topology_diagram, trace_service_health, analyze_infrastructure_health,
+    investigate_root_cause
 ]
 
 # 3. Create Specialist Agents
