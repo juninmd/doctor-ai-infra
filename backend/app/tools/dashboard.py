@@ -1,5 +1,5 @@
 from langchain_core.tools import tool
-from .real import list_k8s_pods, check_gcp_status, get_active_alerts, check_azion_edge, get_cluster_events
+from .real import list_k8s_pods, check_gcp_status, get_active_alerts, check_azion_edge, get_cluster_events, diagnose_azion_configuration, query_gmp_prometheus
 
 @tool
 def analyze_infrastructure_health() -> str:
@@ -35,7 +35,15 @@ def analyze_infrastructure_health() -> str:
         gcp_res = check_gcp_status.invoke({})
         if "Error" in gcp_res:
              gcp_status = "⚠️ Falha na Verificação"
-        gcp_details = gcp_res
+
+        # Add GMP Check
+        try:
+            # Simple query to check if metric collection is active
+            gmp_res = query_gmp_prometheus.invoke({"query": "up"})
+            gcp_details = f"{gcp_res}\n\n**GMP Metrics:**\n{gmp_res[:200]}..."
+        except:
+            gcp_details = f"{gcp_res}\n\n**GMP Metrics:** Indisponível."
+
     except Exception as e:
         gcp_status = "❌ Erro"
         gcp_details = str(e)
@@ -60,11 +68,11 @@ def analyze_infrastructure_health() -> str:
     azion_status = "✅ Online"
     azion_details = ""
     try:
-        # Check general connection and list apps
-        azion_res = check_azion_edge.invoke({})
+        # Diagnostic Check
+        azion_res = diagnose_azion_configuration.invoke({}) # Auto-finds domain/app
 
-        if "Error" in azion_res:
-            azion_status = "⚠️ Verificação Limitada"
+        if "Error" in azion_res or "OFFLINE" in azion_res:
+            azion_status = "⚠️ Atenção"
         azion_details = azion_res
     except Exception as e:
         azion_status = "❌ Erro"

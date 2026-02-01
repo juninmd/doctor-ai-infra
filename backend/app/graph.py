@@ -13,7 +13,7 @@ from .tools import (
     check_pipeline_status, get_argocd_sync_status,
     check_vulnerabilities, analyze_iam_policy,
     analyze_log_patterns, diagnose_service_health, analyze_ci_failure, create_issue,
-    trace_service_health, purge_azion_cache, investigate_root_cause
+    trace_service_health, purge_azion_cache, diagnose_azion_configuration
 )
 from .tools.dashboard import analyze_infrastructure_health
 from .tools.incident import (
@@ -33,8 +33,8 @@ llm = get_llm()
 k8s_tools = [list_k8s_pods, describe_pod, get_pod_logs, get_cluster_events, analyze_log_patterns, diagnose_service_health, trace_service_health]
 gcp_tools = [check_gcp_status, query_gmp_prometheus, list_compute_instances, get_gcp_sql_instances]
 datadog_tools = [get_datadog_metrics, get_active_alerts]
-azion_tools = [check_azion_edge, purge_azion_cache]
-git_tools = [check_github_repos, get_pr_status, list_recent_commits]
+azion_tools = [check_azion_edge, purge_azion_cache, diagnose_azion_configuration]
+git_tools = [check_github_repos, get_pr_status]
 cicd_tools = [check_pipeline_status, get_argocd_sync_status, analyze_ci_failure]
 sec_tools = [check_vulnerabilities, analyze_iam_policy]
 incident_tools = [
@@ -138,11 +138,15 @@ supervisor_system_prompt = (
     "   - Vulnerabilities/IAM -> Security_Specialist\n"
     "   - Incidents/Outages/Status updates/Post-Mortems -> Incident_Specialist\n"
     "   - Runbooks/Remediation/Scripts -> Automation_Specialist\n"
-    "   - Service Dependencies/Topology/Who calls what/Root Cause Analysis -> Topology_Specialist\n"
-    "3. CRITICAL: If a specialist reports a dependency error (e.g. 'ConnectionRefused' or 'Database down'), "
+    "   - Service Dependencies/Topology/Who calls what -> Topology_Specialist\n"
+    "3. SPECIALIZED ROUTING (Latency & Errors):\n"
+    "   - If the user reports 'High Latency', 'Slow Site', or '5xx Errors' -> Route to Azion_Specialist FIRST to check the Edge.\n"
+    "   - If Azion checks out OK, route to Datadog_Specialist to check APM/Metrics.\n"
+    "   - If Datadog shows backend slowness, route to K8s_Specialist or GCP_Specialist.\n"
+    "4. CRITICAL: If a specialist reports a dependency error (e.g. 'ConnectionRefused' or 'Database down'), "
     "IMMEDIATELY route to the specialist responsible for that dependency (e.g. GCP_Specialist for DBs) or Topology_Specialist to verify impact.\n"
-    "4. Always summarize the key findings from the last agent before making the next move.\n"
-    "5. If the issue is resolved or you have a final answer, respond with FINISH.\n"
+    "5. Always summarize the key findings from the last agent before making the next move.\n"
+    "6. If the issue is resolved or you have a final answer, respond with FINISH.\n"
     "Tone: Confident, relaxed, concise. No fluff."
 )
 

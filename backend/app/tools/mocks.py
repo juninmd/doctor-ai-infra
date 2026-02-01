@@ -237,33 +237,16 @@ def create_issue(title: str, description: str, project: str = "SRE", severity: s
     return f"[{system} Mock] Issue created successfully. Key: {fake_id}. (Title: {title})"
 
 @tool
-def check_on_call_schedule(schedule_id: str = "primary") -> str:
+def diagnose_azion_configuration(domain: str = "") -> str:
     """
-    Checks the current on-call schedule in PagerDuty (Mock).
-    """
-    return f"On-Call Schedule ({schedule_id}):\n- Current: Alice (ends in 4h)\n- Next: Bob"
-
-@tool
-def send_slack_notification(channel: str, message: str) -> str:
-    """
-    Sends a message to a Slack channel (Mock).
-    """
-    return f"Simulated Slack Message to {channel}: {message}"
-
-@tool
-def list_datadog_metrics(query_filter: str) -> str:
-    """
-    Lists available Datadog metrics (Mock).
-    """
-    return f"Found metrics (Mock): system.cpu.idle, system.cpu.user, system.mem.used, kubernetes.pod.status"
-
-@tool
-def list_recent_commits(owner: str, repo: str, hours: int = 24) -> str:
-    """
-    Lists recent commits for a GitHub repository (Mock).
+    Checks for common Azion Edge configuration issues (Mock).
     """
     return (
-        f"Recent commits for {owner}/{repo} (Last {hours}h):\n"
-        "- [2026-05-20T10:00:00Z] a1b2c3d dev-alex: fix: typo in header\n"
-        "- [2026-05-20T09:30:00Z] e5f6g7h dev-sara: feat: add logging"
+        "Azion Configuration Diagnostic (Mock):\n"
+        f"App Name: {domain or 'Mock App'} (ID: 12345)\n"
+        "Active: True\n"
+        "- Edge Status: ONLINE\n"
+        "- WAF: Enabled (Mode: Learning)\n"
+        "- Edge Cache: Override Origin (TTL: 60s)\n"
+        "- Edge Firewall: Active (Rules: 12)"
     )

@@ -127,14 +127,14 @@ export function ChatInterface() {
         </div>
         <div>
           <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-200 to-indigo-400">
-            SRE Intelligent Agent
+            Infra Manager 2026
           </h1>
           <p className="text-sm text-white/50">
-            Autonomous Infrastructure Troubleshooting & Orchestration
+            Next-Gen Autonomous Infrastructure Troubleshooting
           </p>
         </div>
         <div className="ml-auto flex gap-2">
-            <Badge icon={Cpu} label="v2.0" />
+            <Badge icon={Cpu} label="AI: Auto-Detect" />
             <Badge icon={ShieldCheck} label="Secure" />
             <Badge icon={Activity} label="Active" color="green" />
         </div>
