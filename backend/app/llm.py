@@ -15,7 +15,7 @@ def get_llm():
     if GOOGLE_API_KEY:
         # Using Gemini if API key is provided
         return ChatGoogleGenerativeAI(
-            model="gemini-pro",
+            model="gemini-1.5-flash",
             google_api_key=GOOGLE_API_KEY,
             temperature=0.7,
             convert_system_message_to_human=True # Helps with some role restrictions in Gemini
