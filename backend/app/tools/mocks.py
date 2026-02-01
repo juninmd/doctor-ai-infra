@@ -235,3 +235,18 @@ def create_issue(title: str, description: str, project: str = "SRE", severity: s
     import random
     fake_id = f"{project}-{random.randint(1000, 9999)}"
     return f"[{system} Mock] Issue created successfully. Key: {fake_id}. (Title: {title})"
+
+@tool
+def diagnose_azion_configuration(domain: str = "") -> str:
+    """
+    Checks for common Azion Edge configuration issues (Mock).
+    """
+    return (
+        "Azion Configuration Diagnostic (Mock):\n"
+        f"App Name: {domain or 'Mock App'} (ID: 12345)\n"
+        "Active: True\n"
+        "- Edge Status: ONLINE\n"
+        "- WAF: Enabled (Mode: Learning)\n"
+        "- Edge Cache: Override Origin (TTL: 60s)\n"
+        "- Edge Firewall: Active (Rules: 12)"
+    )

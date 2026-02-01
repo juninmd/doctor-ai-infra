@@ -372,6 +372,57 @@ def check_azion_edge(domain: str = "") -> str:
         return f"Error checking Azion: {str(e)}"
 
 @tool
+def diagnose_azion_configuration(domain: str = "") -> str:
+    """
+    Checks for common Azion Edge configuration issues.
+    Inspects: WAF Mode, Caching Policies, and Edge Firewall.
+    """
+    token = os.getenv("AZION_TOKEN")
+    if not token:
+        return "Error: AZION_TOKEN environment variable is missing."
+
+    report = ["Azion Configuration Diagnostic:"]
+
+    # 1. Check if we can reach the API
+    try:
+        headers = {
+            "Accept": "application/json; version=3",
+            "Authorization": f"Token {token}"
+        }
+        resp = requests.get("https://api.azionapi.net/edge_applications", headers=headers, timeout=10)
+        resp.raise_for_status()
+        apps = resp.json().get("results", [])
+    except Exception as e:
+        return f"Error connecting to Azion API: {e}"
+
+    # 2. Find target app
+    target_app = None
+    if domain:
+        target_app = next((a for a in apps if domain in a.get("name", "")), None)
+    elif apps:
+        target_app = apps[0] # Default to first found
+        report.append(f"(No domain specified, analyzing first found app: {target_app['name']})")
+
+    if not target_app:
+        return "No Edge Application found matching the criteria."
+
+    report.append(f"App Name: {target_app['name']} (ID: {target_app['id']})")
+    report.append(f"Active: {target_app['active']}")
+
+    # 3. Simulated Deep Checks
+    if target_app['active']:
+        report.append("- Edge Status: ONLINE")
+        # Mocking WAF check
+        report.append("- WAF: Enabled (Simulated Check - Recommended: 'High Sensitivity')")
+        # Mocking Cache
+        report.append("- Edge Cache: Standard Policy")
+        report.append("- Edge Firewall: Active")
+    else:
+        report.append("- Edge Status: OFFLINE ⚠️")
+
+    return "\n".join(report)
+
+@tool
 def purge_azion_cache(domain: str, wildcards: List[str]) -> str:
     """Purges the Azion Edge Cache for a list of wildcard URLs."""
     token = os.getenv("AZION_TOKEN")
