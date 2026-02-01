@@ -284,3 +284,28 @@ def generate_postmortem(incident_id: str) -> str:
         return f"Error generating post-mortem: {str(e)}"
     finally:
         db.close()
+
+@tool
+def suggest_remediation(incident_context: str) -> str:
+    """
+    Suggests a remediation plan based on past incidents and available runbooks.
+    Uses RAG to find similar issues and proposes steps.
+    Args:
+        incident_context: A description of the incident (logs, errors, title).
+    """
+    try:
+        docs = rag_engine.search(incident_context, k=4)
+        if not docs:
+            return "No specific remediation found in Knowledge Base."
+
+        summary = ["Based on Knowledge Base search:"]
+        for doc in docs:
+            meta = doc.metadata
+            source = meta.get('source', 'unknown')
+            name = meta.get('name', 'N/A')
+            summary.append(f"\n[Source: {source} | Name: {name}]")
+            summary.append(f"Content Snippet: {doc.page_content[:300]}...")
+
+        return "\n".join(summary)
+    except Exception as e:
+        return f"Error suggestions: {str(e)}"

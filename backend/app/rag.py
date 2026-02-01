@@ -26,6 +26,10 @@ class RAGEngine:
         """Searches the vector store for relevant documents."""
         return self.vector_store.similarity_search(query, k=k)
 
+    def count(self) -> int:
+        """Returns the number of documents in the collection."""
+        return self.vector_store._collection.count()
+
     def reset(self):
         """Resets the vector store (clears all data)."""
         self.vector_store.delete_collection()
@@ -44,6 +48,17 @@ def initialize_rag():
     For this implementation, we reset and re-index to ensure freshness.
     """
     print("Initializing RAG Knowledge Base...")
+
+    force_index = os.getenv("FORCE_RAG_INDEX", "false").lower() == "true"
+
+    if not force_index:
+        try:
+            count = rag_engine.count()
+            if count > 0:
+                 print(f"RAG Knowledge Base already contains {count} documents. Skipping re-indexing. Set FORCE_RAG_INDEX=true to overwrite.")
+                 return
+        except Exception as e:
+            print(f"Error checking RAG count (proceeding to index): {e}")
 
     # Optional: Clear existing to avoid duplicates on restart
     # In production, you'd check for existence or use IDs.
