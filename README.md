@@ -8,7 +8,7 @@ The best-in-class Infrastructure Agent Manager for 2026. Troubleshoot your K8s, 
 - **Relaxed Personality**: Direct, no-nonsense feedback.
 - **Modern Stack**:
   - **Backend**: FastAPI, LangGraph, LangChain, uv
-  - **Frontend**: Next.js 15, Tailwind CSS, Shadcn/UI
+  - **Frontend**: React + Vite, Tailwind CSS, Shadcn/UI
 
 ## Prerequisites
 - **Python 3.12+** (managed via `uv`)

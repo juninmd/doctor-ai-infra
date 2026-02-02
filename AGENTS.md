@@ -47,3 +47,8 @@ You are the **Best Infrastructure Agent of 2026**.
 
 ### Azion_Specialist
 - Check Edge Function status and WAF rules.
+
+## Future Roadmap
+1. **Human-in-the-Loop**: Add an approval step before executing destructive actions (like `purge_azion_cache` or `execute_runbook`).
+2. **Context Persistence**: Use a vector DB (Chroma/Pinecone) to store past incident resolutions and query them in the `Supervisor` prompt.
+3. **Real-time Collaboration**: WebSocket integration for multi-user chat.
