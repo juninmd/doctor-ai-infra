@@ -91,6 +91,37 @@ class SmartMockLLM(BaseChatModel):
     def bind_tools(self, tools, **kwargs):
         return self
 
+    def with_structured_output(self, schema, **kwargs):
+        from langchain_core.runnables import RunnableLambda
+
+        def mock_router(input_data):
+            # Input might be a ChatPromptValue, dict or list
+            if hasattr(input_data, "to_messages"):
+                messages = input_data.to_messages()
+            elif isinstance(input_data, dict):
+                messages = input_data["messages"]
+            else:
+                messages = input_data
+
+            # Extract content (heuristic)
+            content_to_check = " ".join([m.content for m in messages[1:]]) if len(messages) > 1 else ""
+
+            # Logic matching _generate for Supervisor
+            if "MAINTENANCE" in content_to_check:
+                print(f"[MockRouter] Decision: FINISH (Maintenance)")
+                return schema(reasoning="Found Cloud SQL Maintenance.", next_agent="FINISH")
+            if "ConnectionRefused" in content_to_check:
+                print(f"[MockRouter] Decision: GCP_Specialist (ConnectionRefused)")
+                return schema(reasoning="DB Connection Refused.", next_agent="GCP_Specialist")
+            if "frontend is crashing" in content_to_check or "Check my pods" in content_to_check:
+                print(f"[MockRouter] Decision: K8s_Specialist (Initial)")
+                return schema(reasoning="Investigating frontend crash.", next_agent="K8s_Specialist")
+
+            print(f"[MockRouter] Decision: FINISH (Default)")
+            return schema(reasoning="No clear next step.", next_agent="FINISH")
+
+        return RunnableLambda(mock_router)
+
 # Apply patch before importing graph
 with patch("app.llm.get_llm", return_value=SmartMockLLM()):
     from app.graph import app_graph

@@ -131,6 +131,15 @@ def check_github_repos(org: str = "my-org") -> str:
     return f"GitHub Org {org}: 5 active repos. Latest commit on 'frontend-repo': 'fix: typo in header' by dev-alex."
 
 @tool
+def list_recent_commits(owner: str, repo: str, hours: int = 24) -> str:
+    """Lists recent commits for a GitHub repository (Mock)."""
+    return (
+        f"Recent commits for {owner}/{repo} (Last {hours}h):\n"
+        "- [2026-05-20T10:00:00Z] abc1234 dev-alex: fix: typo in header\n"
+        "- [2026-05-20T09:00:00Z] def5678 dev-jane: feat: add logging"
+    )
+
+@tool
 def get_pr_status(pr_id: int) -> str:
     """Checks the status of a specific Pull Request."""
     return f"PR #{pr_id}: Open. CI checks pending. 2 approvals."
@@ -250,3 +259,23 @@ def diagnose_azion_configuration(domain: str = "") -> str:
         "- Edge Cache: Override Origin (TTL: 60s)\n"
         "- Edge Firewall: Active (Rules: 12)"
     )
+
+@tool
+def list_datadog_metrics(query_filter: str) -> str:
+    """Lists available Datadog metrics (Mock)."""
+    return f"Found 5 metrics matching '{query_filter}': system.cpu.idle, system.cpu.user..."
+
+@tool
+def check_on_call_schedule(schedule_id: str = "primary") -> str:
+    """Checks the current on-call schedule in PagerDuty (Mock)."""
+    return "On-Call: Alice (Mock)"
+
+@tool
+def send_slack_notification(channel: str, message: str) -> str:
+    """Sends a message to a Slack channel (Mock)."""
+    return f"Mock Slack sent to {channel}: {message}"
+
+@tool
+def suggest_remediation(incident_id: str) -> str:
+    """Suggests remediation steps for an incident (Mock)."""
+    return "Remediation: Restart the pod or rollback to v1.2.3."

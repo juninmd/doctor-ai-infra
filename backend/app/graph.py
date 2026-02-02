@@ -3,6 +3,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.graph import StateGraph, END, START
 from langgraph.prebuilt import create_react_agent
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from pydantic import BaseModel, Field
 
 from .llm import get_llm
 from .tools import (
@@ -13,7 +14,9 @@ from .tools import (
     check_pipeline_status, get_argocd_sync_status,
     check_vulnerabilities, analyze_iam_policy,
     analyze_log_patterns, diagnose_service_health, analyze_ci_failure, create_issue,
-    trace_service_health, purge_azion_cache, diagnose_azion_configuration
+    trace_service_health, purge_azion_cache, diagnose_azion_configuration,
+    list_datadog_metrics, check_on_call_schedule, send_slack_notification,
+    investigate_root_cause, scan_infrastructure
 )
 from .tools.dashboard import analyze_infrastructure_health
 from .tools.incident import (
@@ -32,22 +35,22 @@ llm = get_llm()
 # 2. Define Tools for each specialist
 k8s_tools = [list_k8s_pods, describe_pod, get_pod_logs, get_cluster_events, analyze_log_patterns, diagnose_service_health, trace_service_health]
 gcp_tools = [check_gcp_status, query_gmp_prometheus, list_compute_instances, get_gcp_sql_instances]
-datadog_tools = [get_datadog_metrics, get_active_alerts]
+datadog_tools = [get_datadog_metrics, get_active_alerts, list_datadog_metrics]
 azion_tools = [check_azion_edge, purge_azion_cache, diagnose_azion_configuration]
-git_tools = [check_github_repos, get_pr_status]
+git_tools = [check_github_repos, get_pr_status, list_recent_commits]
 cicd_tools = [check_pipeline_status, get_argocd_sync_status, analyze_ci_failure]
 sec_tools = [check_vulnerabilities, analyze_iam_policy]
 incident_tools = [
     create_incident, update_incident_status, list_incidents, get_incident_details,
     generate_postmortem, search_knowledge_base, create_issue,
     log_incident_event, build_incident_timeline, manage_incident_channels,
-    suggest_remediation
+    suggest_remediation, check_on_call_schedule, send_slack_notification
 ]
 automation_tools = [list_runbooks, execute_runbook, lookup_service]
 topology_tools = [
     get_service_dependencies, get_service_topology, lookup_service,
     generate_topology_diagram, trace_service_health, analyze_infrastructure_health,
-    investigate_root_cause
+    investigate_root_cause, scan_infrastructure
 ]
 
 # 3. Create Specialist Agents
@@ -100,7 +103,7 @@ topology_agent = make_specialist(
     "Service Topology & Dependency Mapping",
     heuristics=(
         "SRE TIP: You hold the map of the entire system.\n"
-        "Use `analyze_infrastructure_health` to provide a global status report when asked about general health.\n"
+        "Use `analyze_infrastructure_health` or `scan_infrastructure` to provide a global status report when asked about general health.\n"
         "Use `trace_service_health` to visualize cascading failures across the stack.\n"
         "Use `generate_topology_diagram` for architectural overviews."
     )
@@ -126,8 +129,9 @@ supervisor_system_prompt = (
     "Your team consists of: {members}.\n"
     "Your job is to orchestrate the troubleshooting session from Code to Deploy.\n"
     "If the user speaks Portuguese, reply in Portuguese.\n"
-    "1. Analyze the user's request or the previous agent's findings.\n"
-    "2. Decide which specialist is best suited to take the NEXT step.\n"
+    "1. FIRST STEP: If the user asks for a general checkup or status, route to Topology_Specialist to use `scan_infrastructure`.\n"
+    "2. Analyze the user's request or the previous agent's findings.\n"
+    "3. Decide which specialist is best suited to take the NEXT step.\n"
     "   - General Status / Dashboard / 'How is the system?' / 'Troubleshoot' (no specific target) -> Topology_Specialist\n"
     "   - Issues with pods/clusters -> K8s_Specialist\n"
     "   - Issues with Cloud/VMs -> GCP_Specialist\n"
@@ -139,16 +143,25 @@ supervisor_system_prompt = (
     "   - Incidents/Outages/Status updates/Post-Mortems -> Incident_Specialist\n"
     "   - Runbooks/Remediation/Scripts -> Automation_Specialist\n"
     "   - Service Dependencies/Topology/Who calls what -> Topology_Specialist\n"
-    "3. SPECIALIZED ROUTING (Latency & Errors):\n"
+    "4. SPECIALIZED ROUTING (Latency & Errors):\n"
     "   - If the user reports 'High Latency', 'Slow Site', or '5xx Errors' -> Route to Azion_Specialist FIRST to check the Edge.\n"
     "   - If Azion checks out OK, route to Datadog_Specialist to check APM/Metrics.\n"
     "   - If Datadog shows backend slowness, route to K8s_Specialist or GCP_Specialist.\n"
-    "4. CRITICAL: If a specialist reports a dependency error (e.g. 'ConnectionRefused' or 'Database down'), "
+    "5. CRITICAL: If a specialist reports a dependency error (e.g. 'ConnectionRefused' or 'Database down'), "
     "IMMEDIATELY route to the specialist responsible for that dependency (e.g. GCP_Specialist for DBs) or Topology_Specialist to verify impact.\n"
-    "5. Always summarize the key findings from the last agent before making the next move.\n"
-    "6. If the issue is resolved or you have a final answer, respond with FINISH.\n"
+    "6. Always summarize the key findings from the last agent before making the next move.\n"
+    "7. If the issue is resolved or you have a final answer, respond with FINISH.\n"
     "Tone: Confident, relaxed, concise. No fluff."
 )
+
+class RouterSchema(BaseModel):
+    reasoning: str = Field(description="The chain of thought reasoning for the decision.")
+    next_agent: Literal[
+        "K8s_Specialist", "GCP_Specialist", "Datadog_Specialist",
+        "Azion_Specialist", "Git_Specialist", "CICD_Specialist",
+        "Security_Specialist", "Incident_Specialist", "Automation_Specialist",
+        "Topology_Specialist", "FINISH"
+    ] = Field(description="The next agent to route to, or FINISH.")
 
 def supervisor_node(state: AgentState):
     messages = state["messages"]
@@ -156,30 +169,21 @@ def supervisor_node(state: AgentState):
     prompt = ChatPromptTemplate.from_messages([
         ("system", supervisor_system_prompt),
         MessagesPlaceholder(variable_name="messages"),
-        ("system", (
-            "Who should act next? Select one of: {options}.\n"
-            "Return ONLY the name of the option (e.g., 'K8s_Specialist').\n"
-            "Do not add punctuation or explanation."
-        )),
-    ]).partial(options=str(options), members=", ".join(members))
+        ("system", "Who should act next? Provide your reasoning and select the next agent.")
+    ]).partial(members=", ".join(members))
 
-    chain = prompt | llm
-    response = chain.invoke(messages)
-    decision = response.content.strip().replace(".", "").replace("'", "").replace('"', "")
+    # Google Gen AI Best Practice: Structured Output
+    chain = prompt | llm.with_structured_output(RouterSchema)
 
-    # Exact match check
-    if decision in members:
-        return {"next": decision}
-
-    if "FINISH" in decision:
+    try:
+        decision = chain.invoke(messages)
+        return {"next": decision.next_agent}
+    except Exception as e:
+        # Fallback in case of error (e.g. model overload or schema mismatch)
+        # We can fallback to raw string parsing or just default to FINISH/Topology
+        print(f"Routing Error: {e}")
+        # Simplistic fallback
         return {"next": "FINISH"}
-
-    # Fallback heuristic if LLM is chatty
-    for member in members:
-        if member in decision:
-            return {"next": member}
-
-    return {"next": "FINISH"}
 
 # 5. Build the Graph
 workflow = StateGraph(AgentState)
