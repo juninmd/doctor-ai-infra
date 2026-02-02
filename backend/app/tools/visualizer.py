@@ -1,4 +1,5 @@
 from langchain_core.tools import tool
+from sqlalchemy.orm import joinedload
 from app.db import SessionLocal, Service
 
 @tool
@@ -22,7 +23,11 @@ def generate_topology_diagram(focus_service: str = "all") -> str:
     db = SessionLocal()
     try:
         # Reconstruct Catalog from DB for visualization logic
-        services_obj = db.query(Service).all()
+        # Optimize: Eager load dependencies and runbooks to avoid N+1 queries
+        services_obj = db.query(Service).options(
+            joinedload(Service.dependencies),
+            joinedload(Service.runbooks)
+        ).all()
         service_catalog = {s.name: s.to_dict() for s in services_obj}
 
         if focus_service != "all" and focus_service in service_catalog:
