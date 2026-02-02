@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Send, Terminal, Cpu, ShieldCheck, Activity } from 'lucide-react';
 import { GlassCard } from './GlassCard';
 import { ThinkingProcess, type AgentStep } from './ThinkingProcess';
+import { AgentDashboard } from './AgentDashboard';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { cn } from '../lib/utils';
 
@@ -119,9 +120,9 @@ export function ChatInterface() {
   };
 
   return (
-    <div className="flex flex-col h-[85vh] max-w-5xl mx-auto w-full">
+    <div className="flex flex-col h-[90vh] max-w-7xl mx-auto w-full p-2 md:p-6 gap-6">
       {/* Header */}
-      <GlassCard className="mb-6 flex items-center gap-4 py-4">
+      <GlassCard className="flex items-center gap-4 py-4 px-6 shrink-0">
         <div className="p-3 rounded-xl bg-blue-500/20 border border-blue-500/30">
           <Terminal className="w-6 h-6 text-blue-400" />
         </div>
@@ -140,62 +141,71 @@ export function ChatInterface() {
         </div>
       </GlassCard>
 
-      {/* Main Chat Area */}
-      <GlassCard className="flex-1 overflow-hidden flex flex-col relative !p-0">
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
-            {messages.length === 0 && (
-                <div className="flex flex-col items-center justify-center h-full text-white/30 space-y-4">
-                    <BotIcon className="w-16 h-16 opacity-20" />
-                    <p>Ready to troubleshoot. Describe your incident.</p>
-                </div>
-            )}
+      {/* Content Grid */}
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 overflow-hidden min-h-0">
 
-            {messages.map((msg, idx) => (
-                <div key={idx} className={cn("flex flex-col", msg.role === 'user' ? "items-end" : "items-start")}>
-                    <div className={cn(
-                        "max-w-[80%] rounded-2xl p-4 text-sm leading-relaxed",
-                        msg.role === 'user'
-                            ? "bg-blue-600/20 border border-blue-500/30 text-blue-100 rounded-tr-none"
-                            : "bg-white/5 border border-white/10 text-gray-200 rounded-tl-none"
-                    )}>
-                        {msg.agent && (
-                            <div className="text-xs font-bold text-indigo-400 mb-1 flex items-center gap-2">
-                                <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
-                                {msg.agent}
-                            </div>
-                        )}
-                        <MarkdownRenderer content={msg.content} />
+        {/* Main Chat Area (Left/Top) */}
+        <GlassCard className="lg:col-span-2 flex flex-col relative !p-0 overflow-hidden h-full">
+            <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                {messages.length === 0 && (
+                    <div className="flex flex-col items-center justify-center h-full text-white/30 space-y-4">
+                        <BotIcon className="w-16 h-16 opacity-20" />
+                        <p>Ready to troubleshoot. Describe your incident.</p>
                     </div>
-                </div>
-            ))}
+                )}
 
-            {/* Thinking Process Display */}
-            <ThinkingProcess steps={steps} isProcessing={isProcessing} />
+                {messages.map((msg, idx) => (
+                    <div key={idx} className={cn("flex flex-col", msg.role === 'user' ? "items-end" : "items-start")}>
+                        <div className={cn(
+                            "max-w-[90%] rounded-2xl p-4 text-sm leading-relaxed",
+                            msg.role === 'user'
+                                ? "bg-blue-600/20 border border-blue-500/30 text-blue-100 rounded-tr-none"
+                                : "bg-white/5 border border-white/10 text-gray-200 rounded-tl-none"
+                        )}>
+                            {msg.agent && (
+                                <div className="text-xs font-bold text-indigo-400 mb-1 flex items-center gap-2">
+                                    <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
+                                    {msg.agent}
+                                </div>
+                            )}
+                            <MarkdownRenderer content={msg.content} />
+                        </div>
+                    </div>
+                ))}
 
-            <div ref={scrollRef} />
+                {/* Thinking Process Display */}
+                <ThinkingProcess steps={steps} isProcessing={isProcessing} />
+
+                <div ref={scrollRef} />
+            </div>
+
+            {/* Input Area */}
+            <div className="p-4 border-t border-white/10 bg-black/20 backdrop-blur-md">
+                <form onSubmit={handleSubmit} className="relative">
+                    <input
+                        type="text"
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        placeholder="Describe the infrastructure issue..."
+                        className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-6 pr-14 text-white placeholder:text-white/20 focus:outline-none focus:border-blue-500/50 focus:bg-white/10 transition-all shadow-inner"
+                        disabled={isProcessing}
+                    />
+                    <button
+                        type="submit"
+                        disabled={!input.trim() || isProcessing}
+                        className="absolute right-2 top-2 p-2 rounded-lg bg-blue-500/20 hover:bg-blue-500/40 text-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    >
+                        <Send className="w-5 h-5" />
+                    </button>
+                </form>
+            </div>
+        </GlassCard>
+
+        {/* Dashboard Area (Right/Bottom) */}
+        <div className="hidden lg:block h-full overflow-hidden">
+            <AgentDashboard steps={steps} />
         </div>
-
-        {/* Input Area */}
-        <div className="p-4 border-t border-white/10 bg-black/20 backdrop-blur-md">
-            <form onSubmit={handleSubmit} className="relative">
-                <input
-                    type="text"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    placeholder="Describe the infrastructure issue..."
-                    className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-6 pr-14 text-white placeholder:text-white/20 focus:outline-none focus:border-blue-500/50 focus:bg-white/10 transition-all shadow-inner"
-                    disabled={isProcessing}
-                />
-                <button
-                    type="submit"
-                    disabled={!input.trim() || isProcessing}
-                    className="absolute right-2 top-2 p-2 rounded-lg bg-blue-500/20 hover:bg-blue-500/40 text-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                >
-                    <Send className="w-5 h-5" />
-                </button>
-            </form>
-        </div>
-      </GlassCard>
+      </div>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import os
 
 # New tool import
-from .observability import investigate_root_cause
+from .observability import investigate_root_cause, scan_infrastructure
 
 if os.getenv("USE_REAL_TOOLS", "true").lower() == "true":
     from .real import (
@@ -12,7 +12,8 @@ if os.getenv("USE_REAL_TOOLS", "true").lower() == "true":
         check_pipeline_status, get_argocd_sync_status,
         check_vulnerabilities, analyze_iam_policy,
         analyze_log_patterns, diagnose_service_health, analyze_ci_failure, create_issue,
-        trace_service_health, purge_azion_cache, diagnose_azion_configuration
+        trace_service_health, purge_azion_cache, diagnose_azion_configuration,
+        list_datadog_metrics, check_on_call_schedule, send_slack_notification
     )
 else:
     from .mocks import (
@@ -23,5 +24,6 @@ else:
         check_pipeline_status, get_argocd_sync_status,
         check_vulnerabilities, analyze_iam_policy,
         analyze_log_patterns, diagnose_service_health, analyze_ci_failure, create_issue,
-        trace_service_health, purge_azion_cache, diagnose_azion_configuration
+        trace_service_health, purge_azion_cache, diagnose_azion_configuration,
+        list_datadog_metrics, check_on_call_schedule, send_slack_notification
     )
