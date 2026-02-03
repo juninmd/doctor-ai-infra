@@ -52,3 +52,6 @@ You are the **Best Infrastructure Agent of 2026**.
 1. **Human-in-the-Loop**: Add an approval step before executing destructive actions (like `purge_azion_cache` or `execute_runbook`).
 2. **Context Persistence**: Use a vector DB (Chroma/Pinecone) to store past incident resolutions and query them in the `Supervisor` prompt.
 3. **Real-time Collaboration**: WebSocket integration for multi-user chat.
+4. **Database Performance**: Continue optimizing queries (e.g., as seen in `trace_service_health` refactor).
+5. **Robustness**: Improve error handling in tools (e.g., fallback for missing dependencies).
+6. **Security**: Implement stricter input validation.

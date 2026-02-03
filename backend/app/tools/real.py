@@ -4,7 +4,7 @@ import datetime
 import requests
 import json
 from typing import List, Dict
-from app.tools.runbooks import get_service_dependencies
+from app.db import SessionLocal, Service
 
 # Infrastructure Libraries
 try:
@@ -665,34 +665,31 @@ def trace_service_health(service_name: str, depth: int = 1) -> str:
         report.append(f"Error checking root service: {str(e)}")
 
     if depth > 0:
-        # 2. Get Dependencies
+        # 2. Get Dependencies directly from DB
+        db = SessionLocal()
         try:
-            deps_str = get_service_dependencies.invoke({"service_name": service_name})
-            if "Dependencies for" in deps_str:
-                # Parse string "Dependencies for X: a, b, c"
-                # This is a bit brittle if get_service_dependencies changes format
-                # Ideally, we'd have a function returning list, but the tool returns str.
-                # Let's try to extract.
-                if ":" in deps_str:
-                    deps_list_str = deps_str.split(":", 1)[1].strip()
-                    if deps_list_str:
-                        dependencies = [d.strip() for d in deps_list_str.split(",")]
+            service = db.query(Service).filter(Service.name == service_name).first()
+            if service and service.dependencies:
+                dependencies = [d.name for d in service.dependencies]
+                report.append(f"\n--- Dependencies ({len(dependencies)}) ---")
 
-                        report.append(f"\n--- Dependencies ({len(dependencies)}) ---")
-                        for dep in dependencies:
-                            report.append(f"\n[Dependency: {dep}]")
-                            try:
-                                # FIX: Use invoke
-                                dep_health = diagnose_service_health.invoke({"service_name": dep, "namespace": "default"})
-                                # Indent or simplify
-                                report.append(dep_health)
-                            except Exception as e:
-                                report.append(f"Error checking dependency {dep}: {str(e)}")
+                for dep in dependencies:
+                    report.append(f"\n[Dependency: {dep}]")
+                    try:
+                        # FIX: Use invoke
+                        dep_health = diagnose_service_health.invoke({"service_name": dep, "namespace": "default"})
+                        report.append(dep_health)
+                    except Exception as e:
+                        report.append(f"Error checking dependency {dep}: {str(e)}")
+            elif not service:
+                report.append(f"\nService '{service_name}' not found in catalog.")
             else:
-                report.append(f"\nDependency check: {deps_str}")
+                report.append(f"\nNo dependencies found for '{service_name}'.")
 
         except Exception as e:
             report.append(f"Error fetching dependencies: {str(e)}")
+        finally:
+            db.close()
 
     return "\n".join(report)
 
