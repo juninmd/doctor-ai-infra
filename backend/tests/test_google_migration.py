@@ -22,13 +22,11 @@ class TestGoogleMigration(unittest.TestCase):
         self.env_patcher.stop()
 
     def test_llm_instantiation(self):
-        print("Testing LLM instantiation with Gemini config...")
         llm = get_llm()
         self.assertIsNotNone(llm)
         from langchain_google_genai import ChatGoogleGenerativeAI
         self.assertIsInstance(llm, ChatGoogleGenerativeAI)
         self.assertEqual(llm.temperature, 0)
-        print("LLM instantiated successfully.")
 
     def test_google_sdk_client(self):
         print("Testing Google SDK Client access...")
