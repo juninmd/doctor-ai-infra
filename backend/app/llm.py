@@ -1,9 +1,8 @@
 import os
 from langchain_ollama import ChatOllama
 from langchain_google_genai import ChatGoogleGenerativeAI
-from google.generativeai.types import HarmCategory, HarmBlockThreshold
 
-# Default to llama3 if not specified, user can override via env var
+# Default to llama3 if not specified
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3")
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 
@@ -26,10 +25,10 @@ def get_llm():
             temperature=0, # Precision for SRE tasks
             convert_system_message_to_human=True,
             safety_settings={
-                HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
-                HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
-                HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
-                HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
+                "HARM_CATEGORY_DANGEROUS_CONTENT": "BLOCK_NONE",
+                "HARM_CATEGORY_HATE_SPEECH": "BLOCK_NONE",
+                "HARM_CATEGORY_HARASSMENT": "BLOCK_NONE",
+                "HARM_CATEGORY_SEXUALLY_EXPLICIT": "BLOCK_NONE",
             }
         )
 
@@ -39,3 +38,18 @@ def get_llm():
         base_url=OLLAMA_BASE_URL,
         temperature=0, # Precision for SRE tasks
     )
+
+def get_google_sdk_client():
+    """
+    Returns the raw Google Gen AI SDK client (v2) for advanced features like File API.
+    """
+    try:
+        from google import genai
+    except ImportError:
+        return None
+
+    api_key = os.getenv("GOOGLE_API_KEY")
+    if not api_key:
+        return None
+
+    return genai.Client(api_key=api_key)
