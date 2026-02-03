@@ -8,7 +8,7 @@ on:
 
 jobs:
   backend:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     defaults:
       run:
         working-directory: ./backend
@@ -26,19 +26,35 @@ jobs:
         run: uv run pytest
 
   frontend:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     defaults:
       run:
         working-directory: ./frontend
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'pnpm'
+          cache-dependency-path: 'frontend/pnpm-lock.yaml'
       - name: Install dependencies
-        run: npm install
+        run: pnpm install
       - name: Build
-        run: npm run build
+        run: pnpm run build
       - name: Lint
-        run: npm run lint
+        run: pnpm run lint
+
+  release:
+    needs: [backend, frontend]
+    runs-on: ubuntu-22.04
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Semantic Release
+        uses: cycjimmy/semantic-release-action@v4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
