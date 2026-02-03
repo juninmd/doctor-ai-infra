@@ -14,9 +14,10 @@ This is the **Infrastructure Agent Manager**, a multi-agent system designed to t
 - **Tools**: Mix of Mock tools (default) and Real tools (enabled via `USE_REAL_TOOLS=true`).
 
 ## Key Learnings (Living Memory)
-- **Database**: Uses SQLAlchemy with `joinedload` to avoid N+1 queries in topology visualization.
+- **Database**: Uses SQLAlchemy with `joinedload` to avoid N+1 queries in topology visualization. `trace_service_health` refactored to use direct DB queries for robustness.
 - **Frontend**: Uses `vite` instead of Next.js.
-- **Testing**: Backend tests use `pytest`.
+- **Testing**: Backend tests use `pytest`. CI pipeline updated with correct permissions for release.
+- **Tooling**: Avoid parsing string output from other tools; use direct data access or structured returns.
 
 ## Roadmap
 - See `AGENTS.md` for the future roadmap.
