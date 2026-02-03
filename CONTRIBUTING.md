@@ -1,25 +1,28 @@
 # Contributing to Infrastructure Agent Manager
 
-We welcome contributions! Please follow these guidelines.
+We love your input! We want to make contributing to this project as easy and transparent as possible, whether it's:
 
-## Development Setup
+- Reporting a bug
+- Discussing the current state of the code
+- Submitting a fix
+- Proposing new features
+- Becoming a maintainer
 
-### Backend
-1. Install `uv`: `pip install uv`
-2. Sync dependencies: `cd backend && uv sync`
-3. Run tests: `uv run pytest`
+## We Develop with Github
+We use github to host code, to track issues and feature requests, and to accept pull requests.
 
-### Frontend
-1. Install dependencies: `cd frontend && npm install`
-2. Run lint: `npm run lint`
+## Report bugs using Github's [issues](../../issues)
+We use GitHub issues to track public bugs. Report a bug by [opening a new issue](../../issues/new/choose); it's that easy!
 
-## Pull Request Process
-1. Use the `PULL_REQUEST_TEMPLATE.md`.
-2. Ensure all tests pass.
-3. If adding a new feature, add a corresponding test.
-4. Keep logic changes concise.
+## Write bug reports with detail, background, and sample code
+**Great Bug Reports** tend to have:
+- A quick summary and/or background
+- Steps to reproduce
+    - Be specific!
+    - Give sample code if you can.
+- What you expected would happen
+- What actually happened
+- Notes (possibly including why you think this might be happening, or stuff you tried that didn't work)
 
-## Coding Standards
-- **Python**: Follow PEP 8.
-- **TypeScript**: No `any` types (unless explicitly disabled).
-- **Commits**: Use Semantic Commit Messages (feat, fix, docs, chore).
+## License
+By contributing, you agree that your contributions will be licensed under its MIT License.

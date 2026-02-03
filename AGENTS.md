@@ -49,15 +49,6 @@ You are the **Best Infrastructure Agent of 2026**.
 - Check Edge Function status and WAF rules.
 
 ## Future Roadmap
-
-### 1. Real-time Collaboration
-- **Goal**: Enable multiple users to view the same incident timeline in real-time.
-- **Tech**: WebSockets / Server-Sent Events (bi-directional).
-
-### 2. Advanced RAG
-- **Goal**: Index external documentation (Confluence, Jira, Slack archives) for deeper context.
-- **Tech**: LangChain Loaders, ChromaDB optimization.
-
-### 3. Self-Healing
-- **Goal**: Allow `Automation_Specialist` to autonomously execute safe runbooks for known issues (e.g., restart pod on high memory).
-- **Tech**: Approval workflows, finer-grained permissions.
+1. **Human-in-the-Loop**: Add an approval step before executing destructive actions (like `purge_azion_cache` or `execute_runbook`).
+2. **Context Persistence**: Use a vector DB (Chroma/Pinecone) to store past incident resolutions and query them in the `Supervisor` prompt.
+3. **Real-time Collaboration**: WebSocket integration for multi-user chat.

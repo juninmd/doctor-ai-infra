@@ -182,8 +182,11 @@ def supervisor_node(state: AgentState):
         # Fallback in case of error (e.g. model overload or schema mismatch)
         # We can fallback to raw string parsing or just default to FINISH/Topology
         print(f"Routing Error: {e}")
-        # Simplistic fallback
-        return {"next": "FINISH"}
+        # Robust fallback: Notify user and route to Topology Specialist for a safe check
+        return {
+            "next": "Topology_Specialist",
+            "messages": [SystemMessage(content=f"⚠️ Supervisor Routing Error: {str(e)}. Falling back to Topology Specialist for a system health scan.")]
+        }
 
 # 5. Build the Graph
 workflow = StateGraph(AgentState)
