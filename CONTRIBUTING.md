@@ -11,8 +11,8 @@ We love your input! We want to make contributing to this project as easy and tra
 ## We Develop with Github
 We use github to host code, to track issues and feature requests, and to accept pull requests.
 
-## Report bugs using Github's [issues](https://github.com/USERNAME/REPO/issues)
-We use GitHub issues to track public bugs. Report a bug by [opening a new issue](); it's that easy!
+## Report bugs using Github's [issues](../../issues)
+We use GitHub issues to track public bugs. Report a bug by [opening a new issue](../../issues/new/choose); it's that easy!
 
 ## Write bug reports with detail, background, and sample code
 **Great Bug Reports** tend to have:
