@@ -141,18 +141,14 @@ def analyze_heavy_logs(log_content: str, context: str = "") -> str:
 
     try:
         # Direct generation using the native SDK
-        prompt_contents = [
-            "You are an expert SRE log analyzer.",
-        ]
-        if context:
-            prompt_contents.append(f"Context: {context}")
-        prompt_contents.extend([
-            "Analyze the following logs and find the root cause of errors. Be technical and concise.",
-            log_content,
-        ])
         response = client.models.generate_content(
             model="gemini-1.5-flash",
-            contents=prompt_contents,
+            contents=[
+                "You are an expert SRE log analyzer.",
+                f"Context: {context}",
+                "Analyze the following logs and find the root cause of errors. Be technical and concise.",
+                log_content
+            ]
         )
         return f"Gemini Analysis:\n{response.text}"
     except Exception as e:
