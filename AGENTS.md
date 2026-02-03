@@ -47,3 +47,17 @@ You are the **Best Infrastructure Agent of 2026**.
 
 ### Azion_Specialist
 - Check Edge Function status and WAF rules.
+
+## Future Roadmap
+
+### 1. Real-time Collaboration
+- **Goal**: Enable multiple users to view the same incident timeline in real-time.
+- **Tech**: WebSockets / Server-Sent Events (bi-directional).
+
+### 2. Advanced RAG
+- **Goal**: Index external documentation (Confluence, Jira, Slack archives) for deeper context.
+- **Tech**: LangChain Loaders, ChromaDB optimization.
+
+### 3. Self-Healing
+- **Goal**: Allow `Automation_Specialist` to autonomously execute safe runbooks for known issues (e.g., restart pod on high memory).
+- **Tech**: Approval workflows, finer-grained permissions.
