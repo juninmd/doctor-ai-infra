@@ -29,7 +29,6 @@ class TestGoogleMigration(unittest.TestCase):
         self.assertEqual(llm.temperature, 0)
 
     def test_google_sdk_client(self):
-        print("Testing Google SDK Client access...")
         # We need to verify that get_google_sdk_client returns a client.
         # Since google-genai is installed, we can let it run.
         # If Client() validates the key immediately, this might fail, so we might need to patch the Client class.
@@ -43,8 +42,6 @@ class TestGoogleMigration(unittest.TestCase):
             client = get_google_sdk_client()
             self.assertIsNotNone(client)
             MockClient.assert_called_with(api_key="fake_key")
-
-        print("Google SDK Client retrieved successfully.")
 
     @patch("app.llm.get_google_sdk_client")
     def test_analyze_heavy_logs(self, mock_get_client):
