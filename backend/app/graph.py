@@ -16,7 +16,7 @@ from .tools import (
     analyze_log_patterns, diagnose_service_health, analyze_ci_failure, create_issue,
     trace_service_health, purge_azion_cache, diagnose_azion_configuration,
     list_datadog_metrics, check_on_call_schedule, send_slack_notification,
-    investigate_root_cause, scan_infrastructure
+    investigate_root_cause, scan_infrastructure, analyze_heavy_logs
 )
 from .tools.dashboard import analyze_infrastructure_health
 from .tools.incident import (
@@ -33,8 +33,8 @@ from .state import AgentState
 llm = get_llm()
 
 # 2. Define Tools for each specialist
-k8s_tools = [list_k8s_pods, describe_pod, get_pod_logs, get_cluster_events, analyze_log_patterns, diagnose_service_health, trace_service_health]
-gcp_tools = [check_gcp_status, query_gmp_prometheus, list_compute_instances, get_gcp_sql_instances]
+k8s_tools = [list_k8s_pods, describe_pod, get_pod_logs, get_cluster_events, analyze_log_patterns, analyze_heavy_logs, diagnose_service_health, trace_service_health]
+gcp_tools = [check_gcp_status, query_gmp_prometheus, list_compute_instances, get_gcp_sql_instances, analyze_heavy_logs]
 datadog_tools = [get_datadog_metrics, get_active_alerts, list_datadog_metrics]
 azion_tools = [check_azion_edge, purge_azion_cache, diagnose_azion_configuration]
 git_tools = [check_github_repos, get_pr_status, list_recent_commits]
@@ -50,7 +50,7 @@ automation_tools = [list_runbooks, execute_runbook, lookup_service]
 topology_tools = [
     get_service_dependencies, get_service_topology, lookup_service,
     generate_topology_diagram, trace_service_health, analyze_infrastructure_health,
-    investigate_root_cause, scan_infrastructure
+    investigate_root_cause, scan_infrastructure, analyze_heavy_logs
 ]
 
 # 3. Create Specialist Agents
@@ -133,8 +133,8 @@ supervisor_system_prompt = (
     "2. Analyze the user's request or the previous agent's findings.\n"
     "3. Decide which specialist is best suited to take the NEXT step.\n"
     "   - General Status / Dashboard / 'How is the system?' / 'Troubleshoot' (no specific target) -> Topology_Specialist\n"
-    "   - Issues with pods/clusters -> K8s_Specialist\n"
-    "   - Issues with Cloud/VMs -> GCP_Specialist\n"
+    "   - Issues with pods/clusters or Large Log Analysis -> K8s_Specialist\n"
+    "   - Issues with Cloud/VMs or Google Managed Prometheus (GMP) -> GCP_Specialist\n"
     "   - Metrics/Alerts -> Datadog_Specialist\n"
     "   - Edge/CDN -> Azion_Specialist\n"
     "   - Repos/PRs/Code -> Git_Specialist\n"

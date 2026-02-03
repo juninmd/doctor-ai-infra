@@ -1,7 +1,7 @@
 import os
 
 # New tool import
-from .observability import investigate_root_cause, scan_infrastructure
+from .observability import investigate_root_cause, scan_infrastructure, analyze_heavy_logs
 
 if os.getenv("USE_REAL_TOOLS", "true").lower() == "true":
     from .real import (

@@ -122,3 +122,34 @@ def scan_infrastructure() -> str:
              report.append(f"- Azion: 🔴 Check Failed ({e})")
 
     return "\n".join(report)
+
+@tool
+def analyze_heavy_logs(log_content: str, context: str = "") -> str:
+    """
+    Analyzes large log outputs using Google's Gemini 1.5 Flash directly (bypassing standard context limits).
+    Ideal for troubleshooting complex stack traces or multi-service logs.
+
+    Args:
+        log_content: The raw log text to analyze.
+        context: Optional context about what we are looking for (e.g., "Find database connection errors").
+    """
+    from app.llm import get_google_sdk_client
+
+    client = get_google_sdk_client()
+    if not client:
+        return "Error: Google Gen AI SDK not configured (missing key or library). Use standard analysis."
+
+    try:
+        # Direct generation using the native SDK
+        response = client.models.generate_content(
+            model="gemini-1.5-flash",
+            contents=[
+                "You are an expert SRE log analyzer.",
+                f"Context: {context}",
+                "Analyze the following logs and find the root cause of errors. Be technical and concise.",
+                log_content
+            ]
+        )
+        return f"Gemini Analysis:\n{response.text}"
+    except Exception as e:
+        return f"Error analyzing logs with Gemini SDK: {e}"

@@ -185,7 +185,7 @@ def query_gmp_prometheus(query: str) -> str:
 
         return "\n".join(results)
     except Exception as e:
-        return f"Error querying GMP: {str(e)}"
+        return f"Error querying GMP: {str(e)}. Ensure GOOGLE_APPLICATION_CREDENTIALS is set and the service account has 'Monitoring Viewer' role."
 
 @tool
 def list_compute_instances(zone: str = "us-central1-a") -> str:
