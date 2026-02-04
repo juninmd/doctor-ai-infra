@@ -103,6 +103,7 @@ topology_agent = make_specialist(
     "Service Topology & Dependency Mapping",
     heuristics=(
         "SRE TIP: You hold the map of the entire system.\n"
+        "Use the scan_infrastructure tool immediately when the user asks for help or status updates.\n"
         "Use `analyze_infrastructure_health` or `scan_infrastructure` to provide a global status report when asked about general health.\n"
         "Use `trace_service_health` to visualize cascading failures across the stack.\n"
         "Use `generate_topology_diagram` for architectural overviews."

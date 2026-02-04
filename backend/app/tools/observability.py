@@ -2,6 +2,37 @@ from langchain_core.tools import tool
 import concurrent.futures
 
 @tool
+def analyze_heavy_logs(log_content: str, context: str = "") -> str:
+    """
+    Analyzes large log outputs using Google's Gemini 1.5 Flash directly (bypassing standard context limits).
+    Ideal for troubleshooting complex stack traces or multi-service logs.
+
+    Args:
+        log_content: The raw log text to analyze.
+        context: Optional context about what we are looking for (e.g., "Find database connection errors").
+    """
+    from app.llm import get_google_sdk_client
+
+    client = get_google_sdk_client()
+    if not client:
+        return "Error: Google Gen AI SDK not configured (missing key or library). Use standard analysis."
+
+    try:
+        # Direct generation using the native SDK
+        response = client.models.generate_content(
+            model="gemini-1.5-flash",
+            contents=[
+                "You are an expert SRE log analyzer.",
+                f"Context: {context}",
+                "Analyze the following logs and find the root cause of errors. Be technical and concise.",
+                log_content
+            ]
+        )
+        return f"Gemini Analysis:\n{response.text}"
+    except Exception as e:
+        return f"Error analyzing logs with Gemini SDK: {e}"
+
+@tool
 def investigate_root_cause(service_name: str, owner: str = "my-org", repo: str = "", time_window_minutes: int = 60) -> str:
     """
     Investigates potential root causes for a service failure by correlating:
@@ -65,7 +96,20 @@ def investigate_root_cause(service_name: str, owner: str = "my-org", repo: str =
         except Exception as e:
             report.append(f"\n[Recent Code Changes] Failed: {e}")
 
-    return "\n".join(report)
+    full_text = "\n".join(report)
+
+    # Best of 2026: Auto-Summarization for heavy context
+    if len(full_text) > 2000:
+        try:
+            summary = analyze_heavy_logs.invoke({
+                "log_content": full_text,
+                "context": f"Summarize the root cause investigation for {service_name}"
+            })
+            return f"{full_text}\n\n====================\n[AI AUTO-SUMMARY]\n{summary}"
+        except Exception:
+            return full_text
+
+    return full_text
 
 @tool
 def scan_infrastructure() -> str:
@@ -89,18 +133,19 @@ def scan_infrastructure() -> str:
         try:
             k8s_res = f_k8s.result()
             # Crude analysis of the string output
-            count = k8s_res.count("Running") if "Running" in k8s_res else 0
             if "Error" in k8s_res and not "Running" in k8s_res:
-                report.append(f"- Kubernetes: 🔴 Issue Detected ({k8s_res})")
+                report.append(f"- Kubernetes: 🔴 Issue Detected ({k8s_res[:100]}...)")
             else:
-                report.append(f"- Kubernetes: 🟢 Active (Found 'Running' pods)")
+                pod_count = k8s_res.count("Running") if "Running" in k8s_res else "Unknown"
+                report.append(f"- Kubernetes: 🟢 Active ({pod_count} Pods Running)")
         except Exception as e:
-            report.append(f"- Kubernetes: 🔴 Check Failed ({e})")
+            report.append(f"- Kubernetes: 🔴 Check Failed ({str(e)})")
 
         try:
-            report.append(f"- GCP: {f_gcp.result()}")
+            gcp_res = f_gcp.result()
+            report.append(f"- GCP: {gcp_res}")
         except Exception as e:
-            report.append(f"- GCP: 🔴 Check Failed ({e})")
+            report.append(f"- GCP: 🔴 Check Failed ({str(e)})")
 
         try:
             dd_res = f_dd.result()
@@ -110,46 +155,17 @@ def scan_infrastructure() -> str:
                 alert_count = dd_res.count("[Alert]")
                 report.append(f"- Datadog: 🟠 {alert_count} Active Alerts")
         except Exception as e:
-             report.append(f"- Datadog: 🔴 Check Failed ({e})")
+             report.append(f"- Datadog: 🔴 Check Failed ({str(e)})")
 
         try:
             az_res = f_azion.result()
             if "Active" in az_res:
-                 report.append(f"- Azion: 🟢 {az_res}")
+                 # Check if we can parse the count
+                 count = az_res.count("id") if "id" in az_res else "Multiple"
+                 report.append(f"- Azion: 🟢 Edge Active")
             else:
-                 report.append(f"- Azion: 🟠 {az_res}")
+                 report.append(f"- Azion: 🟠 {az_res[:100]}")
         except Exception as e:
-             report.append(f"- Azion: 🔴 Check Failed ({e})")
+             report.append(f"- Azion: 🔴 Check Failed ({str(e)})")
 
     return "\n".join(report)
-
-@tool
-def analyze_heavy_logs(log_content: str, context: str = "") -> str:
-    """
-    Analyzes large log outputs using Google's Gemini 1.5 Flash directly (bypassing standard context limits).
-    Ideal for troubleshooting complex stack traces or multi-service logs.
-
-    Args:
-        log_content: The raw log text to analyze.
-        context: Optional context about what we are looking for (e.g., "Find database connection errors").
-    """
-    from app.llm import get_google_sdk_client
-
-    client = get_google_sdk_client()
-    if not client:
-        return "Error: Google Gen AI SDK not configured (missing key or library). Use standard analysis."
-
-    try:
-        # Direct generation using the native SDK
-        response = client.models.generate_content(
-            model="gemini-1.5-flash",
-            contents=[
-                "You are an expert SRE log analyzer.",
-                f"Context: {context}",
-                "Analyze the following logs and find the root cause of errors. Be technical and concise.",
-                log_content
-            ]
-        )
-        return f"Gemini Analysis:\n{response.text}"
-    except Exception as e:
-        return f"Error analyzing logs with Gemini SDK: {e}"
