@@ -19,11 +19,12 @@ def get_llm():
             raise ValueError("LLM_PROVIDER is 'gemini' but GOOGLE_API_KEY is not set.")
 
         # Best practice 2026: Use Flash for speed/cost, disable safety blocks for SRE logs
+        # Using google-genai v1.0+ under the hood via langchain-google-genai v2+
         return ChatGoogleGenerativeAI(
             model="gemini-1.5-flash",
             google_api_key=google_api_key,
             temperature=0, # Precision for SRE tasks
-            convert_system_message_to_human=True,
+            # convert_system_message_to_human=False, # Gemini 1.5 supports system instructions natively
             safety_settings={
                 "HARM_CATEGORY_DANGEROUS_CONTENT": "BLOCK_NONE",
                 "HARM_CATEGORY_HATE_SPEECH": "BLOCK_NONE",
@@ -41,15 +42,18 @@ def get_llm():
 
 def get_google_sdk_client():
     """
-    Returns the raw Google Gen AI SDK client (v2) for advanced features like File API.
+    Returns the raw Google Gen AI SDK client (v1.0+) for advanced features like File API.
     """
     try:
         from google import genai
     except ImportError:
+        # Fallback or error if the new SDK is not installed
+        print("Warning: `google-genai` library not found. Advanced features may fail.")
         return None
 
     api_key = os.getenv("GOOGLE_API_KEY")
     if not api_key:
+        print("Warning: GOOGLE_API_KEY not set. Cannot initialize Gen AI SDK.")
         return None
 
     return genai.Client(api_key=api_key)
