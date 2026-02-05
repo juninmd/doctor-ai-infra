@@ -15,7 +15,21 @@ def analyze_heavy_logs(log_content: str, context: str = "") -> str:
 
     client = get_google_sdk_client()
     if not client:
-        return "Error: Google Gen AI SDK not configured (missing key or library). Use standard analysis."
+        # Fallback for Ollama or if SDK is not configured
+        # This ensures "Ollama compatibility" as requested
+        from app.llm import get_llm
+        llm = get_llm()
+
+        # Truncate for smaller context windows common in local models
+        # 32k chars is roughly 8k tokens, safe for Llama 3
+        limit = 32000
+        truncated_logs = log_content[:limit] + ("...[TRUNCATED]" if len(log_content) > limit else "")
+
+        try:
+            res = llm.invoke(f"Context: {context}\n\nAnalyze these logs:\n{truncated_logs}")
+            return f"Analysis (Standard LLM Fallback):\n{res.content}"
+        except Exception as e:
+            return f"Error: Google SDK missing and Standard LLM failed: {e}"
 
     try:
         # Direct generation using the native SDK
@@ -119,7 +133,8 @@ def scan_infrastructure() -> str:
     Useful for initial triage.
     """
     from app.tools import (
-        list_k8s_pods, check_gcp_status, get_active_alerts, check_azion_edge
+        list_k8s_pods, check_gcp_status, get_active_alerts, check_azion_edge,
+        query_gmp_prometheus
     )
 
     report = ["Infrastructure Scan Report:"]
@@ -127,6 +142,7 @@ def scan_infrastructure() -> str:
     with concurrent.futures.ThreadPoolExecutor() as executor:
         f_k8s = executor.submit(list_k8s_pods.invoke, {"namespace": "default"})
         f_gcp = executor.submit(check_gcp_status.invoke, {})
+        f_gmp = executor.submit(query_gmp_prometheus.invoke, {"query": "up"})
         f_dd = executor.submit(get_active_alerts.invoke, {}) # All alerts
         f_azion = executor.submit(check_azion_edge.invoke, {}) # All apps
 
@@ -146,6 +162,15 @@ def scan_infrastructure() -> str:
             report.append(f"- GCP: {gcp_res}")
         except Exception as e:
             report.append(f"- GCP: 🔴 Check Failed ({str(e)})")
+
+        try:
+            gmp_res = f_gmp.result()
+            if "Error" in gmp_res:
+                report.append(f"- GMP: 🔴 Check Failed ({gmp_res[:50]}...)")
+            else:
+                report.append(f"- GMP: 🟢 Active (Prometheus Query Successful)")
+        except Exception as e:
+            report.append(f"- GMP: 🔴 Check Failed ({str(e)})")
 
         try:
             dd_res = f_dd.result()
