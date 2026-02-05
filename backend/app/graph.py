@@ -186,7 +186,7 @@ def supervisor_node(state: AgentState):
         # Robust fallback: Notify user and route to Topology Specialist for a safe check
         return {
             "next": "Topology_Specialist",
-            "messages": [SystemMessage(content=f"⚠️ Supervisor Routing Error: {str(e)}. Falling back to Topology Specialist for a system health scan.")]
+            "messages": [SystemMessage(content=f"⚠️ Auto-Routing Error (Ollama/LLM issue): {str(e)}. Falling back to Topology Specialist for a system health scan.")]
         }
 
 # 5. Build the Graph
