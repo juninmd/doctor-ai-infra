@@ -16,7 +16,7 @@ from .tools import (
     analyze_log_patterns, diagnose_service_health, analyze_ci_failure, create_issue,
     trace_service_health, purge_azion_cache, diagnose_azion_configuration,
     list_datadog_metrics, check_on_call_schedule, send_slack_notification,
-    investigate_root_cause, scan_infrastructure, analyze_heavy_logs
+    investigate_root_cause, scan_infrastructure, analyze_heavy_logs, analyze_gcp_errors
 )
 from .tools.dashboard import analyze_infrastructure_health
 from .tools.incident import (
@@ -34,7 +34,7 @@ llm = get_llm()
 
 # 2. Define Tools for each specialist
 k8s_tools = [list_k8s_pods, describe_pod, get_pod_logs, get_cluster_events, analyze_log_patterns, analyze_heavy_logs, diagnose_service_health, trace_service_health]
-gcp_tools = [check_gcp_status, query_gmp_prometheus, list_compute_instances, get_gcp_sql_instances, analyze_heavy_logs]
+gcp_tools = [check_gcp_status, query_gmp_prometheus, list_compute_instances, get_gcp_sql_instances, analyze_heavy_logs, analyze_gcp_errors]
 datadog_tools = [get_datadog_metrics, get_active_alerts, list_datadog_metrics]
 azion_tools = [check_azion_edge, purge_azion_cache, diagnose_azion_configuration]
 git_tools = [check_github_repos, get_pr_status, list_recent_commits]
@@ -75,7 +75,7 @@ k8s_agent = make_specialist(
 gcp_agent = make_specialist(
     gcp_tools,
     "Google Cloud Platform (GCP) & Cloud Infrastructure",
-    heuristics="SRE TIP: If a service is down or unreachable, check `check_gcp_status` for maintenance windows or outages first."
+    heuristics="SRE TIP: If a service is down or unreachable, check `check_gcp_status` for maintenance windows or outages first. Use `analyze_gcp_errors` to check Cloud Logging for severe errors."
 )
 datadog_agent = make_specialist(
     datadog_tools,

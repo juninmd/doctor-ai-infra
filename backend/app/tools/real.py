@@ -14,12 +14,15 @@ except ImportError:
     config = None
 
 try:
-    from google.cloud import resourcemanager_v3, monitoring_v3
+    from google.cloud import resourcemanager_v3, monitoring_v3, logging as cloud_logging
     from google.auth import default
     from google.auth.transport.requests import Request as GoogleAuthRequest
 except ImportError:
     resourcemanager_v3 = None
     monitoring_v3 = None
+    cloud_logging = None
+    default = None
+    GoogleAuthRequest = None
 
 try:
     from datadog_api_client import ApiClient, Configuration
@@ -266,6 +269,61 @@ def get_gcp_sql_instances() -> str:
 
     except Exception as e:
         return f"Error listing SQL instances: {str(e)}"
+
+@tool
+def analyze_gcp_errors(days: int = 1) -> str:
+    """
+    Analyzes Google Cloud Logging for errors in the current project.
+    Fetches logs with severity >= ERROR from the last N days.
+    """
+    if not cloud_logging:
+        return "GCP Cloud Logging library not installed."
+
+    project_id = os.getenv("GOOGLE_CLOUD_PROJECT")
+    if not project_id:
+        try:
+            _, project_id = default()
+        except Exception:
+            pass
+
+    if not project_id:
+        return "Error: Could not determine Google Cloud Project ID."
+
+    try:
+        client = cloud_logging.Client(project=project_id)
+
+        # Calculate timestamp
+        now = datetime.datetime.utcnow()
+        past = now - datetime.timedelta(days=days)
+        timestamp = past.isoformat("T") + "Z"
+
+        filter_str = f"severity>=ERROR AND timestamp>=\"{timestamp}\""
+
+        entries = client.list_entries(filter_=filter_str, order_by=cloud_logging.DESCENDING, max_results=50)
+
+        error_summary = []
+        count = 0
+        for entry in entries:
+            count += 1
+            payload = entry.payload
+            # Payload can be dict, str, or None
+            msg = "No message"
+            if isinstance(payload, dict):
+                msg = payload.get("message") or payload.get("textPayload") or str(payload)
+            elif isinstance(payload, str):
+                msg = payload
+
+            # Truncate
+            msg = (msg[:100] + '...') if len(msg) > 100 else msg
+            error_summary.append(f"[{entry.timestamp}] {msg}")
+
+        if not error_summary:
+            return f"No errors found in GCP Cloud Logging for project {project_id} in the last {days} days."
+
+        return f"Found {count} errors in GCP Cloud Logging (Last {days} days):\n" + "\n".join(error_summary)
+
+    except Exception as e:
+        return f"Error analyzing GCP logs: {str(e)}"
 
 # --- Datadog Tools ---
 @tool

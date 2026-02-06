@@ -13,7 +13,8 @@ if os.getenv("USE_REAL_TOOLS", "true").lower() == "true":
         check_vulnerabilities, analyze_iam_policy,
         analyze_log_patterns, diagnose_service_health, analyze_ci_failure, create_issue,
         trace_service_health, purge_azion_cache, diagnose_azion_configuration,
-        list_datadog_metrics, check_on_call_schedule, send_slack_notification
+        list_datadog_metrics, check_on_call_schedule, send_slack_notification,
+        analyze_gcp_errors
     )
 else:
     from .mocks import (
@@ -25,5 +26,6 @@ else:
         check_vulnerabilities, analyze_iam_policy,
         analyze_log_patterns, diagnose_service_health, analyze_ci_failure, create_issue,
         trace_service_health, purge_azion_cache, diagnose_azion_configuration,
-        list_datadog_metrics, check_on_call_schedule, send_slack_notification
+        list_datadog_metrics, check_on_call_schedule, send_slack_notification,
+        analyze_gcp_errors
     )
