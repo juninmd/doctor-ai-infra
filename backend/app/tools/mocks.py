@@ -90,6 +90,18 @@ def query_gmp_prometheus(query: str) -> str:
     return f"GMP Query '{query}' returned: cpu_usage=0.45"
 
 @tool
+def analyze_gcp_errors(days: int = 1) -> str:
+    """
+    Analyzes Google Cloud Logging for errors (Mock).
+    """
+    return (
+        f"Found 3 errors in GCP Cloud Logging (Last {days} days) [MOCK]:\n"
+        "- [2026-05-20T10:00:00Z] Cloud SQL: Connection limit reached for 'postgres-db'\n"
+        "- [2026-05-20T09:30:00Z] Cloud Function: Timeout waiting for response\n"
+        "- [2026-05-20T09:00:00Z] Compute Engine: Preemptible instance terminated"
+    )
+
+@tool
 def get_datadog_metrics(query: str) -> str:
     """Queries Datadog for specific metrics."""
     return f"Datadog Metric for '{query}': Avg 45ms latency, 99.9% availability."
