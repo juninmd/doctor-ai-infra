@@ -4,7 +4,7 @@ import datetime
 import uuid
 import json
 from app.db import init_db, SessionLocal, Incident, PostMortem, IncidentEvent
-from app.llm import get_llm
+from app.llm import get_llm, get_google_sdk_client
 from langchain_core.prompts import ChatPromptTemplate
 from app.rag import rag_engine
 
@@ -309,3 +309,41 @@ def suggest_remediation(incident_context: str) -> str:
         return "\n".join(summary)
     except Exception as e:
         return f"Error suggestions: {str(e)}"
+
+@tool
+def generate_remediation_plan(incident_context: str) -> str:
+    """
+    Generates a structured, step-by-step remediation plan (Actionable Runbook) using AI.
+    This is more advanced than 'suggest_remediation' as it creates a specific checklist for the current issue.
+
+    Args:
+        incident_context: Description of the incident, error logs, or symptoms.
+    """
+    client = get_google_sdk_client()
+
+    prompt_text = (
+        "You are a Senior Site Reliability Engineer (SRE). "
+        "Based on the following incident context, generate a detailed, step-by-step remediation plan (Runbook).\n"
+        "Format it as a Markdown checklist.\n"
+        "Include specific commands (kubectl, gcloud, etc.) where possible.\n"
+        "Assess risks for each step.\n\n"
+        f"Incident Context:\n{incident_context}"
+    )
+
+    if client:
+        try:
+            response = client.models.generate_content(
+                model="gemini-1.5-flash",
+                contents=prompt_text
+            )
+            return f"**Generated Remediation Plan (Gemini):**\n\n{response.text}"
+        except Exception as e:
+            return f"Error generating plan with Gemini SDK: {e}. Falling back to standard LLM."
+
+    # Fallback to standard LLM (Ollama or LangChain adapter)
+    llm = get_llm()
+    try:
+        res = llm.invoke(prompt_text)
+        return f"**Generated Remediation Plan:**\n\n{res.content}"
+    except Exception as e:
+        return f"Error generating remediation plan: {str(e)}"

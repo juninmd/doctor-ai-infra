@@ -22,7 +22,7 @@ from .tools.dashboard import analyze_infrastructure_health
 from .tools.incident import (
     create_incident, update_incident_status, list_incidents, get_incident_details,
     generate_postmortem, log_incident_event, build_incident_timeline, manage_incident_channels,
-    suggest_remediation
+    suggest_remediation, generate_remediation_plan
 )
 from .tools.runbooks import list_runbooks, execute_runbook, lookup_service, get_service_dependencies, get_service_topology
 from .tools.visualizer import generate_topology_diagram
@@ -44,7 +44,7 @@ incident_tools = [
     create_incident, update_incident_status, list_incidents, get_incident_details,
     generate_postmortem, search_knowledge_base, create_issue,
     log_incident_event, build_incident_timeline, manage_incident_channels,
-    suggest_remediation, check_on_call_schedule, send_slack_notification
+    suggest_remediation, generate_remediation_plan, check_on_call_schedule, send_slack_notification
 ]
 automation_tools = [list_runbooks, execute_runbook, lookup_service]
 topology_tools = [

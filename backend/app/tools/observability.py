@@ -1,5 +1,6 @@
 from langchain_core.tools import tool
 import concurrent.futures
+import json
 
 @tool
 def analyze_heavy_logs(log_content: str, context: str = "") -> str:
@@ -112,18 +113,20 @@ def investigate_root_cause(service_name: str, owner: str = "my-org", repo: str =
 
     full_text = "\n".join(report)
 
-    # Best of 2026: Auto-Summarization for heavy context
-    if len(full_text) > 2000:
-        try:
-            summary = analyze_heavy_logs.invoke({
-                "log_content": full_text,
-                "context": f"Summarize the root cause investigation for {service_name}"
-            })
-            return f"{full_text}\n\n====================\n[AI AUTO-SUMMARY]\n{summary}"
-        except Exception:
-            return full_text
-
-    return full_text
+    # Always perform AI analysis for root cause correlation (Best Agent behavior)
+    try:
+        summary = analyze_heavy_logs.invoke({
+            "log_content": full_text,
+            "context": (
+                f"Analyze the collected data for service '{service_name}'. "
+                "Identify the most probable root cause. "
+                "Assign a probability score (0-100%) to your findings. "
+                "Highlight if it's an Infrastructure (GCP/K8s), Application (Code/Commit), or External (Azion) issue."
+            )
+        })
+        return f"{full_text}\n\n====================\n[AI ROOT CAUSE ANALYSIS]\n{summary}"
+    except Exception as e:
+        return f"{full_text}\n\n[AI Analysis Failed]: {e}"
 
 @tool
 def scan_infrastructure() -> str:
@@ -139,6 +142,16 @@ def scan_infrastructure() -> str:
 
     report = ["Infrastructure Scan Report:"]
 
+    # Data for structured output
+    health_data = {
+        "timestamp": "now",
+        "k8s": {"status": "unknown", "msg": ""},
+        "gcp": {"status": "unknown", "msg": ""},
+        "gmp": {"status": "unknown", "msg": ""},
+        "datadog": {"status": "unknown", "msg": ""},
+        "azion": {"status": "unknown", "msg": ""}
+    }
+
     with concurrent.futures.ThreadPoolExecutor() as executor:
         f_k8s = executor.submit(list_k8s_pods.invoke, {"namespace": "default"})
         f_gcp = executor.submit(check_gcp_status.invoke, {})
@@ -151,36 +164,47 @@ def scan_infrastructure() -> str:
             # Crude analysis of the string output
             if "Error" in k8s_res and not "Running" in k8s_res:
                 report.append(f"- Kubernetes: 🔴 Issue Detected ({k8s_res[:100]}...)")
+                health_data["k8s"] = {"status": "critical", "msg": k8s_res[:100]}
             else:
                 pod_count = k8s_res.count("Running") if "Running" in k8s_res else "Unknown"
                 report.append(f"- Kubernetes: 🟢 Active ({pod_count} Pods Running)")
+                health_data["k8s"] = {"status": "healthy", "msg": f"{pod_count} pods running"}
         except Exception as e:
             report.append(f"- Kubernetes: 🔴 Check Failed ({str(e)})")
+            health_data["k8s"] = {"status": "error", "msg": str(e)}
 
         try:
             gcp_res = f_gcp.result()
             report.append(f"- GCP: {gcp_res}")
+            health_data["gcp"] = {"status": "healthy", "msg": "Active"} # Simplified
         except Exception as e:
             report.append(f"- GCP: 🔴 Check Failed ({str(e)})")
+            health_data["gcp"] = {"status": "error", "msg": str(e)}
 
         try:
             gmp_res = f_gmp.result()
             if "Error" in gmp_res:
                 report.append(f"- GMP: 🔴 Check Failed ({gmp_res[:50]}...)")
+                health_data["gmp"] = {"status": "critical", "msg": gmp_res[:50]}
             else:
                 report.append(f"- GMP: 🟢 Active (Prometheus Query Successful)")
+                health_data["gmp"] = {"status": "healthy", "msg": "Query OK"}
         except Exception as e:
             report.append(f"- GMP: 🔴 Check Failed ({str(e)})")
+            health_data["gmp"] = {"status": "error", "msg": str(e)}
 
         try:
             dd_res = f_dd.result()
             if "No active alerts" in dd_res:
                  report.append(f"- Datadog: 🟢 No active alerts")
+                 health_data["datadog"] = {"status": "healthy", "msg": "No alerts"}
             else:
                 alert_count = dd_res.count("[Alert]")
                 report.append(f"- Datadog: 🟠 {alert_count} Active Alerts")
+                health_data["datadog"] = {"status": "warning", "msg": f"{alert_count} alerts"}
         except Exception as e:
              report.append(f"- Datadog: 🔴 Check Failed ({str(e)})")
+             health_data["datadog"] = {"status": "error", "msg": str(e)}
 
         try:
             az_res = f_azion.result()
@@ -188,9 +212,15 @@ def scan_infrastructure() -> str:
                  # Check if we can parse the count
                  count = az_res.count("id") if "id" in az_res else "Multiple"
                  report.append(f"- Azion: 🟢 Edge Active")
+                 health_data["azion"] = {"status": "healthy", "msg": "Edge Active"}
             else:
                  report.append(f"- Azion: 🟠 {az_res[:100]}")
+                 health_data["azion"] = {"status": "warning", "msg": az_res[:50]}
         except Exception as e:
              report.append(f"- Azion: 🔴 Check Failed ({str(e)})")
+             health_data["azion"] = {"status": "error", "msg": str(e)}
+
+    # Append hidden JSON block for frontend integration
+    report.append(f"\n```json\n{json.dumps(health_data)}\n```")
 
     return "\n".join(report)
