@@ -2,8 +2,11 @@
 
 The best-in-class Infrastructure Agent Manager for 2026. Troubleshoot your K8s, GCP, Datadog, and Azion resources with an intelligent, multi-agent system.
 
+**📚 For detailed documentation on 2026 Features and Google ADK Migration, see [DOCS.md](./DOCS.md).**
+
 ## Features
 - **Multi-Agent Architecture**: Supervisor routes queries to specialized agents (K8s, GCP, Datadog, Azion).
+- **Google GenAI SDK (v1.0+)**: Powered by Gemini 1.5 Flash for high performance.
 - **Local LLM**: Powered by Ollama (compatible with Gemini).
 - **Relaxed Personality**: Direct, no-nonsense feedback.
 - **Modern Stack**:
@@ -13,11 +16,11 @@ The best-in-class Infrastructure Agent Manager for 2026. Troubleshoot your K8s, 
 ## Prerequisites
 - **Python 3.12+** (managed via `uv`)
 - **Node.js 20+**
-- **Ollama** running locally (default: `http://localhost:11434`)
+- **Ollama** running locally (default: `http://localhost:11434`) OR **Google API Key**
 
 ## Getting Started
 
-### 1. Start Ollama
+### 1. Start Ollama (Optional)
 Ensure you have Ollama installed and running. Pull the model (default `llama3`):
 ```bash
 ollama serve
@@ -40,6 +43,8 @@ By default, the agents run in **Mock Mode** for safety and demonstration. To ena
 1.  Set the environment variable:
     ```bash
     export USE_REAL_TOOLS=true
+    export LLM_PROVIDER=gemini  # Recommended for Best Performance
+    export GOOGLE_API_KEY=...
     ```
 2.  Provide the necessary credentials in `.env` or your shell:
     *   **Kubernetes**: Ensure `~/.kube/config` is valid or run inside a cluster with ServiceAccount.
