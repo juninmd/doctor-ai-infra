@@ -3,13 +3,15 @@ import { GlassCard } from './GlassCard';
 import type { AgentStep } from './ThinkingProcess';
 import { motion } from 'framer-motion';
 
+export type MetricStatus = 'healthy' | 'warning' | 'error' | 'critical' | 'unknown';
+
 export interface SystemStatus {
     timestamp: string;
-    k8s: { status: 'healthy' | 'warning' | 'error' | 'critical' | 'unknown'; msg: string };
-    gcp: { status: 'healthy' | 'warning' | 'error' | 'critical' | 'unknown'; msg: string };
-    gmp: { status: 'healthy' | 'warning' | 'error' | 'critical' | 'unknown'; msg: string };
-    datadog: { status: 'healthy' | 'warning' | 'error' | 'critical' | 'unknown'; msg: string };
-    azion: { status: 'healthy' | 'warning' | 'error' | 'critical' | 'unknown'; msg: string };
+    k8s: { status: MetricStatus; msg: string };
+    gcp: { status: MetricStatus; msg: string };
+    gmp: { status: MetricStatus; msg: string };
+    datadog: { status: MetricStatus; msg: string };
+    azion: { status: MetricStatus; msg: string };
 }
 
 interface AgentDashboardProps {
@@ -47,10 +49,10 @@ export function AgentDashboard({ steps, systemStatus }: AgentDashboardProps) {
                     LIVE INFRASTRUCTURE STATUS
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
-                    <StatusMetric label="K8s Clusters" value={status.k8s.msg} status={status.k8s.status as any} />
-                    <StatusMetric label="GCP Status" value={status.gcp.msg} status={status.gcp.status as any} />
-                    <StatusMetric label="Datadog" value={status.datadog.msg} status={status.datadog.status as any} />
-                    <StatusMetric label="Azion Edge" value={status.azion.msg} status={status.azion.status as any} />
+                    <StatusMetric label="K8s Clusters" value={status.k8s.msg} status={status.k8s.status} />
+                    <StatusMetric label="GCP Status" value={status.gcp.msg} status={status.gcp.status} />
+                    <StatusMetric label="Datadog" value={status.datadog.msg} status={status.datadog.status} />
+                    <StatusMetric label="Azion Edge" value={status.azion.msg} status={status.azion.status} />
                 </div>
              </GlassCard>
 
@@ -99,15 +101,17 @@ export function AgentDashboard({ steps, systemStatus }: AgentDashboardProps) {
     );
 }
 
-function StatusMetric({ label, value, status }: { label: string, value: string, status: 'healthy' | 'warning' | 'critical' }) {
-    const colors = {
+function StatusMetric({ label, value, status }: { label: string, value: string, status: MetricStatus }) {
+    const colors: Record<MetricStatus, string> = {
         healthy: 'text-green-400 border-green-500/20 bg-green-500/5',
         warning: 'text-yellow-400 border-yellow-500/20 bg-yellow-500/5',
         critical: 'text-red-400 border-red-500/20 bg-red-500/5',
+        error: 'text-red-400 border-red-500/20 bg-red-500/5',
+        unknown: 'text-gray-400 border-gray-500/20 bg-gray-500/5',
     };
 
     return (
-        <div className={`p-3 rounded-lg border ${colors[status]} flex flex-col justify-between`}>
+        <div className={`p-3 rounded-lg border ${colors[status] || colors.unknown} flex flex-col justify-between`}>
             <div className="text-[10px] uppercase tracking-wider opacity-70 mb-1">{label}</div>
             <div className="font-mono text-sm font-bold">{value}</div>
         </div>
