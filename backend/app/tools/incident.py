@@ -251,27 +251,45 @@ def generate_postmortem(incident_id: str) -> str:
             f"Relevant Knowledge Base Context (Past Incidents/Runbooks):\n{rag_context_str}\n"
         )
 
-        llm = get_llm()
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", (
-                "You are an SRE Incident Commander. "
-                "Write a blameless post-mortem report in Markdown based on the following incident log.\n"
-                "Use the provided Knowledge Base Context to identify patterns or suggest better remediations if applicable.\n"
-                "Include:\n"
-                "- Executive Summary\n"
-                "- Root Cause Analysis (inference based on logs)\n"
-                "- Timeline (Use the provided Timeline Log)\n"
-                "- Action Items / Lessons Learned (Reference Knowledge Base if relevant)\n"
-            )),
-            ("human", "{context}")
-        ])
+        # Best Practice 2026: Use Google GenAI SDK for large context (Incident Logs)
+        client = get_google_sdk_client()
+        system_msg = (
+            "You are an SRE Incident Commander. "
+            "Write a blameless post-mortem report in Markdown based on the following incident log.\n"
+            "Use the provided Knowledge Base Context to identify patterns or suggest better remediations if applicable.\n"
+            "Include:\n"
+            "- Executive Summary\n"
+            "- Root Cause Analysis (inference based on logs)\n"
+            "- Timeline (Use the provided Timeline Log)\n"
+            "- Action Items / Lessons Learned (Reference Knowledge Base if relevant)\n"
+        )
 
-        chain = prompt | llm
-        try:
-            res = chain.invoke({"context": context})
-            report_content = res.content
-        except Exception as llm_error:
-            return f"Error calling LLM for post-mortem: {str(llm_error)}"
+        report_content = None
+        if client:
+            try:
+                response = client.models.generate_content(
+                    model="gemini-1.5-flash",
+                    contents=f"{system_msg}\n\nContext:\n{context}"
+                )
+                report_content = response.text
+            except Exception as e:
+                 # Fallback to standard LLM
+                 print(f"Gemini SDK failed ({e}), falling back to standard LLM.")
+                 report_content = None
+
+        if not report_content:
+            llm = get_llm()
+            prompt = ChatPromptTemplate.from_messages([
+                ("system", system_msg),
+                ("human", "{context}")
+            ])
+
+            chain = prompt | llm
+            try:
+                res = chain.invoke({"context": context})
+                report_content = res.content
+            except Exception as llm_error:
+                return f"Error calling LLM for post-mortem: {str(llm_error)}"
 
         # Save to DB
         pm = PostMortem(incident_id=incident_id, content=report_content)

@@ -3,11 +3,21 @@ import { GlassCard } from './GlassCard';
 import type { AgentStep } from './ThinkingProcess';
 import { motion } from 'framer-motion';
 
-interface AgentDashboardProps {
-    steps: AgentStep[];
+export interface SystemStatus {
+    timestamp: string;
+    k8s: { status: 'healthy' | 'warning' | 'error' | 'critical' | 'unknown'; msg: string };
+    gcp: { status: 'healthy' | 'warning' | 'error' | 'critical' | 'unknown'; msg: string };
+    gmp: { status: 'healthy' | 'warning' | 'error' | 'critical' | 'unknown'; msg: string };
+    datadog: { status: 'healthy' | 'warning' | 'error' | 'critical' | 'unknown'; msg: string };
+    azion: { status: 'healthy' | 'warning' | 'error' | 'critical' | 'unknown'; msg: string };
 }
 
-export function AgentDashboard({ steps }: AgentDashboardProps) {
+interface AgentDashboardProps {
+    steps: AgentStep[];
+    systemStatus?: SystemStatus;
+}
+
+export function AgentDashboard({ steps, systemStatus }: AgentDashboardProps) {
     const activeStep = steps.find(s => s.status === 'active');
     const activeAgent = activeStep?.agent || "Supervisor";
 
@@ -20,6 +30,15 @@ export function AgentDashboard({ steps }: AgentDashboardProps) {
         { id: "Git_Specialist", icon: GitBranch, label: "Git/CI" },
     ];
 
+    // Default mock status if none provided
+    const status = systemStatus || {
+        k8s: { status: 'unknown', msg: 'Not Scanned' },
+        gcp: { status: 'unknown', msg: 'Not Scanned' },
+        gmp: { status: 'unknown', msg: 'Not Scanned' },
+        datadog: { status: 'unknown', msg: 'Not Scanned' },
+        azion: { status: 'unknown', msg: 'Not Scanned' }
+    };
+
     return (
         <div className="flex flex-col gap-4 h-full">
              <GlassCard className="p-4">
@@ -28,10 +47,10 @@ export function AgentDashboard({ steps }: AgentDashboardProps) {
                     LIVE INFRASTRUCTURE STATUS
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
-                    <StatusMetric label="K8s Clusters" value="3 Active" status="healthy" />
-                    <StatusMetric label="GCP Projects" value="2 Online" status="healthy" />
-                    <StatusMetric label="Datadog Alerts" value="0 Critical" status="warning" />
-                    <StatusMetric label="Edge Nodes" value="154 Active" status="healthy" />
+                    <StatusMetric label="K8s Clusters" value={status.k8s.msg} status={status.k8s.status as any} />
+                    <StatusMetric label="GCP Status" value={status.gcp.msg} status={status.gcp.status as any} />
+                    <StatusMetric label="Datadog" value={status.datadog.msg} status={status.datadog.status as any} />
+                    <StatusMetric label="Azion Edge" value={status.azion.msg} status={status.azion.status as any} />
                 </div>
              </GlassCard>
 
