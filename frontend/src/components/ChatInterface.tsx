@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Send, Terminal, Cpu, ShieldCheck, Activity } from 'lucide-react';
 import { GlassCard } from './GlassCard';
 import { ThinkingProcess, type AgentStep } from './ThinkingProcess';
-import { AgentDashboard } from './AgentDashboard';
+import { AgentDashboard, type SystemStatus } from './AgentDashboard';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { cn } from '../lib/utils';
 
@@ -17,6 +17,7 @@ export function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [steps, setSteps] = useState<AgentStep[]>([]);
+  const [systemStatus, setSystemStatus] = useState<SystemStatus | undefined>(undefined);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -24,6 +25,28 @@ export function ChatInterface() {
       scrollRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages, steps]);
+
+  useEffect(() => {
+    // Auto-detect infrastructure status from agent messages
+    if (messages.length > 0) {
+        const lastMsg = messages[messages.length - 1];
+        if (lastMsg.role === 'assistant') {
+            // Look for hidden JSON block from scan_infrastructure
+            const match = lastMsg.content.match(/```json\n({[\s\S]*?})\n```/);
+            if (match && match[1]) {
+                try {
+                    const data = JSON.parse(match[1]);
+                    // Validate minimal structure
+                    if (data.k8s && data.gcp) {
+                        setSystemStatus(data);
+                    }
+                } catch (e) {
+                    console.debug("Failed to parse status JSON", e);
+                }
+            }
+        }
+    }
+  }, [messages]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -203,7 +226,7 @@ export function ChatInterface() {
 
         {/* Dashboard Area (Right/Bottom) */}
         <div className="hidden lg:block h-full overflow-hidden">
-            <AgentDashboard steps={steps} />
+            <AgentDashboard steps={steps} systemStatus={systemStatus} />
         </div>
       </div>
     </div>

@@ -29,9 +29,10 @@ Don't have a runbook for an issue? The agent generates one for you.
 -   **Tool:** `generate_remediation_plan`
 -   **Mechanism:** Analyzes the incident context -> Generates a step-by-step, actionable Markdown checklist with specific `kubectl` or `gcloud` commands.
 
-### 4. Live Infrastructure Scan
-Get a holistic view of your stack in seconds.
+### 4. Live Infrastructure Scan & Dynamic Dashboard
+Get a holistic view of your stack in seconds. The agent output updates the **Live Infrastructure Status** dashboard in real-time.
 -   **Tool:** `scan_infrastructure`
+-   **Mechanism:** The tool appends a hidden JSON block (wrapped in ` ```json `) to its response. The Frontend (`ChatInterface.tsx`) parses this block and updates the `AgentDashboard` component.
 -   **Output:** A human-readable summary AND a structured JSON block for frontend integration.
 
 ### 5. Topology Visualization
