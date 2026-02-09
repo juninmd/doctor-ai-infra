@@ -40,6 +40,20 @@ Understand your dependencies instantly.
 -   **Tool:** `generate_topology_diagram`
 -   **Output:** Mermaid.js graph definition.
 
+### 6. Hybrid Mode (Ollama + Gemini)
+The agent is designed to run anywhere.
+-   **Performance Mode**: Set `LLM_PROVIDER=gemini` and `GOOGLE_API_KEY`. The agent uses Google's global network and **Gemini 1.5 Flash** for heavy tasks (Log Analysis, Post-Mortems).
+-   **Privacy/Local Mode**: Set `LLM_PROVIDER=ollama`. The agent gracefully falls back to your local LLM (e.g., Llama 3) for all tasks, truncating logs to fit context windows automatically.
+
+### 7. AI-Driven Log Analysis
+We replaced traditional RegEx with **Semantic Log Analysis**.
+-   **Tool:** `analyze_log_patterns`
+-   **Mechanism:** It reads up to 500 lines of logs and uses the LLM to identify *unique* error patterns and suggest root causes, rather than just counting keyword matches.
+
+### 8. CI/CD Pipeline Tracking
+-   **Tool:** `check_pipeline_status`
+-   **Integration:** Connects to GitHub Actions to report on build/deploy status directly in the chat.
+
 ## Getting Started
 
 ### Prerequisites

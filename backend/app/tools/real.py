@@ -5,6 +5,8 @@ import requests
 import json
 from typing import List, Dict
 from app.db import SessionLocal, Service
+from app.llm import get_llm, get_google_sdk_client
+from langchain_core.prompts import ChatPromptTemplate
 
 # Infrastructure Libraries
 try:
@@ -293,9 +295,9 @@ def analyze_gcp_errors(days: int = 1) -> str:
         client = cloud_logging.Client(project=project_id)
 
         # Calculate timestamp
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now(datetime.UTC)
         past = now - datetime.timedelta(days=days)
-        timestamp = past.isoformat("T") + "Z"
+        timestamp = past.isoformat().replace("+00:00", "Z")
 
         filter_str = f"severity>=ERROR AND timestamp>=\"{timestamp}\""
 
@@ -536,7 +538,7 @@ def list_recent_commits(owner: str, repo: str, hours: int = 24) -> str:
         return "Error: GITHUB_TOKEN is missing."
 
     headers = {"Authorization": f"token {token}"}
-    since = (datetime.datetime.utcnow() - datetime.timedelta(hours=hours)).isoformat()
+    since = (datetime.datetime.now(datetime.UTC) - datetime.timedelta(hours=hours)).isoformat().replace("+00:00", "Z")
 
     try:
         url = f"https://api.github.com/repos/{owner}/{repo}/commits?since={since}"
@@ -613,41 +615,56 @@ def analyze_iam_policy(user: str) -> str:
 @tool
 def analyze_log_patterns(pod_name: str, namespace: str = "default") -> str:
     """
-    Analyzes pod logs and returns a summary of error patterns.
-    Useful for compressing large logs into actionable insights for the LLM.
+    Analyzes pod logs using AI to identify error patterns and root causes.
+    Uses Google GenAI SDK (Gemini 1.5 Flash) if available for high-speed analysis,
+    otherwise falls back to standard LLM (Ollama) for local compatibility.
     """
-    # This tool calls another tool function logic directly, but get_pod_logs returns a string
-    # We need to manually invoke the logic if we want raw access, but get_pod_logs is decorated
-    # So we call it as a normal function (it returns a Tool object if accessed via .tool, but usually callable)
-    # Langchain @tool decorated functions are callable.
     try:
-        # FIX: Use invoke for nested tool call
-        logs = get_pod_logs.invoke({"pod_name": pod_name, "namespace": namespace, "lines": 200})
-    except Exception:
-        # Fallback if direct call fails (e.g. context issues), return simple msg
-        return "Could not fetch logs for analysis."
+        # Fetch logs (up to 500 lines for better context)
+        logs = get_pod_logs.invoke({"pod_name": pod_name, "namespace": namespace, "lines": 500})
+    except Exception as e:
+        return f"Could not fetch logs for analysis: {str(e)}"
 
     if "Error" in logs and "retrieving logs" in logs:
         return logs
 
-    lines = logs.split('\n')
-    error_counts = {}
+    if len(logs) < 50:
+        return f"Logs are too short for AI analysis:\n{logs}"
 
-    for line in lines:
-        if "ERROR" in line or "Exception" in line or "Fail" in line:
-            # Simple clustering: removing digits and timestamps might be complex,
-            # so we just take the first 60 chars as the "signature"
-            signature = line[:60]
-            error_counts[signature] = error_counts.get(signature, 0) + 1
+    # Prepare Prompt
+    prompt_text = (
+        f"Analyze the following logs for pod '{pod_name}' in namespace '{namespace}'.\n"
+        "Identify unique error patterns, their frequency, and potential root causes.\n"
+        "Ignore standard info/debug messages unless relevant to a failure.\n"
+        "Format the output as a concise Markdown summary.\n\n"
+        f"LOGS:\n{logs[:100000]}" # Safety cap
+    )
 
-    if not error_counts:
-        return "Log Analysis: No obvious ERROR/Exception patterns found in last 200 lines."
+    # Strategy 1: Google GenAI SDK (Gemini 1.5 Flash) - Best for Speed & Context
+    client = get_google_sdk_client()
+    if client:
+        try:
+            response = client.models.generate_content(
+                model="gemini-1.5-flash",
+                contents=prompt_text
+            )
+            return f"**AI Log Analysis (Gemini 1.5 Flash):**\n{response.text}"
+        except Exception as e:
+            # If SDK fails, fall through to standard LLM
+            print(f"Gemini SDK failed: {e}. Falling back to standard LLM.")
 
-    summary = ["Log Analysis Summary:"]
-    for sig, count in error_counts.items():
-        summary.append(f"- Found {count} occurrences of: '{sig}...'")
-
-    return "\n".join(summary)
+    # Strategy 2: Standard LLM (Ollama / LangChain Adapter) - "Run with Ollama" compatibility
+    llm = get_llm()
+    try:
+        # Truncate logs if using local LLM to avoid context overflow (approx 8k tokens safe limit)
+        safe_logs = logs[:12000] + ("...[TRUNCATED]" if len(logs) > 12000 else "")
+        fallback_prompt = (
+            f"Analyze these logs for '{pod_name}'. Summarize errors and root causes.\n\n{safe_logs}"
+        )
+        response = llm.invoke(fallback_prompt)
+        return f"**AI Log Analysis (Standard LLM):**\n{response.content}"
+    except Exception as e:
+        return f"Error during AI log analysis: {str(e)}"
 
 @tool
 def diagnose_service_health(service_name: str, namespace: str = "default") -> str:
