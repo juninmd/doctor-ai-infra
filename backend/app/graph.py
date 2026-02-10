@@ -27,6 +27,8 @@ from .tools.incident import (
 from .tools.runbooks import list_runbooks, execute_runbook, lookup_service, get_service_dependencies, get_service_topology
 from .tools.visualizer import generate_topology_diagram
 from .tools.knowledge import search_knowledge_base
+from .tools.code import generate_code_fix, create_github_pr, read_repo_file, list_repo_files
+from .tools.cost import estimate_gcp_cost
 from .state import AgentState
 
 # 1. Initialize LLM
@@ -34,10 +36,10 @@ llm = get_llm()
 
 # 2. Define Tools for each specialist
 k8s_tools = [list_k8s_pods, describe_pod, get_pod_logs, get_cluster_events, analyze_log_patterns, analyze_heavy_logs, diagnose_service_health, trace_service_health]
-gcp_tools = [check_gcp_status, query_gmp_prometheus, list_compute_instances, get_gcp_sql_instances, analyze_heavy_logs, analyze_gcp_errors]
+gcp_tools = [check_gcp_status, query_gmp_prometheus, list_compute_instances, get_gcp_sql_instances, analyze_heavy_logs, analyze_gcp_errors, estimate_gcp_cost]
 datadog_tools = [get_datadog_metrics, get_active_alerts, list_datadog_metrics]
 azion_tools = [check_azion_edge, purge_azion_cache, diagnose_azion_configuration]
-git_tools = [check_github_repos, get_pr_status, list_recent_commits]
+code_tools = [check_github_repos, get_pr_status, list_recent_commits, generate_code_fix, create_github_pr, read_repo_file, list_repo_files]
 cicd_tools = [check_pipeline_status, get_argocd_sync_status, analyze_ci_failure]
 sec_tools = [check_vulnerabilities, analyze_iam_policy]
 incident_tools = [
@@ -75,7 +77,7 @@ k8s_agent = make_specialist(
 gcp_agent = make_specialist(
     gcp_tools,
     "Google Cloud Platform (GCP) & Cloud Infrastructure",
-    heuristics="SRE TIP: If a service is down or unreachable, check `check_gcp_status` for maintenance windows or outages first. Use `analyze_gcp_errors` to check Cloud Logging for severe errors."
+    heuristics="SRE TIP: If a service is down or unreachable, check `check_gcp_status` for maintenance windows or outages first. Use `analyze_gcp_errors` to check Cloud Logging for severe errors. Use `estimate_gcp_cost` for billing questions."
 )
 datadog_agent = make_specialist(
     datadog_tools,
@@ -83,7 +85,11 @@ datadog_agent = make_specialist(
     heuristics="SRE TIP: Correlate high latency spikes with error logs. Check for recent alerts."
 )
 azion_agent = make_specialist(azion_tools, "Azion Edge Computing & CDNs")
-git_agent = make_specialist(git_tools, "Git, GitHub & Source Code Management")
+code_agent = make_specialist(
+    code_tools,
+    "Source Code, Git, Development & Bug Fixing",
+    heuristics="SRE TIP: You are the 'Bits Dev Agent'. You can fix bugs! Use `generate_code_fix` to propose fixes and `create_github_pr` to submit them. Always check recent commits first."
+)
 cicd_agent = make_specialist(cicd_tools, "CI/CD Pipelines & ArgoCD")
 sec_agent = make_specialist(sec_tools, "DevSecOps, Vulnerability Scanning & IAM")
 incident_agent = make_specialist(
@@ -116,7 +122,7 @@ members = [
     "GCP_Specialist",
     "Datadog_Specialist",
     "Azion_Specialist",
-    "Git_Specialist",
+    "Code_Specialist",
     "CICD_Specialist",
     "Security_Specialist",
     "Incident_Specialist",
@@ -135,10 +141,10 @@ supervisor_system_prompt = (
     "3. Decide which specialist is best suited to take the NEXT step.\n"
     "   - General Status / Dashboard / 'How is the system?' / 'Troubleshoot' (no specific target) -> Topology_Specialist\n"
     "   - Issues with pods/clusters or Large Log Analysis -> K8s_Specialist\n"
-    "   - Issues with Cloud/VMs or Google Managed Prometheus (GMP) -> GCP_Specialist\n"
+    "   - Issues with Cloud/VMs, GMP, or Billing/Cost -> GCP_Specialist\n"
     "   - Metrics/Alerts -> Datadog_Specialist\n"
     "   - Edge/CDN -> Azion_Specialist\n"
-    "   - Repos/PRs/Code -> Git_Specialist\n"
+    "   - Repos/PRs/Code Changes/Bug Fixes -> Code_Specialist\n"
     "   - Builds/Pipelines/ArgoCD -> CICD_Specialist\n"
     "   - Vulnerabilities/IAM -> Security_Specialist\n"
     "   - Incidents/Outages/Status updates/Post-Mortems -> Incident_Specialist\n"
@@ -161,7 +167,7 @@ class RouterSchema(BaseModel):
     reasoning: str = Field(description="The chain of thought reasoning for the decision.")
     next_agent: Literal[
         "K8s_Specialist", "GCP_Specialist", "Datadog_Specialist",
-        "Azion_Specialist", "Git_Specialist", "CICD_Specialist",
+        "Azion_Specialist", "Code_Specialist", "CICD_Specialist",
         "Security_Specialist", "Incident_Specialist", "Automation_Specialist",
         "Topology_Specialist", "FINISH"
     ] = Field(description="The next agent to route to, or FINISH.")
@@ -199,7 +205,7 @@ workflow.add_node("K8s_Specialist", k8s_agent)
 workflow.add_node("GCP_Specialist", gcp_agent)
 workflow.add_node("Datadog_Specialist", datadog_agent)
 workflow.add_node("Azion_Specialist", azion_agent)
-workflow.add_node("Git_Specialist", git_agent)
+workflow.add_node("Code_Specialist", code_agent)
 workflow.add_node("CICD_Specialist", cicd_agent)
 workflow.add_node("Security_Specialist", sec_agent)
 workflow.add_node("Incident_Specialist", incident_agent)
@@ -219,7 +225,7 @@ workflow.add_conditional_edges(
         "GCP_Specialist": "GCP_Specialist",
         "Datadog_Specialist": "Datadog_Specialist",
         "Azion_Specialist": "Azion_Specialist",
-        "Git_Specialist": "Git_Specialist",
+        "Code_Specialist": "Code_Specialist",
         "CICD_Specialist": "CICD_Specialist",
         "Security_Specialist": "Security_Specialist",
         "Incident_Specialist": "Incident_Specialist",
