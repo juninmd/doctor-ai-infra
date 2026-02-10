@@ -13,6 +13,10 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "..", "backend"))
 # Mock imports before loading graph
 sys.modules["langchain_ollama"] = MagicMock()
 sys.modules["langchain_google_genai"] = MagicMock()
+sys.modules["langchain_chroma"] = MagicMock()
+sys.modules["langchain_huggingface"] = MagicMock()
+sys.modules["sentence_transformers"] = MagicMock()
+sys.modules["chromadb"] = MagicMock()
 
 # Ensure we use MOCK tools to avoid real connection errors
 os.environ["USE_REAL_TOOLS"] = "false"
