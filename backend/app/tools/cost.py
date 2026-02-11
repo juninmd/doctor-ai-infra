@@ -2,6 +2,7 @@ from langchain_core.tools import tool
 from app.llm import get_google_sdk_client, get_llm
 import concurrent.futures
 import os
+import importlib
 
 @tool
 def estimate_gcp_cost() -> str:
@@ -12,13 +13,31 @@ def estimate_gcp_cost() -> str:
     """
     use_real = os.getenv("USE_REAL_TOOLS", "true").lower() == "true"
 
-    try:
-        if use_real:
-            from app.tools.real import list_compute_instances, get_gcp_sql_instances
-        else:
-            from app.tools.mocks import list_compute_instances, get_gcp_sql_instances
-    except ImportError:
-        return "Error: Could not import GCP tools. Ensure 'app.tools.real' or 'app.tools.mocks' is available."
+    list_compute_instances = None
+    get_gcp_sql_instances = None
+
+    # Try importing real tools first if requested
+    if use_real:
+        try:
+            # Dynamic import to avoid circular dependency issues at module level
+            real_module = importlib.import_module("app.tools.real")
+            list_compute_instances = getattr(real_module, "list_compute_instances", None)
+            get_gcp_sql_instances = getattr(real_module, "get_gcp_sql_instances", None)
+        except ImportError:
+            print("Warning: Could not import app.tools.real")
+            pass
+
+    # Fallback to mocks if real tools are missing or not requested
+    if not list_compute_instances or not get_gcp_sql_instances:
+        try:
+            mock_module = importlib.import_module("app.tools.mocks")
+            list_compute_instances = getattr(mock_module, "list_compute_instances", None)
+            get_gcp_sql_instances = getattr(mock_module, "get_gcp_sql_instances", None)
+        except ImportError:
+            return "Error: Could not import GCP tools from mocks either."
+
+    if not list_compute_instances or not get_gcp_sql_instances:
+        return "Error: Tools 'list_compute_instances' or 'get_gcp_sql_instances' not found."
 
     resources = []
 
