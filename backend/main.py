@@ -72,29 +72,26 @@ async def chat_endpoint(request: ChatRequest):
                         # output usually contains "messages"
                         msgs = output.get("messages", [])
                         if msgs:
-                            # It could be a single message or list
-                            if isinstance(msgs, list):
-                                last_msg = msgs[-1]
-                            else:
-                                last_msg = msgs
+                            if not isinstance(msgs, list):
+                                msgs = [msgs]
 
-                            # Check for tool calls
-                            if hasattr(last_msg, 'tool_calls') and last_msg.tool_calls:
-                                for tool_call in last_msg.tool_calls:
+                            for msg in msgs:
+                                # Check for tool calls
+                                if hasattr(msg, 'tool_calls') and msg.tool_calls:
+                                    for tool_call in msg.tool_calls:
+                                        yield json.dumps({
+                                            "type": "tool_call",
+                                            "agent": node,
+                                            "tool": tool_call.get('name', 'unknown'),
+                                            "args": tool_call.get('args', {})
+                                        }) + "\n"
+
+                                if msg.content:
                                     yield json.dumps({
-                                        "type": "tool_call",
+                                        "type": "message",
                                         "agent": node,
-                                        "tool": tool_call.get('name', 'unknown'),
-                                        "args": tool_call.get('args', {})
+                                        "content": msg.content
                                     }) + "\n"
-
-                            content = last_msg.content
-                            if content:
-                                yield json.dumps({
-                                    "type": "message",
-                                    "agent": node,
-                                    "content": content
-                                }) + "\n"
 
         except Exception as e:
             yield json.dumps({"type": "message", "agent": "System", "content": f"Error: {str(e)}"}) + "\n"
