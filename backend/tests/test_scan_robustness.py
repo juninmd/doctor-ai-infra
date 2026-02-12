@@ -12,7 +12,7 @@ sys_modules = {
     "datadog_api_client": MagicMock(),
 }
 with patch.dict("sys.modules", sys_modules):
-    from backend.app.tools import observability
+    from app.tools import observability
 
 def test_scan_infrastructure_robustness():
     # Patch at the source where observability.py imports FROM

@@ -10,7 +10,7 @@ sys_modules = {
     "kubernetes.config": MagicMock(),
 }
 with patch.dict("sys.modules", sys_modules):
-    from backend.app.tools import runbooks
+    from app.tools import runbooks
 
 def test_execute_runbook_restart_service_k8s():
     # Mock DB Session
@@ -40,7 +40,7 @@ def test_execute_runbook_restart_service_k8s():
     # Ensure items is a list
     mock_k8s_client.list_namespaced_pod.return_value.items = [mock_pod]
 
-    with patch("backend.app.tools.runbooks.SessionLocal", return_value=mock_db):
+    with patch("app.tools.runbooks.SessionLocal", return_value=mock_db):
         # Patch the helper functions using object patch on the imported module
         with patch.object(runbooks, "_get_k8s_client", return_value=mock_k8s_client):
 
@@ -73,7 +73,7 @@ def test_execute_runbook_scale_up_k8s():
     mock_deployment.spec.replicas = 2
     mock_apps_client.read_namespaced_deployment.return_value = mock_deployment
 
-    with patch("backend.app.tools.runbooks.SessionLocal", return_value=mock_db):
+    with patch("app.tools.runbooks.SessionLocal", return_value=mock_db):
         with patch.object(runbooks, "_get_k8s_apps_client", return_value=mock_apps_client):
 
             result = runbooks.execute_runbook.invoke({"runbook_name": "scale_up", "target_service": "payment-api"})

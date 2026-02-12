@@ -2,17 +2,11 @@
 import sys
 from unittest.mock import MagicMock
 
-# MOCK RAG Engine BEFORE importing backend.main
+# MOCK RAG Engine BEFORE importing main
 mock_rag = MagicMock()
 mock_rag.rag_engine = MagicMock()
 mock_rag.initialize_rag = MagicMock()
 sys.modules["app.rag"] = mock_rag
-sys.modules["backend.app.rag"] = mock_rag
-
-# Also mock tools that depend on RAG if necessary, but app.rag should be enough if imported as 'app.rag'
-# Verify imports in graph.py
-# graph.py imports from .tools.incident
-# tools/incident.py imports from app.rag
 
 import pytest
 import json
@@ -20,7 +14,7 @@ import asyncio
 from langchain_core.messages import AIMessage, ToolMessage
 
 # Now import main
-from backend.main import chat_endpoint, ChatRequest
+from main import chat_endpoint, ChatRequest
 
 @pytest.mark.asyncio
 async def test_chat_endpoint_streams_tool_output():
@@ -55,7 +49,7 @@ async def test_chat_endpoint_streams_tool_output():
 
     # Patch app_graph in main
     with pytest.MonkeyPatch.context() as m:
-        m.setattr("backend.main.app_graph", mock_graph)
+        m.setattr("main.app_graph", mock_graph)
 
         request = ChatRequest(message="status")
         response = await chat_endpoint(request)

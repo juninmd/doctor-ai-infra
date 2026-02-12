@@ -3,7 +3,7 @@ import pytest
 from unittest.mock import MagicMock, patch
 import os
 import requests
-from backend.app.tools.real import analyze_ci_failure
+from app.tools.real import analyze_ci_failure
 
 def test_analyze_ci_failure_uses_sdk():
     # Mock environment variables
@@ -34,7 +34,7 @@ def test_analyze_ci_failure_uses_sdk():
             mock_client.models.generate_content.return_value = mock_response
 
             # Patch get_google_sdk_client in real.py
-            with patch("backend.app.tools.real.get_google_sdk_client", return_value=mock_client) as mock_get_client:
+            with patch("app.tools.real.get_google_sdk_client", return_value=mock_client) as mock_get_client:
 
                 result = analyze_ci_failure.invoke({"build_id": "999", "repo_name": "test-repo"})
 
@@ -59,9 +59,9 @@ def test_analyze_ci_failure_fallback():
             mock_get.side_effect = [mock_jobs_resp, mock_log_resp]
 
             # Mock SDK as None
-            with patch("backend.app.tools.real.get_google_sdk_client", return_value=None):
+            with patch("app.tools.real.get_google_sdk_client", return_value=None):
                 # Mock Standard LLM
-                with patch("backend.app.tools.real.get_llm") as mock_get_llm:
+                with patch("app.tools.real.get_llm") as mock_get_llm:
                     mock_llm = MagicMock()
                     mock_llm.invoke.return_value.content = "Standard LLM Analysis"
                     mock_get_llm.return_value = mock_llm
