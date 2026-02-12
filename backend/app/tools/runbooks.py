@@ -4,6 +4,36 @@ import json
 from sqlalchemy.orm import Session
 from app.db import SessionLocal, Service, Runbook
 
+try:
+    from kubernetes import client, config
+except ImportError:
+    client = None
+    config = None
+
+def _get_k8s_client():
+    if not config:
+        return None
+    try:
+        config.load_kube_config()
+    except:
+        try:
+            config.load_incluster_config()
+        except:
+            return None
+    return client.CoreV1Api()
+
+def _get_k8s_apps_client():
+    if not config:
+        return None
+    try:
+        config.load_kube_config()
+    except:
+        try:
+            config.load_incluster_config()
+        except:
+            return None
+    return client.AppsV1Api()
+
 # --- Mock Data for Bootstrap ---
 INITIAL_SERVICE_CATALOG = {
     "payment-api": {
@@ -164,8 +194,47 @@ def execute_runbook(runbook_name: str, target_service: str) -> str:
         if runbook_name not in allowed_runbooks:
              return f"Warning: Runbook '{runbook_name}' is not linked to '{target_service}'. Executing anyway via override..."
 
-        # Mock execution logic (The implementation would go here, dispatching by runbook.implementation_key)
-        return f"SUCCESS: Executed runbook '{runbook_name}' on '{target_service}'. Operation completed."
+        # Execution Logic
+        msg = []
+        if runbook_name == "restart_service":
+            v1 = _get_k8s_client()
+            if v1:
+                try:
+                    # Find pods with label app=target_service (convention)
+                    pods = v1.list_namespaced_pod("default", label_selector=f"app={target_service}")
+                    if pods.items:
+                        for pod in pods.items:
+                            v1.delete_namespaced_pod(pod.metadata.name, "default")
+                        msg.append(f"K8s: Deleted {len(pods.items)} pods for '{target_service}'. Rollout restart triggered.")
+                    else:
+                        msg.append(f"K8s: No pods found with label 'app={target_service}'.")
+                except Exception as e:
+                    msg.append(f"K8s Error: {e}")
+            else:
+                msg.append(f"Simulated: Service '{target_service}' restarted (K8s client unavailable).")
+
+        elif runbook_name == "scale_up":
+            apps_v1 = _get_k8s_apps_client()
+            if apps_v1:
+                try:
+                    # Assume deployment name matches service name
+                    deployment = apps_v1.read_namespaced_deployment(target_service, "default")
+                    if deployment:
+                        new_replicas = (deployment.spec.replicas or 1) + 2
+                        patch = {"spec": {"replicas": new_replicas}}
+                        apps_v1.patch_namespaced_deployment(target_service, "default", patch)
+                        msg.append(f"K8s: Scaled '{target_service}' from {deployment.spec.replicas} to {new_replicas} replicas.")
+                    else:
+                        msg.append(f"K8s: Deployment '{target_service}' not found.")
+                except Exception as e:
+                    msg.append(f"K8s Error: {e}")
+            else:
+                msg.append(f"Simulated: Scaled up '{target_service}' (K8s client unavailable).")
+
+        else:
+            msg.append(f"SUCCESS: Executed runbook '{runbook_name}' on '{target_service}'. Operation completed.")
+
+        return "\n".join(msg)
     finally:
         db.close()
 

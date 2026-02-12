@@ -824,14 +824,36 @@ def analyze_ci_failure(build_id: str, repo_name: str = "", owner: str = "my-org"
                 log_resp = requests.get(log_url, headers=headers, timeout=15)
                 if log_resp.status_code == 200:
                     logs = log_resp.text
-                    # Use analyze_heavy_logs if it was importable, but we are in tools.py
-                    # Call LLM for analysis
-                    truncated = logs[-10000:] # Last 10k chars
 
-                    llm = get_llm()
-                    prompt = f"Analyze these CI/CD logs for job '{job_name}' and find the error:\n\n{truncated}"
-                    res = llm.invoke(prompt)
-                    report.append(f"AI Analysis:\n{res.content}")
+                    # Try Google GenAI SDK first for large context
+                    client = get_google_sdk_client()
+                    analysis = None
+
+                    if client:
+                        try:
+                            # Use full logs with Gemini Flash (up to 1M tokens!)
+                            response = client.models.generate_content(
+                                model="gemini-1.5-flash",
+                                contents=[
+                                    f"Analyze the CI/CD logs for job '{job_name}'.",
+                                    "Identify the specific error message and the root cause.",
+                                    "Suggest a fix if possible.",
+                                    f"LOGS:\n{logs}" # No truncation needed for Flash
+                                ]
+                            )
+                            analysis = f"Gemini Analysis:\n{response.text}"
+                        except Exception as e:
+                            print(f"Gemini SDK failed: {e}")
+
+                    if not analysis:
+                        # Fallback to standard LLM
+                        truncated = logs[-10000:] # Last 10k chars
+                        llm = get_llm()
+                        prompt = f"Analyze these CI/CD logs for job '{job_name}' and find the error:\n\n{truncated}"
+                        res = llm.invoke(prompt)
+                        analysis = f"AI Analysis (Standard):\n{res.content}"
+
+                    report.append(analysis)
                 else:
                     report.append("Could not fetch logs (Status: " + str(log_resp.status_code) + ")")
             except Exception as e:
