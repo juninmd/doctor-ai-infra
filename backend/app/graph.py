@@ -22,11 +22,11 @@ from .tools.dashboard import analyze_infrastructure_health
 from .tools.incident import (
     create_incident, update_incident_status, list_incidents, get_incident_details,
     generate_postmortem, log_incident_event, build_incident_timeline, manage_incident_channels,
-    suggest_remediation, generate_remediation_plan
+    list_incident_channels, suggest_remediation, generate_remediation_plan
 )
 from .tools.runbooks import list_runbooks, execute_runbook, lookup_service, get_service_dependencies, get_service_topology
 from .tools.visualizer import generate_topology_diagram
-from .tools.knowledge import search_knowledge_base
+from .tools.knowledge import search_knowledge_base, generate_service_catalog_docs
 from .tools.code import generate_code_fix, create_github_pr, read_repo_file, list_repo_files
 from .tools.cost import estimate_gcp_cost
 from .state import AgentState
@@ -46,13 +46,15 @@ incident_tools = [
     create_incident, update_incident_status, list_incidents, get_incident_details,
     generate_postmortem, search_knowledge_base, create_issue,
     log_incident_event, build_incident_timeline, manage_incident_channels,
-    suggest_remediation, generate_remediation_plan, check_on_call_schedule, send_slack_notification
+    list_incident_channels, suggest_remediation, generate_remediation_plan,
+    check_on_call_schedule, send_slack_notification
 ]
 automation_tools = [list_runbooks, execute_runbook, lookup_service]
 topology_tools = [
     get_service_dependencies, get_service_topology, lookup_service,
     generate_topology_diagram, trace_service_health, analyze_infrastructure_health,
-    investigate_root_cause, scan_infrastructure, analyze_heavy_logs
+    investigate_root_cause, scan_infrastructure, analyze_heavy_logs,
+    generate_service_catalog_docs
 ]
 
 # 3. Create Specialist Agents
@@ -99,7 +101,7 @@ incident_agent = make_specialist(
         "SRE TIP: You are the Incident Commander. \n"
         "1. Create a channel with `manage_incident_channels`.\n"
         "2. Use `log_incident_event` to record your Hypotheses, Evidence, and Actions in real-time. This builds the timeline.\n"
-        "3. Use `build_incident_timeline` to summarize the state for the user.\n"
+        "3. Use `build_incident_timeline` (default text) or `build_incident_timeline(format='mermaid')` to visualize the sequence of events.\n"
         "4. Always act on facts, not assumptions."
     )
 )
@@ -112,7 +114,8 @@ topology_agent = make_specialist(
         "Use the scan_infrastructure tool immediately when the user asks for help or status updates.\n"
         "Use `analyze_infrastructure_health` or `scan_infrastructure` to provide a global status report when asked about general health.\n"
         "Use `trace_service_health` to visualize cascading failures across the stack.\n"
-        "Use `generate_topology_diagram` for architectural overviews."
+        "Use `generate_topology_diagram` for architectural overviews.\n"
+        "Use `generate_service_catalog_docs` to produce a full documentation report of the system."
     )
 )
 

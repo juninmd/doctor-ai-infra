@@ -35,6 +35,7 @@ class Incident(Base):
 
     post_mortem = relationship("PostMortem", back_populates="incident", uselist=False)
     events = relationship("IncidentEvent", back_populates="incident", order_by="IncidentEvent.created_at")
+    channels = relationship("IncidentChannel", back_populates="incident")
 
     def add_update(self, message: str):
         updates_list = json.loads(self.updates)
@@ -51,6 +52,18 @@ class Incident(Base):
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updates": json.loads(self.updates)
         }
+
+class IncidentChannel(Base):
+    __tablename__ = "incident_channels"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    incident_id = Column(String, ForeignKey("incidents.id"))
+    platform = Column(String)  # Slack, Zoom
+    channel_name = Column(String)
+    url = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    incident = relationship("Incident", back_populates="channels")
 
 class PostMortem(Base):
     __tablename__ = "post_mortems"
