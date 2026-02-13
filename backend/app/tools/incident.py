@@ -3,7 +3,7 @@ from typing import List, Dict, Optional
 import datetime
 import uuid
 import json
-from app.db import init_db, SessionLocal, Incident, PostMortem, IncidentEvent
+from app.db import init_db, SessionLocal, Incident, PostMortem, IncidentEvent, IncidentChannel
 from app.llm import get_llm, get_google_sdk_client
 from langchain_core.prompts import ChatPromptTemplate
 from app.rag import rag_engine
@@ -120,10 +120,12 @@ def update_incident_status(incident_id: str, status: str, update_message: str = 
         db.close()
 
 @tool
-def build_incident_timeline(incident_id: str) -> str:
+def build_incident_timeline(incident_id: str, format: str = "text") -> str:
     """
-    Constructs a Markdown-formatted timeline of the incident based on logged events.
-    Useful for catching up on context or generating reports.
+    Constructs a timeline of the incident based on logged events.
+    Args:
+        incident_id: The ID of the incident.
+        format: 'text' (Markdown list) or 'mermaid' (Mermaid Gantt chart for visualization).
     """
     db = SessionLocal()
     try:
@@ -134,6 +136,27 @@ def build_incident_timeline(incident_id: str) -> str:
         # Fetch events sorted by time
         events = db.query(IncidentEvent).filter(IncidentEvent.incident_id == incident_id).order_by(IncidentEvent.created_at).all()
 
+        if not events:
+            return "No events logged yet."
+
+        if format.lower() == "mermaid":
+            # Generate a Mermaid Gantt Chart for the timeline (IncidentFox feature)
+            diagram = ["gantt", f"    title Incident Timeline: {inc.title}"]
+            diagram.append("    dateFormat YYYY-MM-DD HH:mm:ss")
+            diagram.append("    axisFormat %H:%M")
+
+            diagram.append(f"    section Incident {inc.id}")
+
+            for e in events:
+                # Sanitize content for mermaid
+                safe_content = e.content.replace(':', '-').replace('"', "'")[:40]
+                t_str = e.created_at.strftime("%Y-%m-%d %H:%M:%S")
+                # Use milestone for events
+                diagram.append(f"    {e.event_type} ({e.source}) - {safe_content} :milestone, {t_str}, 0m")
+
+            return "```mermaid\n" + "\n".join(diagram) + "\n```"
+
+        # Default Text Format
         timeline = [f"# Incident Timeline: {inc.title} ({inc.id})"]
         timeline.append(f"**Severity:** {inc.severity} | **Status:** {inc.status}\n")
 
@@ -148,23 +171,79 @@ def build_incident_timeline(incident_id: str) -> str:
 
             timeline.append(f"- **{timestamp}** {icon} [{e.source}] **{e.event_type}**: {e.content}")
 
-        if not events:
-            timeline.append("No events logged yet.")
-
         return "\n".join(timeline)
     finally:
         db.close()
 
 @tool
-def manage_incident_channels(action: str, channel_name: str, platform: str = "Slack") -> str:
+def manage_incident_channels(action: str, channel_name: str, incident_id: str, platform: str = "Slack") -> str:
     """
-    Manages communication channels for incidents (Mock).
+    Manages communication channels for incidents.
     Args:
         action: 'create', 'archive', 'invite'.
         channel_name: Name of the channel (e.g., '#inc-123').
+        incident_id: The ID of the incident to link.
         platform: 'Slack' or 'Zoom'.
     """
-    return f"MOCK: Successfully performed '{action}' on {platform} channel '{channel_name}'."
+    db = SessionLocal()
+    try:
+        inc = db.query(Incident).filter(Incident.id == incident_id).first()
+        if not inc:
+             return f"Incident {incident_id} not found."
+
+        if action == "create":
+            # Check if exists
+            exists = db.query(IncidentChannel).filter(
+                IncidentChannel.channel_name == channel_name,
+                IncidentChannel.platform == platform
+            ).first()
+
+            if exists:
+                return f"Channel {channel_name} on {platform} already exists (ID: {exists.id})."
+
+            # Create
+            new_channel = IncidentChannel(
+                incident_id=incident_id,
+                platform=platform,
+                channel_name=channel_name,
+                url=f"https://{platform.lower()}.com/app/{channel_name}" # Mock URL
+            )
+            db.add(new_channel)
+
+            # Log event directly since calling another tool inside a tool can be tricky depending on execution context
+            # simpler to just use DB
+            event = IncidentEvent(
+                incident_id=incident_id,
+                source="System",
+                event_type="Action",
+                content=f"Created {platform} channel: {channel_name}"
+            )
+            db.add(event)
+
+            db.commit()
+            return f"Successfully created {platform} channel '{channel_name}' for Incident {incident_id}."
+
+        return f"Action '{action}' simulated for {channel_name}."
+    except Exception as e:
+        db.rollback()
+        return f"Error managing channels: {e}"
+    finally:
+        db.close()
+
+@tool
+def list_incident_channels(incident_id: str) -> str:
+    """
+    Lists all communication channels linked to an incident.
+    """
+    db = SessionLocal()
+    try:
+        channels = db.query(IncidentChannel).filter(IncidentChannel.incident_id == incident_id).all()
+        if not channels:
+            return "No channels linked to this incident."
+
+        return "\n".join([f"- {c.platform}: {c.channel_name} ({c.url})" for c in channels])
+    finally:
+        db.close()
 
 @tool
 def list_incidents(status: Optional[str] = None) -> str:

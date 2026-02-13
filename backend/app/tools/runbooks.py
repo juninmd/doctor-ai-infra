@@ -171,12 +171,13 @@ def list_runbooks() -> str:
         db.close()
 
 @tool
-def execute_runbook(runbook_name: str, target_service: str) -> str:
+def execute_runbook(runbook_name: str, target_service: str, dry_run: bool = False) -> str:
     """
     Executes a specific runbook against a target service.
     Args:
         runbook_name: The name of the runbook to run.
         target_service: The service to target (e.g., payment-api).
+        dry_run: If True, simulates the action without making changes.
     """
     db = SessionLocal()
     try:
@@ -192,10 +193,15 @@ def execute_runbook(runbook_name: str, target_service: str) -> str:
         # Verify association
         allowed_runbooks = [r.name for r in service.runbooks]
         if runbook_name not in allowed_runbooks:
-             return f"Warning: Runbook '{runbook_name}' is not linked to '{target_service}'. Executing anyway via override..."
+             msg_prefix = f"Warning: Runbook '{runbook_name}' is not linked to '{target_service}'. Executing anyway via override..."
+        else:
+             msg_prefix = ""
+
+        if dry_run:
+            return f"{msg_prefix}[DRY RUN] Would execute runbook '{runbook_name}' on '{target_service}'. Action Description: {runbook.description}"
 
         # Execution Logic
-        msg = []
+        msg = [msg_prefix] if msg_prefix else []
         if runbook_name == "restart_service":
             v1 = _get_k8s_client()
             if v1:
