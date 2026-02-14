@@ -1,4 +1,4 @@
-import { Activity, Server, Cloud, Shield, GitBranch, Terminal } from 'lucide-react';
+import { Activity, Server, Cloud, Shield, GitBranch, Terminal, RefreshCw, Zap } from 'lucide-react';
 import { GlassCard } from './GlassCard';
 import type { AgentStep } from './ThinkingProcess';
 import { motion } from 'framer-motion';
@@ -12,14 +12,16 @@ export interface SystemStatus {
     gmp: { status: MetricStatus; msg: string };
     datadog: { status: MetricStatus; msg: string };
     azion: { status: MetricStatus; msg: string };
+    ai_insight?: string;
 }
 
 interface AgentDashboardProps {
     steps: AgentStep[];
     systemStatus?: SystemStatus;
+    onRefresh?: () => void;
 }
 
-export function AgentDashboard({ steps, systemStatus }: AgentDashboardProps) {
+export function AgentDashboard({ steps, systemStatus, onRefresh }: AgentDashboardProps) {
     const activeStep = steps.find(s => s.status === 'active');
     const activeAgent = activeStep?.agent || "Supervisor";
 
@@ -43,11 +45,34 @@ export function AgentDashboard({ steps, systemStatus }: AgentDashboardProps) {
 
     return (
         <div className="flex flex-col gap-4 h-full">
+             {status.ai_insight && (
+                <GlassCard className="p-4 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border-indigo-500/20">
+                    <h3 className="text-xs font-bold text-indigo-300 tracking-wider mb-2 flex items-center gap-2">
+                        <Zap className="w-3 h-3" />
+                        AI INSIGHT
+                    </h3>
+                    <p className="text-sm text-indigo-100/90 leading-relaxed font-medium">
+                        {status.ai_insight}
+                    </p>
+                </GlassCard>
+             )}
+
              <GlassCard className="p-4">
-                <h3 className="text-xs font-bold text-white/50 tracking-wider mb-4 flex items-center gap-2">
-                    <Activity className="w-3 h-3 text-blue-400" />
-                    LIVE INFRASTRUCTURE STATUS
-                </h3>
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xs font-bold text-white/50 tracking-wider flex items-center gap-2">
+                        <Activity className="w-3 h-3 text-blue-400" />
+                        LIVE STATUS
+                    </h3>
+                    {onRefresh && (
+                        <button
+                            onClick={onRefresh}
+                            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/50 hover:text-white transition-colors"
+                            title="Scan Infrastructure"
+                        >
+                            <RefreshCw className="w-3 h-3" />
+                        </button>
+                    )}
+                </div>
                 <div className="grid grid-cols-2 gap-3">
                     <StatusMetric label="K8s Clusters" value={status.k8s.msg} status={status.k8s.status} />
                     <StatusMetric label="GCP Status" value={status.gcp.msg} status={status.gcp.status} />

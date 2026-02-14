@@ -48,12 +48,7 @@ export function ChatInterface() {
     }
   }, [messages]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || isProcessing) return;
-
-    const userMsg = input;
-    setInput('');
+  const sendMessage = async (userMsg: string) => {
     setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
     setIsProcessing(true);
     setSteps([]);
@@ -115,9 +110,6 @@ export function ChatInterface() {
                 });
             } else if (event.type === 'message') {
               setMessages(prev => {
-                // If the last message is from the same agent, append to it (optional, but cleaner)
-                // However, for this multi-agent setup, we usually want distinct blocks.
-                // Let's just append for now.
                 return [...prev, {
                     role: 'assistant',
                     content: event.content,
@@ -140,6 +132,19 @@ export function ChatInterface() {
       setMessages(prev => [...prev, { role: 'assistant', content: "Error communicating with the agent system." }]);
       setIsProcessing(false);
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || isProcessing) return;
+    const msg = input;
+    setInput('');
+    await sendMessage(msg);
+  };
+
+  const handleRefresh = async () => {
+    if (isProcessing) return;
+    await sendMessage("Scan infrastructure status");
   };
 
   return (
@@ -226,7 +231,7 @@ export function ChatInterface() {
 
         {/* Dashboard Area (Right/Bottom) */}
         <div className="hidden lg:block h-full overflow-hidden">
-            <AgentDashboard steps={steps} systemStatus={systemStatus} />
+            <AgentDashboard steps={steps} systemStatus={systemStatus} onRefresh={handleRefresh} />
         </div>
       </div>
     </div>

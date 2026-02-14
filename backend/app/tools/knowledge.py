@@ -1,7 +1,33 @@
 from langchain_core.tools import tool
+from langchain_core.documents import Document
 from app.rag import rag_engine
 from app.db import SessionLocal, Service, Runbook
 import datetime
+
+@tool
+def add_knowledge_base_item(content: str, category: str = "general", source: str = "user_input") -> str:
+    """
+    Adds a new item (note, runbook snippet, or observation) to the SRE Knowledge Base.
+    This allows the agent to learn dynamically.
+
+    Args:
+        content: The text content to store.
+        category: The category (e.g., 'runbook', 'incident_note', 'best_practice').
+        source: Origin of the info (default: 'user_input').
+    """
+    try:
+        doc = Document(
+            page_content=content,
+            metadata={
+                "type": category,
+                "source": source,
+                "timestamp": datetime.datetime.now().isoformat()
+            }
+        )
+        rag_engine.add_documents([doc])
+        return f"Successfully added item to Knowledge Base (Category: {category})."
+    except Exception as e:
+        return f"Error adding to Knowledge Base: {str(e)}"
 
 @tool
 def search_knowledge_base(query: str) -> str:

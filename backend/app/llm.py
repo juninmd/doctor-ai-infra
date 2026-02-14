@@ -43,6 +43,7 @@ def get_llm():
 def get_google_sdk_client():
     """
     Returns the raw Google Gen AI SDK client (v1.0+) for advanced features like File API.
+    This bypasses LangChain for direct access to the Gemini API features not yet exposed by the wrapper.
     """
     try:
         from google import genai

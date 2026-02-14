@@ -1,105 +1,35 @@
-# SRE Agent - The Best Infrastructure Manager of 2026
+# Infra Manager 2026 - Feature Documentation
 
-Welcome to the future of SRE. This project implements a cutting-edge **Autonomous Infrastructure Agent** that manages, troubleshoots, and heals your infrastructure.
+Welcome to the Next-Gen Autonomous Infrastructure Manager. This document outlines the new features introduced in the 2026 release.
 
-It is built with the **Best Stack of 2026**:
--   **LangGraph** for robust multi-agent orchestration.
--   **Google GenAI SDK (v1.0+)** for high-speed, long-context reasoning with Gemini 1.5 Flash.
--   **Ollama** compatibility for local, privacy-focused operations.
--   **React 19 + Vite** for a futuristic, real-time dashboard.
+## 🧠 AI Insights
 
-## Key Features
+The **Live Status** dashboard now includes an **AI Insight** card.
+*   **What it is:** A real-time, AI-generated executive summary of your infrastructure's health.
+*   **How it works:** When you click "Refresh" (or run a scan), the agent aggregates data from K8s, GCP, Datadog, and Azion. It then uses Gemini 1.5 Flash to synthesize this data into a single, actionable sentence.
+*   **Example:** *"System Normal: All pods are running, but Datadog reports a slight latency spike in the payment service."*
 
-### 1. Autonomous Agent Swarm (The Supervisor)
-The system uses a **Supervisor Agent** that intelligently routes tasks to specialized sub-agents:
--   **K8s_Specialist**: Deep dives into pods, logs, and events.
--   **GCP_Specialist**: Manages Cloud resources and GMP.
--   **Datadog_Specialist**: Checks metrics and alerts.
--   **Azion_Specialist**: Manages Edge Computing and CDNs.
--   **Incident_Specialist**: Handles the full incident lifecycle (Detection -> Timeline -> Post-Mortem).
--   **Topology_Specialist**: Visualizes the entire system map.
+## 📚 Dynamic Knowledge Base
 
-### 2. AI-Driven Root Cause Analysis
-Unlike traditional tools that just dump logs, our agent **correlates signals** from K8s, Datadog, and GCP to find the *true* root cause.
--   **Tool:** `investigate_root_cause`
--   **Mechanism:** Aggregates data -> Uses Gemini 1.5 Flash (via `analyze_heavy_logs`) -> Outputs a Probability Score for each potential cause.
+The agent now learns! You can feed it runbooks, notes, or incident reports on the fly.
 
-### 3. Smart Remediation (Runbooks on the Fly)
-Don't have a runbook for an issue? The agent generates one for you.
--   **Tool:** `generate_remediation_plan`
--   **Mechanism:** Analyzes the incident context -> Generates a step-by-step, actionable Markdown checklist with specific `kubectl` or `gcloud` commands.
+### New Tool: `add_knowledge_base_item`
+*   **Usage:** The agent (or you via chat) can add information to the RAG system.
+*   **Example Chat Command:** "Remember that error 503 on service X usually means the DB is restarting."
+*   **Under the Hood:** The agent calls `add_knowledge_base_item`, indexing the text into ChromaDB for future retrieval.
 
-### 4. Live Infrastructure Scan & Dynamic Dashboard
-Get a holistic view of your stack in seconds. The agent output updates the **Live Infrastructure Status** dashboard in real-time.
--   **Tool:** `scan_infrastructure`
--   **Mechanism:** The tool appends a hidden JSON block (wrapped in ` ```json `) to its response. The Frontend (`ChatInterface.tsx`) parses this block and updates the `AgentDashboard` component.
--   **Output:** A human-readable summary AND a structured JSON block for frontend integration.
+## 🔄 Proactive Refresh
 
-### 5. Topology Visualization
-Understand your dependencies instantly.
--   **Tool:** `generate_topology_diagram`
--   **Output:** Mermaid.js graph definition.
+*   **Refresh Button:** A new refresh button on the dashboard triggers a `scan_infrastructure` command behind the scenes.
+*   **Chat Integration:** The refresh action is treated as a user request ("Scan infrastructure status"), ensuring the conversation context is updated with the latest findings.
 
-### 6. Hybrid Mode (Ollama + Gemini)
-The agent is designed to run anywhere.
--   **Performance Mode**: Set `LLM_PROVIDER=gemini` and `GOOGLE_API_KEY`. The agent uses Google's global network and **Gemini 1.5 Flash** for heavy tasks (Log Analysis, Post-Mortems).
--   **Privacy/Local Mode**: Set `LLM_PROVIDER=ollama`. The agent gracefully falls back to your local LLM (e.g., Llama 3) for all tasks, truncating logs to fit context windows automatically.
+## 🛠️ Tech Stack & Compatibility
 
-### 7. AI-Driven Log Analysis
-We replaced traditional RegEx with **Semantic Log Analysis**.
--   **Tool:** `analyze_log_patterns`
--   **Mechanism:** It reads up to 500 lines of logs and uses the LLM to identify *unique* error patterns and suggest root causes, rather than just counting keyword matches.
+*   **Google GenAI SDK**: Utilizing `gemini-1.5-flash` for high speed and low cost.
+*   **Ollama Fallback**: Fully compatible with local models (Llama 3) for offline or air-gapped environments.
+*   **Frontend**: React 19 + Vite + Framer Motion for a "Glassmorphism" UI.
 
-### 8. CI/CD Pipeline Tracking
--   **Tool:** `check_pipeline_status`
--   **Integration:** Connects to GitHub Actions to report on build/deploy status directly in the chat.
+## Future Roadmap
 
-## Getting Started
-
-### Prerequisites
--   Python 3.12+
--   Node.js 20+
--   `uv` (Recommended for fast Python package management)
-
-### Configuration
-Set the following environment variables in `.env`:
-
-```bash
-# LLM Provider
-LLM_PROVIDER=gemini  # or 'ollama'
-GOOGLE_API_KEY=your_gemini_api_key
-
-# Infrastructure Credentials (for Real Tools)
-KUBECONFIG=~/.kube/config
-GOOGLE_APPLICATION_CREDENTIALS=path/to/sa.json
-DD_API_KEY=...
-DD_APP_KEY=...
-AZION_TOKEN=...
-GITHUB_TOKEN=...
-```
-
-### Running the Backend
-```bash
-cd backend
-uv pip install -r requirements.txt
-python main.py
-```
-
-### Running the Frontend
-```bash
-cd frontend
-pnpm install
-pnpm dev
-```
-
-## Migration Note (Google ADK)
-This project has been fully migrated to use the **Google GenAI SDK (v1.0+)** (`google-genai`).
--   Legacy `google.generativeai` usage has been removed.
--   `langchain-google-genai` >= 2.0 is used for LangChain integration.
--   Direct SDK calls are used for high-throughput tasks like Log Analysis.
-
-## Inspiration
-This project integrates the best ideas from:
--   **Datadog Bits AI**: Correlation & Remediation.
--   **SmythOS**: Flexible Agent Graph.
--   **IncidentFox**: Automated Timelines.
+*   **Auto-Remediation Approval Flow**: UI for approving dangerous actions.
+*   **Mermaid.js Topology**: Visualizing service maps directly in the chat.

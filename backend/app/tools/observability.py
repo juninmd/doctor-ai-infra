@@ -139,18 +139,25 @@ def scan_infrastructure() -> str:
         list_k8s_pods, check_gcp_status, get_active_alerts, check_azion_edge,
         query_gmp_prometheus
     )
+    from app.llm import get_google_sdk_client
+    import concurrent.futures
+    import json
+    import datetime
 
     report = ["Infrastructure Scan Report:"]
 
     # Data for structured output
     health_data = {
-        "timestamp": "now",
+        "timestamp": datetime.datetime.now().isoformat(),
         "k8s": {"status": "unknown", "msg": ""},
         "gcp": {"status": "unknown", "msg": ""},
         "gmp": {"status": "unknown", "msg": ""},
         "datadog": {"status": "unknown", "msg": ""},
-        "azion": {"status": "unknown", "msg": ""}
+        "azion": {"status": "unknown", "msg": ""},
+        "ai_insight": ""
     }
+
+    raw_scan_results = []
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
         f_k8s = executor.submit(list_k8s_pods.invoke, {"namespace": "default"})
@@ -161,10 +168,11 @@ def scan_infrastructure() -> str:
 
         try:
             k8s_res = f_k8s.result()
+            raw_scan_results.append(f"[K8s] {k8s_res}")
             # Crude analysis of the string output
             if "Error" in k8s_res and not "Running" in k8s_res:
                 report.append(f"- Kubernetes: 🔴 Issue Detected ({k8s_res[:100]}...)")
-                health_data["k8s"] = {"status": "critical", "msg": k8s_res[:100]}
+                health_data["k8s"] = {"status": "critical", "msg": k8s_res[:50]}
             else:
                 pod_count = k8s_res.count("Running") if "Running" in k8s_res else "Unknown"
                 report.append(f"- Kubernetes: 🟢 Active ({pod_count} Pods Running)")
@@ -175,6 +183,7 @@ def scan_infrastructure() -> str:
 
         try:
             gcp_res = f_gcp.result()
+            raw_scan_results.append(f"[GCP] {gcp_res}")
             report.append(f"- GCP: {gcp_res}")
             health_data["gcp"] = {"status": "healthy", "msg": "Active"} # Simplified
         except Exception as e:
@@ -183,6 +192,7 @@ def scan_infrastructure() -> str:
 
         try:
             gmp_res = f_gmp.result()
+            raw_scan_results.append(f"[GMP] {gmp_res}")
             if "Error" in gmp_res:
                 report.append(f"- GMP: 🔴 Check Failed ({gmp_res[:50]}...)")
                 health_data["gmp"] = {"status": "critical", "msg": gmp_res[:50]}
@@ -195,6 +205,7 @@ def scan_infrastructure() -> str:
 
         try:
             dd_res = f_dd.result()
+            raw_scan_results.append(f"[Datadog] {dd_res}")
             if "No active alerts" in dd_res:
                  report.append(f"- Datadog: 🟢 No active alerts")
                  health_data["datadog"] = {"status": "healthy", "msg": "No alerts"}
@@ -208,6 +219,7 @@ def scan_infrastructure() -> str:
 
         try:
             az_res = f_azion.result()
+            raw_scan_results.append(f"[Azion] {az_res}")
             if "Active" in az_res:
                  # Check if we can parse the count
                  count = az_res.count("id") if "id" in az_res else "Multiple"
@@ -219,6 +231,32 @@ def scan_infrastructure() -> str:
         except Exception as e:
              report.append(f"- Azion: 🔴 Check Failed ({str(e)})")
              health_data["azion"] = {"status": "error", "msg": str(e)}
+
+    # AI Insight Generation (The "Intelligence" Layer)
+    ai_summary = "System Normal."
+    client = get_google_sdk_client()
+    scan_text = "\n".join(raw_scan_results)
+
+    if client:
+        try:
+            response = client.models.generate_content(
+                model="gemini-1.5-flash",
+                contents=[
+                    "You are a futuristic System Monitor AI.",
+                    "Analyze the following infrastructure scan results.",
+                    "Provide a ONE-SENTENCE, punchy, executive summary of the health state.",
+                    "If everything is fine, say something witty and positive.",
+                    "If there are issues, pinpoint the most critical one immediately.",
+                    f"SCAN DATA:\n{scan_text}"
+                ]
+            )
+            ai_summary = response.text.strip()
+        except Exception:
+            # Silent fallback
+            pass
+
+    health_data["ai_insight"] = ai_summary
+    report.append(f"\n🧠 **AI Insight:** {ai_summary}")
 
     # Append hidden JSON block for frontend integration
     report.append(f"\n```json\n{json.dumps(health_data)}\n```")
