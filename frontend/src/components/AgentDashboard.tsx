@@ -35,12 +35,14 @@ export function AgentDashboard({ steps, systemStatus, onRefresh }: AgentDashboar
     ];
 
     // Default mock status if none provided
-    const status = systemStatus || {
+    const status: SystemStatus = systemStatus || {
+        timestamp: "unknown",
         k8s: { status: 'unknown', msg: 'Not Scanned' },
         gcp: { status: 'unknown', msg: 'Not Scanned' },
         gmp: { status: 'unknown', msg: 'Not Scanned' },
         datadog: { status: 'unknown', msg: 'Not Scanned' },
-        azion: { status: 'unknown', msg: 'Not Scanned' }
+        azion: { status: 'unknown', msg: 'Not Scanned' },
+        ai_insight: undefined
     };
 
     return (
