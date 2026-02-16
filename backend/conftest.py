@@ -34,9 +34,9 @@ def db_session():
     # Create a session for the test itself (if needed)
     session = TestingSessionLocal()
 
-    # Patch app.db.SessionLocal to use our testing factory
-    # This ensures that when tools call SessionLocal(), they get a session connected to our test DB
-    with patch("app.db.SessionLocal", side_effect=TestingSessionLocal):
+    # Patch app.db.SessionLocal to return the SAME session instance
+    # This avoids transaction isolation issues with in-memory SQLite
+    with patch("app.db.SessionLocal", return_value=session):
         # We also need to patch it in specific tools if they imported it directly
         # But since we can't easily patch all, we rely on them importing from app.db
         # or we patch specifically in the test file if needed.
@@ -45,9 +45,9 @@ def db_session():
         # if the module is already imported.
         # So we patch the reference in app.tools.incident as well.
         # And app.rag used by initialize_rag
-        p1 = patch("app.tools.incident.SessionLocal", side_effect=TestingSessionLocal)
-        p2 = patch("app.rag.SessionLocal", side_effect=TestingSessionLocal)
-        p3 = patch("app.tools.runbooks.SessionLocal", side_effect=TestingSessionLocal) # Just in case
+        p1 = patch("app.tools.incident.SessionLocal", return_value=session)
+        p2 = patch("app.rag.SessionLocal", return_value=session)
+        p3 = patch("app.tools.runbooks.SessionLocal", return_value=session) # Just in case
 
         with p1, p2, p3:
             yield session
