@@ -4,6 +4,7 @@ import os
 import sys
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 from app.db import Base
 
 # Ensure backend is in path
@@ -18,7 +19,13 @@ def db_session():
     Creates a fresh in-memory database for each test and patches SessionLocal.
     """
     # Create engine and tables
-    engine = create_engine(TEST_DATABASE_URL, connect_args={"check_same_thread": False})
+    # Use StaticPool to ensure the same in-memory connection is shared
+    # across multiple session creations within the test.
+    engine = create_engine(
+        TEST_DATABASE_URL,
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool
+    )
     Base.metadata.create_all(bind=engine)
 
     # Create a session factory bound to this engine
