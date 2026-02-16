@@ -344,27 +344,30 @@ def generate_postmortem(incident_id: str) -> str:
         )
 
         report_content = None
+
+        # Try Gemini SDK first (better performance for large contexts)
         if client:
             try:
                 response = client.models.generate_content(
                     model="gemini-1.5-flash",
                     contents=f"{system_msg}\n\nContext:\n{context}"
                 )
-                report_content = response.text
+                if response and response.text:
+                    report_content = response.text
             except Exception as e:
-                 # Fallback to standard LLM
                  print(f"Gemini SDK failed ({e}), falling back to standard LLM.")
                  report_content = None
 
+        # Fallback to standard LLM (Ollama or LangChain adapter)
         if not report_content:
-            llm = get_llm()
-            prompt = ChatPromptTemplate.from_messages([
-                ("system", system_msg),
-                ("human", "{context}")
-            ])
-
-            chain = prompt | llm
             try:
+                llm = get_llm()
+                prompt = ChatPromptTemplate.from_messages([
+                    ("system", system_msg),
+                    ("human", "{context}")
+                ])
+
+                chain = prompt | llm
                 res = chain.invoke({"context": context})
                 report_content = res.content
             except Exception as llm_error:
@@ -427,15 +430,22 @@ def generate_remediation_plan(incident_context: str) -> str:
         f"Incident Context:\n{incident_context}"
     )
 
+    plan_content = None
+
     if client:
         try:
             response = client.models.generate_content(
                 model="gemini-1.5-flash",
                 contents=prompt_text
             )
-            return f"**Generated Remediation Plan (Gemini):**\n\n{response.text}"
+            if response and response.text:
+                plan_content = f"**Generated Remediation Plan (Gemini):**\n\n{response.text}"
         except Exception as e:
-            return f"Error generating plan with Gemini SDK: {e}. Falling back to standard LLM."
+            print(f"Error generating plan with Gemini SDK: {e}. Falling back to standard LLM.")
+            plan_content = None
+
+    if plan_content:
+        return plan_content
 
     # Fallback to standard LLM (Ollama or LangChain adapter)
     llm = get_llm()
