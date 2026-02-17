@@ -11,8 +11,13 @@ def test_rag_initialization(db_session, mock_rag_engine):
     db_session.add(r1)
     db_session.commit()
 
-    # Run init
-    initialize_rag()
+    # Mock SessionLocal to return the test session
+    # Mock rag_engine to be the mock object passed in
+    with patch("app.rag.SessionLocal", return_value=db_session), \
+         patch("app.rag.rag_engine", mock_rag_engine), \
+         patch.dict("os.environ", {"FORCE_RAG_INDEX": "true"}):
+            # Run init
+            initialize_rag()
 
     # Verify add_documents was called on the mock engine
     assert mock_rag_engine.add_documents.called

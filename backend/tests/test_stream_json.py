@@ -64,17 +64,18 @@ async def test_chat_endpoint_streams_tool_output():
                     pass
 
         # Verification
-        # We expect TWO message events from Topology_Specialist
-        # 1. The ToolMessage (containing JSON)
-        # 2. The AIMessage (summary)
+        # We expect two types of events from Topology_Specialist
+        # 1. The ToolOutput (containing JSON)
+        # 2. The Message (summary)
 
+        tool_outputs = [e for e in events if e["type"] == "tool_output" and e["agent"] == "Topology_Specialist"]
         messages = [e for e in events if e["type"] == "message" and e["agent"] == "Topology_Specialist"]
 
-        # Check if we got the JSON content
-        has_json = any("```json" in m["content"] for m in messages)
+        # Check if we got the JSON content in tool_output
+        has_json = any("```json" in t["content"] for t in tool_outputs)
 
-        assert has_json, f"The stream did not contain the ToolMessage with the JSON block! Got: {[m['content'] for m in messages]}"
-        assert len(messages) == 2, f"Expected 2 messages, got {len(messages)}"
+        assert has_json, f"The stream did not contain the ToolOutput with the JSON block! Got: {tool_outputs}"
+        assert len(messages) == 1, f"Expected 1 summary message, got {len(messages)}"
 
 if __name__ == "__main__":
     asyncio.run(test_chat_endpoint_streams_tool_output())
