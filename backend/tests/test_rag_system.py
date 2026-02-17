@@ -2,6 +2,7 @@ import pytest
 from unittest.mock import MagicMock, patch
 from app.rag import initialize_rag
 from app.db import Service, Runbook, Incident
+import os
 
 def test_rag_initialization(db_session, mock_rag_engine):
     # Setup data in the in-memory DB
@@ -11,8 +12,16 @@ def test_rag_initialization(db_session, mock_rag_engine):
     db_session.add(r1)
     db_session.commit()
 
-    # Run init
-    initialize_rag()
+    # Verify data is in DB
+    assert db_session.query(Service).count() == 1
+    assert db_session.query(Runbook).count() == 1
+
+    # Mock rag_engine to be the mock object passed in (explicitly, to be safe)
+    # We rely on conftest for SessionLocal, but we double check app.rag.rag_engine
+    with patch("app.rag.rag_engine", mock_rag_engine), \
+         patch.dict("os.environ", {"FORCE_RAG_INDEX": "true"}):
+            # Run init
+            initialize_rag()
 
     # Verify add_documents was called on the mock engine
     assert mock_rag_engine.add_documents.called
