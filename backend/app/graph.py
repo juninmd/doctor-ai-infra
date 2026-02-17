@@ -105,7 +105,17 @@ incident_agent = make_specialist(
         "4. Always act on facts, not assumptions."
     )
 )
-automation_agent = make_specialist(automation_tools, "Runbook Automation & Site Reliability Engineering")
+automation_agent = make_specialist(
+    automation_tools,
+    "Runbook Automation & Site Reliability Engineering",
+    heuristics=(
+        "SRE TIP: SAFETY FIRST. You have the power to change infrastructure.\n"
+        "1. Always use `execute_runbook` with `dry_run=True` FIRST to verify the action.\n"
+        "2. Show the dry-run output to the user and ask for explicit confirmation.\n"
+        "3. Only run with `dry_run=False` after receiving user approval.\n"
+        "4. If a service is unknown, use `lookup_service`."
+    )
+)
 topology_agent = make_specialist(
     topology_tools,
     "Service Topology & Dependency Mapping",
@@ -139,31 +149,30 @@ supervisor_system_prompt = (
     "Your team consists of: {members}.\n"
     "Your job is to orchestrate the troubleshooting session from Code to Deploy.\n"
     "If the user speaks Portuguese, reply in Portuguese.\n"
-    "1. FIRST STEP: If the user asks for a general checkup or status, route to Topology_Specialist to use `scan_infrastructure`.\n"
+    "1. INTELLIGENT START: If the user's request is vague (e.g., 'Help', 'System is slow'), ALWAYS route to Topology_Specialist to run `scan_infrastructure` first.\n"
     "2. Analyze the user's request or the previous agent's findings.\n"
-    "3. Decide which specialist is best suited to take the NEXT step.\n"
-    "   - General Status / Dashboard / 'How is the system?' / 'Troubleshoot' (no specific target) -> Topology_Specialist\n"
-    "   - Issues with pods/clusters or Large Log Analysis -> K8s_Specialist\n"
-    "   - Issues with Cloud/VMs, GMP, or Billing/Cost -> GCP_Specialist\n"
-    "   - Metrics/Alerts -> Datadog_Specialist\n"
-    "   - Edge/CDN -> Azion_Specialist\n"
-    "   - Repos/PRs/Code Changes/Bug Fixes -> Code_Specialist\n"
-    "   - Builds/Pipelines/ArgoCD -> CICD_Specialist\n"
-    "   - Vulnerabilities/IAM -> Security_Specialist\n"
-    "   - Incidents/Outages/Status updates/Post-Mortems -> Incident_Specialist\n"
-    "   - Runbooks/Remediation/Scripts -> Automation_Specialist\n"
-    "   - Service Dependencies/Topology/Who calls what -> Topology_Specialist\n"
-    "4. SPECIALIZED ROUTING (Latency & Errors):\n"
-    "   - If the user reports 'High Latency', 'Slow Site', or '5xx Errors' -> Route to Azion_Specialist FIRST to check the Edge.\n"
-    "   - If Azion checks out OK, route to Datadog_Specialist to check APM/Metrics.\n"
-    "   - If Datadog shows backend slowness, route to K8s_Specialist or GCP_Specialist.\n"
-    "5. CRITICAL: If a specialist reports a dependency error (e.g. 'ConnectionRefused' or 'Database down'), "
-    "IMMEDIATELY route to the specialist responsible for that dependency (e.g. GCP_Specialist for DBs) or Topology_Specialist to verify impact.\n"
-    "6. Always summarize the key findings from the last agent before making the next move.\n"
-    "7. PROACTIVE REMEDIATION: If a Root Cause is identified (e.g., by `investigate_root_cause` or `analyze_log_patterns`), "
-    "route to Incident_Specialist to generate a remediation plan using `generate_remediation_plan` immediately, unless the user explicitly asked otherwise.\n"
-    "8. If the issue is resolved or you have a final answer, respond with FINISH.\n"
-    "Tone: Friendly 🤖, professional, and confident. Use emojis to make the interface 2026-fresh."
+    "3. ROUTING LOGIC:\n"
+    "   - General Status / Dashboard / 'How is the system?' -> Topology_Specialist\n"
+    "   - Issues with pods, containers, or Large Log Analysis -> K8s_Specialist\n"
+    "   - Issues with Cloud/VMs, SQL, GMP, or Cost -> GCP_Specialist\n"
+    "   - APM/Metrics/Alerts -> Datadog_Specialist\n"
+    "   - Edge/CDN/WAF -> Azion_Specialist\n"
+    "   - Code/PRs/Commits -> Code_Specialist\n"
+    "   - CI/CD/ArgoCD -> CICD_Specialist\n"
+    "   - Security/IAM/Vulnerabilities -> Security_Specialist\n"
+    "   - Incidents/Post-Mortems/Remediation Plans -> Incident_Specialist\n"
+    "   - Runbooks/Scripts/Restarting Services -> Automation_Specialist\n"
+    "4. SMART TRIAGE (Latency & Errors):\n"
+    "   - 'High Latency' or '5xx Errors' -> Route to Azion_Specialist FIRST to check the Edge.\n"
+    "   - If Azion is healthy, route to Datadog_Specialist (check Backend Metrics).\n"
+    "   - If DB errors are found, route to GCP_Specialist.\n"
+    "5. DEPENDENCY AWARENESS: If a dependency fails (e.g., 'ConnectionRefused'), route to the owner of that dependency.\n"
+    "6. PROACTIVE AGENT BEHAVIOR:\n"
+    "   - If a Root Cause is found, AUTOMATICALLY route to Incident_Specialist to `generate_remediation_plan`.\n"
+    "   - If a risky action is needed, route to Automation_Specialist.\n"
+    "7. Always summarize findings before routing.\n"
+    "8. If the task is complete, respond with FINISH.\n"
+    "Tone: Friendly 🤖, professional, and confident. Use emojis."
 )
 
 class RouterSchema(BaseModel):

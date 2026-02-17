@@ -9,7 +9,7 @@ import json
 import asyncio
 
 from app.graph import app_graph
-from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 from app.rag import initialize_rag
 from contextlib import asynccontextmanager
 
@@ -76,7 +76,7 @@ async def chat_endpoint(request: ChatRequest):
                                 msgs = [msgs]
 
                             for msg in msgs:
-                                # Check for tool calls
+                                # Check for tool calls (Request)
                                 if hasattr(msg, 'tool_calls') and msg.tool_calls:
                                     for tool_call in msg.tool_calls:
                                         yield json.dumps({
@@ -86,7 +86,16 @@ async def chat_endpoint(request: ChatRequest):
                                             "args": tool_call.get('args', {})
                                         }) + "\n"
 
-                                if msg.content:
+                                # Check for tool outputs (Result)
+                                if isinstance(msg, ToolMessage):
+                                    yield json.dumps({
+                                        "type": "tool_output",
+                                        "agent": node,
+                                        "tool": msg.name or "unknown",
+                                        "content": msg.content
+                                    }) + "\n"
+
+                                if msg.content and not isinstance(msg, ToolMessage):
                                     yield json.dumps({
                                         "type": "message",
                                         "agent": node,
