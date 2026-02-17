@@ -18,6 +18,7 @@ def test_rag_initialization(db_session, mock_rag_engine):
 
     # Mock rag_engine to be the mock object passed in (explicitly, to be safe)
     # We rely on conftest for SessionLocal, but we double check app.rag.rag_engine
+    # NOTE: db_session fixture in conftest.py already patches app.rag.SessionLocal to use the test DB.
     with patch("app.rag.rag_engine", mock_rag_engine), \
          patch.dict("os.environ", {"FORCE_RAG_INDEX": "true"}):
             # Run init
