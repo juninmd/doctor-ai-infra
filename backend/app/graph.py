@@ -247,4 +247,5 @@ workflow.add_conditional_edges(
     }
 )
 
-app_graph = workflow.compile()
+# Human-in-the-Loop: Interrupt before risky actions
+app_graph = workflow.compile(interrupt_before=["Automation_Specialist"])
