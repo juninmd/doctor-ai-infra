@@ -1,5 +1,6 @@
 import pytest
 from unittest.mock import MagicMock, patch
+import app.rag  # Import the module directly
 from app.rag import initialize_rag
 from app.db import Service, Runbook, Incident
 import os
@@ -13,13 +14,23 @@ def test_rag_initialization(db_session, mock_rag_engine):
     db_session.commit()
 
     # Verify data is in DB
-    assert db_session.query(Service).count() == 1
-    assert db_session.query(Runbook).count() == 1
+    assert db_session.query(Service).filter(Service.name == "service-a").count() == 1
+    assert db_session.query(Runbook).filter(Runbook.name == "restart-db").count() == 1
 
-    # Mock rag_engine to be the mock object passed in (explicitly, to be safe)
-    # We rely on conftest for SessionLocal, but we double check app.rag.rag_engine
-    with patch("app.rag.rag_engine", mock_rag_engine), \
+    # Create a mock for SessionLocal that returns our fixture session
+    mock_session_factory = MagicMock(return_value=db_session)
+
+    # Patch the rag_engine AND SessionLocal on the imported module object directly
+    # This ensures we use the test DB and test Mock RAG, regardless of import aliasing
+    with patch.object(app.rag, "rag_engine", mock_rag_engine), \
+         patch.object(app.rag, "SessionLocal", mock_session_factory), \
          patch.dict("os.environ", {"FORCE_RAG_INDEX": "true"}):
+
+            # Verify patch is active
+            assert app.rag.rag_engine is mock_rag_engine
+            # assert app.rag.SessionLocal() is db_session # Can't call twice if session closes?
+            # db_session fixture yields a session.
+
             # Run init
             initialize_rag()
 
@@ -34,11 +45,15 @@ def test_rag_initialization(db_session, mock_rag_engine):
     service_docs = [d for d in docs if d.metadata.get('type') == 'service']
     runbook_docs = [d for d in docs if d.metadata.get('type') == 'runbook']
 
-    assert len(service_docs) >= 1
-    assert service_docs[0].metadata['name'] == "service-a"
+    # Robust check: Ensure our test data is present
+    service_names = [d.metadata['name'] for d in service_docs]
+    runbook_names = [d.metadata['name'] for d in runbook_docs]
 
-    assert len(runbook_docs) >= 1
-    assert runbook_docs[0].metadata['name'] == "restart-db"
+    assert "service-a" in service_names
+    assert "restart-db" in runbook_names
+
+    # Also verify we are NOT seeing the polluted data (optional, but good for sanity)
+    assert "auth-service" not in service_names
 
 def test_rag_search_via_mock(mock_rag_engine):
     # Test that we can use the mock interface
