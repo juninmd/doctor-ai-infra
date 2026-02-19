@@ -3,9 +3,9 @@ from unittest.mock import MagicMock, patch
 import sys
 from io import StringIO
 from langchain_core.messages import AIMessage
-from backend.cli import run_single_shot, run_interactive
+from cli import run_single_shot, run_interactive
 
-@patch("backend.cli.app_graph")
+@patch("cli.app_graph")
 def test_run_single_shot(mock_graph, capsys):
     # Setup mock stream
     mock_graph.stream.return_value = [
@@ -20,7 +20,7 @@ def test_run_single_shot(mock_graph, capsys):
     assert "Routing to -> K8s_Specialist" in captured.out
     assert "Checking pods..." in captured.out
 
-@patch("backend.cli.app_graph")
+@patch("cli.app_graph")
 @patch("builtins.input", side_effect=["status", "exit"])
 def test_run_interactive(mock_input, mock_graph, capsys):
     # Setup mock stream
