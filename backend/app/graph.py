@@ -29,6 +29,7 @@ from .tools.visualizer import generate_topology_diagram
 from .tools.knowledge import search_knowledge_base, generate_service_catalog_docs
 from .tools.code import generate_code_fix, create_github_pr, read_repo_file, list_repo_files
 from .tools.cost import estimate_gcp_cost
+from .tools.reasoning import generate_hypothesis
 from .state import AgentState
 
 # 1. Initialize LLM
@@ -56,6 +57,7 @@ topology_tools = [
     investigate_root_cause, scan_infrastructure, analyze_heavy_logs,
     generate_service_catalog_docs
 ]
+planner_tools = [generate_hypothesis, search_knowledge_base]
 
 # 3. Create Specialist Agents
 def make_specialist(tools, persona, heuristics=""):
@@ -128,6 +130,16 @@ topology_agent = make_specialist(
         "Use `generate_service_catalog_docs` to produce a full documentation report of the system."
     )
 )
+planner_agent = make_specialist(
+    planner_tools,
+    "Hypothesis Generation & Reasoning Engine",
+    heuristics=(
+        "SRE TIP: You are the brain. When a problem is complex or the root cause is unclear:\n"
+        "1. Use `generate_hypothesis` to brainstorm potential causes.\n"
+        "2. Use `search_knowledge_base` to see if this has happened before.\n"
+        "3. Provide a structured plan to the Supervisor."
+    )
+)
 
 # 4. Define the Supervisor (Router)
 members = [
@@ -140,7 +152,8 @@ members = [
     "Security_Specialist",
     "Incident_Specialist",
     "Automation_Specialist",
-    "Topology_Specialist"
+    "Topology_Specialist",
+    "Planner_Specialist"
 ]
 options = ["FINISH"] + members
 
@@ -153,6 +166,7 @@ supervisor_system_prompt = (
     "2. Analyze the user's request or the previous agent's findings.\n"
     "3. ROUTING LOGIC:\n"
     "   - General Status / Dashboard / 'How is the system?' -> Topology_Specialist\n"
+    "   - Complex/Unknown Issues / 'Hypothesize' / 'Plan' -> Planner_Specialist\n"
     "   - Issues with pods, containers, or Large Log Analysis -> K8s_Specialist\n"
     "   - Issues with Cloud/VMs, SQL, GMP, or Cost -> GCP_Specialist\n"
     "   - APM/Metrics/Alerts -> Datadog_Specialist\n"
@@ -181,7 +195,7 @@ class RouterSchema(BaseModel):
         "K8s_Specialist", "GCP_Specialist", "Datadog_Specialist",
         "Azion_Specialist", "Code_Specialist", "CICD_Specialist",
         "Security_Specialist", "Incident_Specialist", "Automation_Specialist",
-        "Topology_Specialist", "FINISH"
+        "Topology_Specialist", "Planner_Specialist", "FINISH"
     ] = Field(description="The next agent to route to, or FINISH.")
 
 def supervisor_node(state: AgentState):
@@ -223,6 +237,7 @@ workflow.add_node("Security_Specialist", sec_agent)
 workflow.add_node("Incident_Specialist", incident_agent)
 workflow.add_node("Automation_Specialist", automation_agent)
 workflow.add_node("Topology_Specialist", topology_agent)
+workflow.add_node("Planner_Specialist", planner_agent)
 
 workflow.add_edge(START, "Supervisor")
 
@@ -243,6 +258,7 @@ workflow.add_conditional_edges(
         "Incident_Specialist": "Incident_Specialist",
         "Automation_Specialist": "Automation_Specialist",
         "Topology_Specialist": "Topology_Specialist",
+        "Planner_Specialist": "Planner_Specialist",
         "FINISH": END
     }
 )
