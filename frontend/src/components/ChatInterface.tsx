@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { Send, Terminal, Cpu, ShieldCheck, Activity } from 'lucide-react';
 import { GlassCard } from './GlassCard';
 import { ThinkingProcess, type AgentStep } from './ThinkingProcess';
@@ -17,7 +17,6 @@ export function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [steps, setSteps] = useState<AgentStep[]>([]);
-  const [systemStatus, setSystemStatus] = useState<SystemStatus | undefined>(undefined);
   const [threadId] = useState(() => crypto.randomUUID());
   const [isWaitingForApproval, setIsWaitingForApproval] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -28,19 +27,20 @@ export function ChatInterface() {
     }
   }, [messages, steps]);
 
-  useEffect(() => {
-    // Auto-detect infrastructure status from agent messages
-    if (messages.length > 0) {
-        const lastMsg = messages[messages.length - 1];
-        if (lastMsg.role === 'assistant') {
+  // Auto-detect infrastructure status from agent messages
+  const systemStatus = useMemo(() => {
+    // Iterate backwards to find the latest status
+    for (let i = messages.length - 1; i >= 0; i--) {
+        const msg = messages[i];
+        if (msg.role === 'assistant') {
             // Look for hidden JSON block from scan_infrastructure
-            const match = lastMsg.content.match(/```json\n({[\s\S]*?})\n```/);
+            const match = msg.content.match(/```json\n({[\s\S]*?})\n```/);
             if (match && match[1]) {
                 try {
                     const data = JSON.parse(match[1]);
                     // Validate minimal structure
                     if (data.k8s && data.gcp) {
-                        setSystemStatus(data);
+                        return data as SystemStatus;
                     }
                 } catch (e) {
                     console.debug("Failed to parse status JSON", e);
@@ -48,6 +48,7 @@ export function ChatInterface() {
             }
         }
     }
+    return undefined;
   }, [messages]);
 
   const sendMessage = async (userMsg: string) => {
