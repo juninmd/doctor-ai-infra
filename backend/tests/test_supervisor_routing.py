@@ -54,6 +54,7 @@ def test_supervisor_fallback_on_error():
         mock_chain = MagicMock()
         # Simulate an error
         mock_chain.invoke.side_effect = Exception("Ollama overload")
+        mock_chain.__or__.return_value = mock_chain
 
         mock_prompt_instance = MockPrompt.from_messages.return_value
         mock_prompt_instance.partial.return_value = mock_prompt_instance

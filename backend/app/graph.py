@@ -2,7 +2,9 @@ from typing import Literal
 from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.graph import StateGraph, END, START
 from langgraph.prebuilt import create_react_agent
+from langgraph.checkpoint.memory import MemorySaver
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.output_parsers import JsonOutputParser
 from pydantic import BaseModel, Field
 
 from .llm import get_llm
@@ -208,20 +210,33 @@ def supervisor_node(state: AgentState):
     ]).partial(members=", ".join(members))
 
     # Google Gen AI Best Practice: Structured Output
-    chain = prompt | llm.with_structured_output(RouterSchema)
-
+    # Try native structured output first (Gemini / New Ollama)
     try:
-        decision = chain.invoke(messages)
+        chain = prompt | llm.with_structured_output(RouterSchema)
+        decision = chain.invoke({"messages": messages})
         return {"next": decision.next_agent}
     except Exception as e:
-        # Fallback in case of error (e.g. model overload or schema mismatch)
-        # We can fallback to raw string parsing or just default to FINISH/Topology
-        print(f"Routing Error: {e}")
-        # Robust fallback: Notify user and route to Topology Specialist for a safe check
-        return {
-            "next": "Topology_Specialist",
-            "messages": [SystemMessage(content=f"⚠️ Auto-Routing Error (Ollama/LLM issue): {str(e)}. Falling back to Topology Specialist for a system health scan.")]
-        }
+        print(f"Structured Output Failed (likely Ollama old version or model limitation): {e}")
+        # Fallback: Use standard JSON prompting
+        try:
+            parser = JsonOutputParser(pydantic_object=RouterSchema)
+            fallback_prompt = ChatPromptTemplate.from_messages([
+                ("system", supervisor_system_prompt),
+                MessagesPlaceholder(variable_name="messages"),
+                ("system", "Who should act next? Respond with a JSON object having 'reasoning' and 'next_agent' keys.\n{format_instructions}")
+            ]).partial(members=", ".join(members), format_instructions=parser.get_format_instructions())
+
+            fallback_chain = fallback_prompt | llm | parser
+            decision = fallback_chain.invoke({"messages": messages})
+            # decision is a dict here, not a Pydantic model
+            return {"next": decision.get("next_agent", "Topology_Specialist")}
+        except Exception as e2:
+             print(f"Fallback Routing Error: {e2}")
+             # Robust fallback: Notify user and route to Topology Specialist for a safe check
+             return {
+                "next": "Topology_Specialist",
+                "messages": [SystemMessage(content=f"⚠️ Auto-Routing Error (Ollama/LLM issue): {str(e2)}. Falling back to Topology Specialist for a system health scan.")]
+             }
 
 # 5. Build the Graph
 workflow = StateGraph(AgentState)
@@ -264,4 +279,5 @@ workflow.add_conditional_edges(
 )
 
 # Human-in-the-Loop: Interrupt before risky actions
-app_graph = workflow.compile(interrupt_before=["Automation_Specialist"])
+checkpointer = MemorySaver()
+app_graph = workflow.compile(checkpointer=checkpointer, interrupt_before=["Automation_Specialist"])

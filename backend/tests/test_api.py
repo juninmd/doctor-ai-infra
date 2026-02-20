@@ -10,10 +10,17 @@ def test_read_root():
     assert response.status_code == 200
     assert response.json() == {"message": "Infrastructure Agent Manager is Running"}
 
+@patch("app.graph.app_graph.get_state")
 @patch("app.graph.app_graph.astream")
-def test_chat_endpoint_stream(mock_astream):
+def test_chat_endpoint_stream(mock_astream, mock_get_state):
+    # Mock get_state to avoid connection errors or empty state
+    mock_state = MagicMock()
+    mock_state.values = {}
+    mock_state.next = None
+    mock_get_state.return_value = mock_state
+
     # Mock the generator
-    async def mock_generator(inputs):
+    async def mock_generator(inputs, config=None):
         # Simulate Supervisor routing
         yield {"Supervisor": {"next": "K8s_Specialist"}}
         # Simulate Specialist response
