@@ -41,11 +41,21 @@ async def test_chat_endpoint_streams_tool_output():
     }
 
     # Mock astream to yield this once then finish
-    async def mock_astream(input):
+    async def mock_astream(input, config=None):
         yield mock_node_output
         yield {"Supervisor": {"next": "FINISH"}}
 
     mock_graph.astream = mock_astream
+
+    # Mock get_state
+    mock_state_start = MagicMock()
+    mock_state_start.values = {} # New thread
+    mock_state_start.next = None
+
+    mock_state_end = MagicMock()
+    mock_state_end.next = None # Finished properly
+
+    mock_graph.get_state.side_effect = [mock_state_start, mock_state_end]
 
     # Patch app_graph in main
     with pytest.MonkeyPatch.context() as m:

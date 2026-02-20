@@ -17,6 +17,13 @@ def test_supervisor_failure_fallback(mock_llm):
         # 3. Configure chain.invoke to raise an exception
         mock_chain.invoke.side_effect = Exception("Simulated LLM Failure")
 
+        # Ensure fallback chain also fails (so we hit the final safety net)
+        # fallback_chain = prompt | llm | parser
+        # prompt | llm returns mock_chain.
+        # mock_chain | parser needs to return something that raises on invoke.
+        # Let's make it return mock_chain itself.
+        mock_chain.__or__.return_value = mock_chain
+
         # 4. Run the test
         from app.graph import supervisor_node
         from app.state import AgentState
