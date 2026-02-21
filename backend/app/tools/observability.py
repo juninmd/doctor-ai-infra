@@ -237,23 +237,36 @@ def scan_infrastructure() -> str:
     client = get_google_sdk_client()
     scan_text = "\n".join(raw_scan_results)
 
-    if client:
-        try:
+    # Prepare prompt logic
+    prompt_msgs = [
+        "You are a futuristic System Monitor AI.",
+        "Analyze the following infrastructure scan results.",
+        "Provide a ONE-SENTENCE, punchy, executive summary of the health state.",
+        "If everything is fine, say something witty and positive.",
+        "If there are issues, pinpoint the most critical one immediately.",
+        f"SCAN DATA:\n{scan_text}"
+    ]
+
+    try:
+        if client:
             response = client.models.generate_content(
                 model="gemini-1.5-flash",
-                contents=[
-                    "You are a futuristic System Monitor AI.",
-                    "Analyze the following infrastructure scan results.",
-                    "Provide a ONE-SENTENCE, punchy, executive summary of the health state.",
-                    "If everything is fine, say something witty and positive.",
-                    "If there are issues, pinpoint the most critical one immediately.",
-                    f"SCAN DATA:\n{scan_text}"
-                ]
+                contents=prompt_msgs
             )
             ai_summary = response.text.strip()
-        except Exception:
-            # Silent fallback
-            pass
+        else:
+            raise ImportError("Google SDK not configured")
+    except Exception:
+        # Fallback to standard LLM (Ollama / LangChain)
+        try:
+            from app.llm import get_llm
+            llm = get_llm()
+            # Convert list to single string for standard LLM
+            full_prompt = "\n".join(prompt_msgs)
+            res = llm.invoke(full_prompt)
+            ai_summary = res.content.strip()
+        except Exception as e:
+            ai_summary = f"System Normal (AI Analysis Failed: {str(e)})"
 
     health_data["ai_insight"] = ai_summary
     report.append(f"\n🧠 **AI Insight:** {ai_summary}")
