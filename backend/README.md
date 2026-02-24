@@ -57,6 +57,14 @@ pytest backend/tests/
 ```
 All tests should pass, verifying the graph logic, tool integrations, and API endpoints.
 
+### Best of 2026 Features Tests
+To verify the advanced capabilities (Service Catalog Docs, Incident Timelines, Remediation Plans, On-Call Schedules), run:
+```bash
+export PYTHONPATH=$PYTHONPATH:$(pwd)/backend
+pytest backend/tests/test_best_of_2026.py
+```
+These tests ensure that the agent correctly generates Markdown documentation, Mermaid Gantt charts, and handles LLM fallbacks (Gemini vs Ollama) for complex reasoning tasks.
+
 ## API Usage
 
 - **POST /chat**: interact with the agent.
