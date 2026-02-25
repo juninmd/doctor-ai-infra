@@ -262,7 +262,7 @@ export function ChatInterface() {
                         </div>
                     </div>
                 ) : (
-                    <form onSubmit={handleSubmit} className="relative">
+                    <form onSubmit={handleSubmit} className="relative" data-testid="chat-form">
                         <input
                             type="text"
                             value={input}
@@ -273,6 +273,7 @@ export function ChatInterface() {
                         />
                         <button
                             type="submit"
+                            aria-label="Send message"
                             disabled={!input.trim() || isProcessing}
                             className="absolute right-2 top-2 p-2 rounded-lg bg-blue-500/20 hover:bg-blue-500/40 text-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                         >
