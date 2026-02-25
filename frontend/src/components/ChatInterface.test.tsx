@@ -3,7 +3,7 @@ import { ChatInterface } from './ChatInterface';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 // Mock fetch globally
-global.fetch = vi.fn();
+globalThis.fetch = vi.fn();
 
 // Mock MarkdownRenderer to avoid ESM/remark-gfm issues in JSDOM
 vi.mock('./MarkdownRenderer', () => ({
@@ -41,7 +41,7 @@ describe('ChatInterface', () => {
       JSON.stringify({ type: 'final' }) + '\n'
     ];
 
-    (global.fetch as any).mockResolvedValueOnce(createStreamResponse(streamData));
+    (globalThis.fetch as any).mockResolvedValueOnce(createStreamResponse(streamData));
 
     render(<ChatInterface />);
 
@@ -63,7 +63,7 @@ describe('ChatInterface', () => {
     const supervisors = await screen.findAllByText(/Supervisor/);
     expect(supervisors.length).toBeGreaterThan(0);
 
-    expect(global.fetch).toHaveBeenCalledWith('/chat', expect.objectContaining({
+    expect(globalThis.fetch).toHaveBeenCalledWith('/chat', expect.objectContaining({
       method: 'POST',
       body: expect.stringContaining('System is slow')
     }));
@@ -77,7 +77,7 @@ describe('ChatInterface', () => {
       JSON.stringify({ type: 'final' }) + '\n'
     ];
 
-    (global.fetch as any).mockResolvedValueOnce(createStreamResponse(streamData));
+    (globalThis.fetch as any).mockResolvedValueOnce(createStreamResponse(streamData));
 
     render(<ChatInterface />);
 
@@ -100,7 +100,7 @@ describe('ChatInterface', () => {
       JSON.stringify({ type: 'approval_required' }) + '\n'
     ];
 
-    (global.fetch as any).mockResolvedValueOnce(createStreamResponse(streamData));
+    (globalThis.fetch as any).mockResolvedValueOnce(createStreamResponse(streamData));
 
     render(<ChatInterface />);
 
@@ -119,12 +119,12 @@ describe('ChatInterface', () => {
         JSON.stringify({ type: 'message', content: 'Service restarted.', agent: 'Automation_Specialist' }) + '\n',
         JSON.stringify({ type: 'final' }) + '\n'
     ];
-    (global.fetch as any).mockResolvedValueOnce(createStreamResponse(resumeStreamData));
+    (globalThis.fetch as any).mockResolvedValueOnce(createStreamResponse(resumeStreamData));
 
     fireEvent.click(screen.getByText('Approve'));
 
     await waitFor(() => {
-        expect(global.fetch).toHaveBeenCalledWith('/chat/resume', expect.objectContaining({
+        expect(globalThis.fetch).toHaveBeenCalledWith('/chat/resume', expect.objectContaining({
             method: 'POST',
             body: expect.stringContaining('"action":"approve"')
         }));
