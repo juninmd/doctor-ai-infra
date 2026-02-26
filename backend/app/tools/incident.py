@@ -1,9 +1,10 @@
 from langchain_core.tools import tool
+from langchain_core.documents import Document
 from typing import List, Dict, Optional
 import datetime
 import uuid
 import json
-from app.db import init_db, SessionLocal, Incident, PostMortem, IncidentEvent, IncidentChannel
+from app.db import init_db, SessionLocal, Incident, PostMortem, IncidentEvent, IncidentChannel, Runbook, Service
 from app.llm import get_llm, get_google_sdk_client
 from langchain_core.prompts import ChatPromptTemplate
 from app.rag import rag_engine
@@ -378,10 +379,105 @@ def generate_postmortem(incident_id: str) -> str:
         db.add(pm)
         db.commit()
 
-        return f"Post-Mortem generated and saved for {incident_id}.\n\nPreview:\n{report_content[:500]}..."
+        # Immediate Self-Learning: Index into RAG
+        try:
+            doc = Document(
+                page_content=f"Post-Mortem for Incident: {inc.title}\nReport Content:\n{report_content}",
+                metadata={"type": "post_mortem", "incident_id": inc.id, "source": "post_mortem_gen"}
+            )
+            rag_engine.add_documents([doc])
+            learn_msg = "\n(Self-Learning: Added to Knowledge Base)"
+        except Exception as rag_err:
+            learn_msg = f"\n(Warning: Failed to index in Knowledge Base: {rag_err})"
+
+        return f"Post-Mortem generated and saved for {incident_id}.{learn_msg}\n\nPreview:\n{report_content[:500]}..."
     except Exception as e:
         db.rollback()
         return f"Error generating post-mortem: {str(e)}"
+    finally:
+        db.close()
+
+@tool
+def generate_runbook_from_incident(incident_id: str, runbook_name: str) -> str:
+    """
+    Analyzes a resolved incident's post-mortem and automatically generates a reusable Runbook.
+    The new Runbook is saved to the library with 'manual_steps' implementation.
+
+    Args:
+        incident_id: The ID of the resolved incident.
+        runbook_name: A unique name for the new runbook (e.g., 'fix_db_deadlock').
+    """
+    db = SessionLocal()
+    try:
+        inc = db.query(Incident).filter(Incident.id == incident_id).first()
+        if not inc:
+            return f"Incident {incident_id} not found."
+
+        if not inc.post_mortem:
+            return f"No Post-Mortem found for incident {incident_id}. Generate one first."
+
+        # Check if runbook name exists
+        if db.query(Runbook).filter(Runbook.name == runbook_name).first():
+            return f"Runbook '{runbook_name}' already exists. Choose a different name."
+
+        pm_content = inc.post_mortem.content
+
+        # AI Generation
+        client = get_google_sdk_client()
+        prompt = (
+            f"Based on the following Post-Mortem report, extract the key Action Items or remediation steps "
+            f"and format them as a clear, reusable Markdown Runbook.\n"
+            f"Target Audience: Junior SRE on call.\n"
+            f"Post-Mortem Content:\n{pm_content}"
+        )
+
+        runbook_content = "Runbook Content Generation Failed."
+
+        if client:
+            try:
+                response = client.models.generate_content(
+                    model="gemini-1.5-flash",
+                    contents=prompt
+                )
+                if response and response.text:
+                    runbook_content = response.text
+            except Exception as e:
+                print(f"Gemini SDK failed: {e}")
+
+        if runbook_content == "Runbook Content Generation Failed.":
+             # Fallback
+             try:
+                 llm = get_llm()
+                 res = llm.invoke(prompt)
+                 runbook_content = res.content
+             except Exception as e:
+                 return f"Error generating runbook content: {e}"
+
+        # Create Runbook
+        new_runbook = Runbook(
+            name=runbook_name,
+            description=f"Auto-generated from Incident {incident_id}",
+            implementation_key="manual_steps",
+            content=runbook_content
+        )
+        db.add(new_runbook)
+        db.commit()
+
+        # Index new runbook into RAG immediately
+        try:
+             doc = Document(
+                page_content=f"Runbook: {runbook_name}\nDescription: {new_runbook.description}",
+                metadata={"type": "runbook", "name": runbook_name, "source": "auto_gen"}
+            )
+             rag_engine.add_documents([doc])
+        except:
+            pass
+
+        return f"Successfully created Runbook '{runbook_name}' from Incident {incident_id}."
+
+    except Exception as e:
+        db.rollback()
+        return f"Error: {e}"
     finally:
         db.close()
 

@@ -124,6 +124,7 @@ class Runbook(Base):
     name = Column(String, primary_key=True)
     description = Column(Text)
     implementation_key = Column(String) # Maps to python function key in code
+    content = Column(Text, nullable=True) # Actual steps/script for the runbook
 
     services = relationship("Service", secondary=service_runbooks, back_populates="runbooks")
 
@@ -131,7 +132,8 @@ class Runbook(Base):
         return {
             "name": self.name,
             "description": self.description,
-            "implementation_key": self.implementation_key
+            "implementation_key": self.implementation_key,
+            "content": self.content
         }
 
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
