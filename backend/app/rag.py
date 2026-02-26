@@ -3,7 +3,7 @@ from typing import List, Dict, Optional
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.documents import Document
-from app.db import SessionLocal, Incident, Service, Runbook
+from app.db import SessionLocal, Incident, Service, Runbook, PostMortem
 
 CHROMA_DB_DIR = "./chroma_db"
 
@@ -108,6 +108,22 @@ def initialize_rag():
                 metadata={"type": "incident", "id": inc.id, "source": "incident_db"}
             )
             docs.append(doc)
+
+        # 4. Index Post-Mortems (Self-Learning from Past Analysis)
+        pms = db.query(PostMortem).all()
+        for pm in pms:
+            # Fetch related incident for title context
+            inc_title = pm.incident.title if pm.incident else "Unknown Incident"
+            content = (
+                f"Post-Mortem for Incident: {inc_title}\n"
+                f"Report Content:\n{pm.content}"
+            )
+            doc = Document(
+                page_content=content,
+                metadata={"type": "post_mortem", "incident_id": pm.incident_id, "source": "post_mortem_db"}
+            )
+            docs.append(doc)
+
     except Exception as e:
         print(f"Error indexing for RAG: {e}")
     finally:

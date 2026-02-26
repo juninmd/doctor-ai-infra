@@ -275,3 +275,54 @@ def scan_infrastructure() -> str:
     report.append(f"\n```json\n{json.dumps(health_data)}\n```")
 
     return "\n".join(report)
+
+@tool
+def correlate_alerts(alerts_input: str = "") -> str:
+    """
+    Analyzes active alerts to identify patterns, correlations, and potential root causes.
+    If no input is provided, it fetches active alerts from Datadog.
+
+    Args:
+        alerts_input: Optional text containing a list of alerts. If empty, fetches real/mock alerts.
+    """
+    from app.llm import get_google_sdk_client
+    from app.tools import get_active_alerts
+
+    alerts_data = alerts_input
+    if not alerts_data:
+        # Fetch current alerts
+        try:
+             alerts_data = get_active_alerts.invoke({})
+        except Exception as e:
+             return f"Error fetching alerts: {e}"
+
+    if "No active alerts" in alerts_data:
+        return "No active alerts to correlate. System appears healthy."
+
+    client = get_google_sdk_client()
+    prompt = (
+        "You are a Senior SRE. Analyze the following list of alerts.\n"
+        "Group them by potential root cause (e.g., Database Latency -> API Failure).\n"
+        "Identify if these are independent issues or a cascading failure.\n"
+        "Recommend the Next Best Action.\n"
+        f"Alerts Data:\n{alerts_data}"
+    )
+
+    if client:
+        try:
+            response = client.models.generate_content(
+                model="gemini-1.5-flash",
+                contents=prompt
+            )
+            return f"**Alert Correlation Analysis (Gemini):**\n\n{response.text}"
+        except Exception as e:
+            print(f"Gemini SDK failed: {e}")
+
+    # Fallback
+    try:
+        from app.llm import get_llm
+        llm = get_llm()
+        res = llm.invoke(prompt)
+        return f"**Alert Correlation Analysis:**\n\n{res.content}"
+    except Exception as e:
+        return f"Error correlating alerts: {e}"

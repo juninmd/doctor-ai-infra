@@ -18,13 +18,15 @@ from .tools import (
     analyze_log_patterns, diagnose_service_health, analyze_ci_failure, create_issue,
     trace_service_health, purge_azion_cache, diagnose_azion_configuration,
     list_datadog_metrics, check_on_call_schedule, send_slack_notification,
-    investigate_root_cause, scan_infrastructure, analyze_heavy_logs, analyze_gcp_errors
+    investigate_root_cause, scan_infrastructure, analyze_heavy_logs, analyze_gcp_errors,
+    correlate_alerts
 )
 from .tools.dashboard import analyze_infrastructure_health
 from .tools.incident import (
     create_incident, update_incident_status, list_incidents, get_incident_details,
     generate_postmortem, log_incident_event, build_incident_timeline, manage_incident_channels,
-    list_incident_channels, suggest_remediation, generate_remediation_plan
+    list_incident_channels, suggest_remediation, generate_remediation_plan,
+    generate_runbook_from_incident
 )
 from .tools.runbooks import list_runbooks, execute_runbook, lookup_service, get_service_dependencies, get_service_topology
 from .tools.visualizer import generate_topology_diagram
@@ -40,7 +42,7 @@ llm = get_llm()
 # 2. Define Tools for each specialist
 k8s_tools = [list_k8s_pods, describe_pod, get_pod_logs, get_cluster_events, analyze_log_patterns, analyze_heavy_logs, diagnose_service_health, trace_service_health]
 gcp_tools = [check_gcp_status, query_gmp_prometheus, list_compute_instances, get_gcp_sql_instances, analyze_heavy_logs, analyze_gcp_errors, estimate_gcp_cost]
-datadog_tools = [get_datadog_metrics, get_active_alerts, list_datadog_metrics]
+datadog_tools = [get_datadog_metrics, get_active_alerts, list_datadog_metrics, correlate_alerts]
 azion_tools = [check_azion_edge, purge_azion_cache, diagnose_azion_configuration]
 code_tools = [check_github_repos, get_pr_status, list_recent_commits, generate_code_fix, create_github_pr, read_repo_file, list_repo_files]
 cicd_tools = [check_pipeline_status, get_argocd_sync_status, analyze_ci_failure]
@@ -50,7 +52,7 @@ incident_tools = [
     generate_postmortem, search_knowledge_base, create_issue,
     log_incident_event, build_incident_timeline, manage_incident_channels,
     list_incident_channels, suggest_remediation, generate_remediation_plan,
-    check_on_call_schedule, send_slack_notification
+    check_on_call_schedule, send_slack_notification, generate_runbook_from_incident
 ]
 automation_tools = [list_runbooks, execute_runbook, lookup_service]
 topology_tools = [

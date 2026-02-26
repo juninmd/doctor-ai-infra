@@ -202,6 +202,16 @@ def execute_runbook(runbook_name: str, target_service: str, dry_run: bool = Fals
 
         # Execution Logic
         msg = [msg_prefix] if msg_prefix else []
+
+        # Feature: Manual / Generated Runbooks
+        if runbook.implementation_key == "manual_steps":
+            return (
+                f"{msg_prefix}**Manual Runbook Execution:**\n"
+                f"Runbook: {runbook.name}\n"
+                f"Description: {runbook.description}\n\n"
+                f"**Instructions:**\n{runbook.content}"
+            )
+
         if runbook_name == "restart_service":
             v1 = _get_k8s_client()
             if v1:

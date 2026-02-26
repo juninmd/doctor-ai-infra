@@ -29,6 +29,30 @@ The agent now learns! You can feed it runbooks, notes, or incident reports on th
 *   **Ollama Fallback**: Fully compatible with local models (Llama 3) for offline or air-gapped environments.
 *   **Frontend**: React 19 + Vite + Framer Motion for a "Glassmorphism" UI.
 
+## 🚀 Best of 2026 Features (New!)
+
+### 🧠 Self-Learning Incident Post-Mortems
+The system now automatically "learns" from past incidents.
+*   **How it works:** When an `Incident_Specialist` generates a Post-Mortem report using `generate_postmortem`, the content is immediately indexed into the RAG Knowledge Base.
+*   **Benefit:** Future incidents with similar symptoms will automatically retrieve relevant past solutions and lessons learned.
+
+### 📖 Automated Runbook Generation
+Turn your incident learnings into actionable runbooks instantly.
+*   **New Tool:** `generate_runbook_from_incident(incident_id, runbook_name)`
+*   **Workflow:** After resolving an incident, ask the agent: *"Create a runbook named 'db_restart_procedure' from incident inc-123"*.
+*   **Result:** The AI extracts the successful remediation steps from the Post-Mortem and saves a new **Manual Runbook** to the library.
+
+### 🔔 Smart Alert Correlation
+Stop alert fatigue with AI-driven correlation.
+*   **New Tool:** `correlate_alerts` (available to Datadog & Planner Specialists).
+*   **Capability:** The agent analyzes a list of active alerts to identify patterns (e.g., *"High DB CPU is causing API Latency"*).
+*   **Usage:** Ask *"Check active alerts and find the root cause"*.
+
+### 📝 Manual Runbook Execution
+The agent can now guide you through manual procedures.
+*   **Support:** Runbooks can be defined as `manual_steps` (Markdown text) instead of Python code.
+*   **Execution:** When you run `execute_runbook` on a manual runbook, the agent displays the step-by-step instructions for you to follow.
+
 ## Future Roadmap
 
 *   **Auto-Remediation Approval Flow**: UI for approving dangerous actions.
