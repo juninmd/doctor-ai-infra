@@ -22,7 +22,7 @@ def test_langgraph_compilation():
     """
     assert app_graph is not None
     # We interrupt before Automation_Specialist as per graph.py definition
-    assert "Automation_Specialist" in [node for node in app_graph.builder.branches.keys()] or True # simplified check
+    assert "Automation_Specialist" in app_graph.interrupt_before_nodes
 
 def test_initial_state_routing():
     """
