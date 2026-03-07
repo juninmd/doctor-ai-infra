@@ -1,4 +1,3 @@
-import React, { useEffect, useState } from "react"
 import {
   Server,
   Cloud,
@@ -25,15 +24,8 @@ const agents = [
 ]
 
 export function AgentNetwork({ activeAgent }: AgentNetworkProps) {
-  const [isClient, setIsClient] = useState(false)
-
-  useEffect(() => {
-    setIsClient(true)
-  }, [])
-
   // We arrange agents in a circle
   const radius = 120 // px
-  const center = 150 // px (half of container size 300)
 
   return (
     <div className="relative w-full h-[300px] flex items-center justify-center rounded-xl overflow-hidden mb-2">
@@ -52,10 +44,7 @@ export function AgentNetwork({ activeAgent }: AgentNetworkProps) {
 
         {agents.map((agent, index) => {
           const angle = (index * (360 / agents.length)) * (Math.PI / 180) - (Math.PI / 2)
-          const x = center + radius * Math.cos(angle)
-          const y = center + radius * Math.sin(angle)
           const isActive = activeAgent === agent.name
-          const centerOffsetX = isClient && window.innerWidth < 500 ? 0 : 0
 
           return (
             <g key={`line-${agent.name}`}>
