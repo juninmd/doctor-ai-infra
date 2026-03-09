@@ -46,13 +46,16 @@ def test_supervisor_node_fallback():
     with patch("app.graph.llm", new_callable=MagicMock) as mock_llm:
         mock_llm.with_structured_output.side_effect = Exception("Ollama unsupported")
 
-        with patch("app.graph.ChatPromptTemplate.__or__") as mock_or:
-            mock_chain = MagicMock()
-            mock_intermediate = MagicMock()
-            mock_intermediate.__or__.return_value = mock_chain
-            mock_or.return_value = mock_intermediate
+        # The fallback chain will call `llm.invoke()` and the result is parsed by `JsonOutputParser`.
+        # We mock `llm.invoke()` to return what the parser expects: a message with a JSON string.
+        import json
+        from langchain_core.messages import AIMessage
+        llm_output = {"next_agent": "Datadog_Specialist", "reasoning": "checking metrics"}
+        mock_llm.invoke.return_value = AIMessage(content=json.dumps(llm_output))
 
-            mock_chain.invoke.return_value = {"next_agent": "Datadog_Specialist", "reasoning": "checking metrics"}
+        result = supervisor_node(state)
+        assert result["next"] == "Datadog_Specialist"
 
-            result = supervisor_node(state)
-            assert result["next"] == "Datadog_Specialist"
+        # Verify that the structured output was attempted and failed, and the fallback was used.
+        mock_llm.with_structured_output.assert_called_once()
+        mock_llm.invoke.assert_called_once()
