@@ -38,24 +38,31 @@ def test_supervisor_node_fallback():
     Verifies that when structured output fails (as it might with older Ollama versions),
     the supervisor successfully falls back to JsonOutputParser.
     """
-    from unittest.mock import patch, MagicMock
+    from unittest.mock import patch
     from app.graph import supervisor_node
+    import json
+    from langchain_core.language_models import FakeListChatModel
 
     state = {"messages": [HumanMessage(content="System is very slow")]}
 
-    with patch("app.graph.llm", new_callable=MagicMock) as mock_llm:
-        mock_llm.with_structured_output.side_effect = Exception("Ollama unsupported")
+    llm_output = {"next_agent": "Datadog_Specialist", "reasoning": "checking metrics"}
 
-        # The fallback chain will call `llm.invoke()` and the result is parsed by `JsonOutputParser`.
-        # We mock `llm.invoke()` to return what the parser expects: a message with a JSON string.
-        import json
-        from langchain_core.messages import AIMessage
-        llm_output = {"next_agent": "Datadog_Specialist", "reasoning": "checking metrics"}
-        mock_llm.invoke.return_value = AIMessage(content=json.dumps(llm_output))
+    class FakeLLM(FakeListChatModel):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.structured_output_called = False
 
+        def with_structured_output(self, *args, **kwargs):
+            self.structured_output_called = True
+            raise Exception("Ollama unsupported")
+
+    fake_llm = FakeLLM(responses=[json.dumps(llm_output)])
+
+    with patch("app.graph.llm", fake_llm):
         result = supervisor_node(state)
         assert result["next"] == "Datadog_Specialist"
 
         # Verify that the structured output was attempted and failed, and the fallback was used.
-        mock_llm.with_structured_output.assert_called_once()
-        mock_llm.invoke.assert_called_once()
+        assert fake_llm.structured_output_called
+        assert len(fake_llm.invocations) == 1
+
