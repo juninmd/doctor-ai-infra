@@ -1,6 +1,6 @@
 import pytest
 from langgraph.graph import StateGraph
-from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.messages import HumanMessage
 from app.graph import workflow, app_graph, members
 
 def test_langgraph_workflow_instantiation():
@@ -48,7 +48,12 @@ def test_supervisor_node_fallback():
     llm_output = {"next_agent": "Datadog_Specialist", "reasoning": "checking metrics"}
 
     class FakeLLM(FakeListChatModel):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.structured_output_called = False
+
         def with_structured_output(self, *args, **kwargs):
+            self.structured_output_called = True
             raise Exception("Ollama unsupported")
 
     fake_llm = FakeLLM(responses=[json.dumps(llm_output)])
@@ -56,4 +61,8 @@ def test_supervisor_node_fallback():
     with patch("app.graph.llm", fake_llm):
         result = supervisor_node(state)
         assert result["next"] == "Datadog_Specialist"
+
+        # Verify that the structured output was attempted and failed, and the fallback was used.
+        assert fake_llm.structured_output_called
+        assert len(fake_llm.invocations) == 1
 
