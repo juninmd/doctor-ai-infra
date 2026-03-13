@@ -3,12 +3,12 @@ from unittest.mock import patch
 from app.tools.cost import estimate_gcp_cost
 import os
 
-def test_estimate_gcp_cost_success():
+def test_estimate_gcp_cost_success(monkeypatch):
     """
     Test successful execution of estimate_gcp_cost, mocking GCP resource list and LLM output.
     """
     # Force use of mocks to make it predictable
-    os.environ["USE_REAL_TOOLS"] = "false"
+    monkeypatch.setenv("USE_REAL_TOOLS", "false")
 
     with patch("app.tools.mocks.list_compute_instances._run", return_value="Instance: vm-1, Type: e2-medium"), \
          patch("app.tools.mocks.get_gcp_sql_instances._run", return_value="Instance: sql-1, Type: db-f1-micro"), \
