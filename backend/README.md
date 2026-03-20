@@ -43,8 +43,7 @@ It orchestrates specialized agents (K8s, GCP, Datadog, Azion, etc.) to perform c
 Start the FastAPI server:
 ```bash
 # Ensure you are in the project root
-export PYTHONPATH=$PYTHONPATH:$(pwd)/backend
-python backend/main.py
+python -m backend.main
 ```
 The server will start on `http://0.0.0.0:8000`.
 
@@ -52,7 +51,6 @@ The server will start on `http://0.0.0.0:8000`.
 
 Run the comprehensive test suite:
 ```bash
-export PYTHONPATH=$PYTHONPATH:$(pwd)/backend
 pytest backend/tests/
 ```
 All tests should pass, verifying the graph logic, tool integrations, and API endpoints.
