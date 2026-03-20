@@ -3,10 +3,10 @@ from langgraph.graph import StateGraph
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from app.graph import workflow, app_graph, members
 
-def test_unknown_agent_routing():
+def test_supervisor_double_failure_fallback():
     """
-    Verifies that when structured output returns an unknown agent,
-    the supervisor successfully falls back or routes to the topology specialist.
+    Verifies that when both the primary structured output call and the fallback
+    LLM call fail, the supervisor correctly falls back to the Topology_Specialist.
     """
     from unittest.mock import patch
     from app.graph import supervisor_node
