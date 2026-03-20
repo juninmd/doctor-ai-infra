@@ -44,7 +44,6 @@ Start the FastAPI server:
 ```bash
 # Ensure you are in the project root
 python -m backend.main
-```
 The server will start on `http://0.0.0.0:8000`.
 
 ## Running Tests
@@ -52,8 +51,7 @@ The server will start on `http://0.0.0.0:8000`.
 Run the comprehensive test suite:
 ```bash
 pytest backend/tests/
-```
-All tests should pass, verifying the graph logic, tool integrations, and API endpoints.
+pytest backend/tests/
 
 ## API Usage
 
