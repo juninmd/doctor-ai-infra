@@ -44,7 +44,6 @@ Start the FastAPI server:
 ```bash
 # Ensure you are in the project root
 python -m backend.main
-The server will start on `http://0.0.0.0:8000`.
 
 ## Running Tests
 
@@ -52,8 +51,7 @@ Run the comprehensive test suite:
 ```bash
 pytest backend/tests/
 pytest backend/tests/
-
-## API Usage
+pytest backend/tests/
 
 - **POST /chat**: interact with the agent.
   - Body: `{"message": "Check system health", "thread_id": "optional-uuid"}`
