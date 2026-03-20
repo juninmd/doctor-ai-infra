@@ -44,7 +44,6 @@ Start the FastAPI server:
 ```bash
 # Ensure you are in the project root
 python -m backend.main
-## Running Tests
 
 Run the comprehensive test suite:
 ```bash
@@ -52,8 +51,7 @@ pytest backend/tests/
 pytest backend/tests/
 pytest backend/tests/
 pytest backend/tests/
-  - Body: `{"message": "Check system health", "thread_id": "optional-uuid"}`
-  - Returns: Stream of JSON events (`activity`, `message`, `tool_output`, `approval_required`, `final`).
+pytest backend/tests/
 
 - **POST /chat/resume**: Resume a paused workflow (e.g., after approval).
   - Body: `{"thread_id": "...", "action": "approve"}`
