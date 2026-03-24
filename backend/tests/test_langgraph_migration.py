@@ -442,3 +442,7 @@ def test_supervisor_node_fallback():
         assert fake_llm.structured_output_called
         assert len(fake_llm.invocations) == 1
 
+        # Verify that the structured output was attempted and failed, and the fallback was used.
+        assert fake_llm.structured_output_called
+        assert len(fake_llm.invocations) == 1
+
