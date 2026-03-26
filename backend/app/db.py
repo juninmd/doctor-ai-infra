@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, ForeignKey, Table
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 import datetime
 import json
@@ -30,7 +30,7 @@ class Incident(Base):
     severity = Column(String)
     description = Column(Text)
     status = Column(String, default="OPEN")
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc))
     updates = Column(Text, default="[]")  # JSON string of updates
 
     post_mortem = relationship("PostMortem", back_populates="incident", uselist=False)
@@ -61,7 +61,7 @@ class IncidentChannel(Base):
     platform = Column(String)  # Slack, Zoom
     channel_name = Column(String)
     url = Column(String, nullable=True)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc))
 
     incident = relationship("Incident", back_populates="channels")
 
@@ -71,7 +71,7 @@ class PostMortem(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     incident_id = Column(String, ForeignKey("incidents.id"), unique=True)
     content = Column(Text)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc))
 
     incident = relationship("Incident", back_populates="post_mortem")
 
@@ -83,7 +83,7 @@ class IncidentEvent(Base):
     source = Column(String)  # e.g., "Supervisor", "K8s_Specialist", "Human"
     event_type = Column(String)  # e.g., "Hypothesis", "Action", "StatusChange", "Evidence"
     content = Column(Text)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc))
 
     incident = relationship("Incident", back_populates="events")
 
