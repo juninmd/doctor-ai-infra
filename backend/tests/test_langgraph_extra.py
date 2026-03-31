@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import patch
 from langchain_core.messages import HumanMessage
-from app.graph import supervisor_node
+from app.graph import supervisor_node, RouterSchema
 import json
 from langchain_core.language_models import FakeListChatModel
 
@@ -17,18 +17,6 @@ def _create_mock_llm(next_agent: str, reasoning: str):
             # Use inner FakeListChatModel to mock structured output invocation
             class InnerMock:
                 def invoke(self, *i_args, **i_kwargs):
-                    from pydantic import BaseModel
-                    from typing import Literal
-
-                    class RouterSchema(BaseModel):
-                        reasoning: str
-                        next_agent: Literal[
-                            "K8s_Specialist", "GCP_Specialist", "Datadog_Specialist",
-                            "Azion_Specialist", "Code_Specialist", "CICD_Specialist",
-                            "Security_Specialist", "Incident_Specialist", "Automation_Specialist",
-                            "Topology_Specialist", "Planner_Specialist", "FINISH"
-                        ]
-
                     return RouterSchema(next_agent=next_agent, reasoning=reasoning)
 
             return InnerMock()
