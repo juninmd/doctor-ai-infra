@@ -59,7 +59,7 @@ export function AgentNetwork({ activeAgent }: AgentNetworkProps) {
                <line
                  x1="50%"
                  y1="50%"
-                 x2={x + (window.innerWidth < 500 ? 0 : 0)} // simplified centering logic
+                 x2={x}
                  y2={y}
                  stroke={isActive ? "cyan" : "#334155"}
                  strokeWidth={isActive ? "2" : "1"}
