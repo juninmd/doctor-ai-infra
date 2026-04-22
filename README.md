@@ -4,6 +4,8 @@
 [![Python](https://img.shields.io/badge/Python-3.x-3776AB?logo=python)](https://www.python.org/)
 [![React](https://img.shields.io/badge/React-18.x-61DAFB?logo=react)](https://reactjs.org/)
 [![Protocol: Antigravity](https://img.shields.io/badge/Protocol-Antigravity-orange.svg)]()
+[![ArgoCD](https://img.shields.io/badge/ArgoCD-Synced-success?style=for-the-badge&logo=argocd)](https://argocd.antonio-code.duckdns.org)
+
 
 > A secure, monorepo-style infrastructure for the **Doctor AI** network, featuring a robust backend, modern frontend, and automated verification agents.
 
