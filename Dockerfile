@@ -3,7 +3,7 @@ FROM node:20-slim AS frontend-builder
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@latest --activate
 COPY frontend/package.json frontend/pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+RUN pnpm install
 COPY frontend/ .
 RUN pnpm run build
 
