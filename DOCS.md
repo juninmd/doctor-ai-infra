@@ -6,7 +6,7 @@ Welcome to the Next-Gen Autonomous Infrastructure Manager. This document outline
 
 The **Live Status** dashboard now includes an **AI Insight** card.
 *   **What it is:** A real-time, AI-generated executive summary of your infrastructure's health.
-*   **How it works:** When you click "Refresh" (or run a scan), the agent aggregates data from K8s, GCP, Datadog, and Azion. It then uses Gemini 1.5 Flash to synthesize this data into a single, actionable sentence.
+*   **How it works:** When you click "Refresh" (or run a scan), the agent aggregates data from K8s, GCP, Datadog, and Traefik. It then uses Gemini 1.5 Flash to synthesize this data into a single, actionable sentence.
 *   **Example:** *"System Normal: All pods are running, but Datadog reports a slight latency spike in the payment service."*
 
 ## 📚 Dynamic Knowledge Base

@@ -1,7 +1,7 @@
 # GEMINI.md
 
 ## Project Context
-This is the **Infrastructure Agent Manager**, a multi-agent system designed to troubleshoot Kubernetes, GCP, Datadog, and Azion resources.
+This is the **Infrastructure Agent Manager**, a multi-agent system designed to troubleshoot Kubernetes, GCP, Datadog, and Traefik resources.
 
 ## Core Stack
 - **Backend**: Python 3.12, FastAPI, LangGraph, LangChain, SQLAlchemy (SQLite), uv
@@ -10,7 +10,7 @@ This is the **Infrastructure Agent Manager**, a multi-agent system designed to t
 
 ## Architecture
 - **Supervisor**: Routes requests to specialized agents.
-- **Specialists**: K8s, GCP, Datadog, Azion, Git, CICD, Security, Incident, Automation, Topology.
+- **Specialists**: K8s, GCP, Datadog, Traefik, Git, CICD, Security, Incident, Automation, Topology.
 - **Tools**: Mix of Mock tools (default) and Real tools (enabled via `USE_REAL_TOOLS=true`).
 
 ## Key Learnings (Living Memory)

@@ -1,7 +1,7 @@
 # Infrastructure Agent Manager - Design Document
 
 ## Overview
-This project is an advanced Infrastructure Agent Manager designed to troubleshoot and analyze resources across multiple platforms: Kubernetes, GCP, Datadog, and Azion. It aims to be the best-in-class solution for 2026, featuring automatic agent selection and a user-friendly interface.
+This project is an advanced Infrastructure Agent Manager designed to troubleshoot and analyze resources across multiple platforms: Kubernetes, GCP, Datadog, and Traefik. It aims to be the best-in-class solution for 2026, featuring automatic agent selection and a user-friendly interface.
 
 ## Tech Stack
 *   **Backend**: Python 3.11+
@@ -18,7 +18,7 @@ This project is an advanced Infrastructure Agent Manager designed to troubleshoo
     *   `kubernetes` (Official Python client)
     *   `google-cloud-sdk`
     *   `datadog`
-    *   REST API wrapper for Azion
+    *   REST API wrapper for Traefik
 
 ## Architecture
 
@@ -30,7 +30,7 @@ The backend uses a Multi-Agent architecture orchestrated by a Supervisor (Router
     *   **K8s Specialist**: Has tools to `kubectl get`, `describe`, check logs, etc.
     *   **GCP Specialist**: Can check VM status, GKE clusters, IAM, etc.
     *   **Datadog Specialist**: Queries metrics and monitors.
-    *   **Azion Specialist**: Checks edge functions, domains, etc.
+    *   **Traefik Specialist**: Audits ingress routes, certificates, and reverse proxy health.
 *   **Tools Layer**: Each agent is equipped with specific tools (Python functions) to interact with the infrastructure.
 
 ### 2. Interface (Frontend)

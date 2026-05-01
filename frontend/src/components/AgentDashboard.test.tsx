@@ -10,7 +10,7 @@ describe('AgentDashboard Component', () => {
     gcp: { status: 'healthy' as const, msg: 'APIs ok' },
     gmp: { status: 'healthy' as const, msg: 'Metrics collected' },
     datadog: { status: 'warning' as const, msg: 'High latency detected' },
-    azion: { status: 'healthy' as const, msg: 'Edge ok' },
+    traefik: { status: 'healthy' as const, msg: 'Ingress ok' },
     ai_insight: 'System is stable, but monitoring Datadog latency spikes.'
   };
 

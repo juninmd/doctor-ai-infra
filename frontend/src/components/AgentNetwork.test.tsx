@@ -31,7 +31,7 @@ describe('AgentNetwork Component', () => {
       'Kubernetes',
       'Google Cloud',
       'Datadog',
-      'Azion Edge',
+      'Traefik Ingress',
       'Git / Repo',
       'CI/CD',
       'Security',

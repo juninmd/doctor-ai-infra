@@ -1,11 +1,11 @@
 # 🚀 Infra Manager 2026 - User Guide
 
-This project is a Next-Gen Infrastructure Agent Manager designed to autonomously troubleshoot Kubernetes, GCP, Datadog, and Azion resources.
+This project is a Next-Gen Infrastructure Agent Manager designed to autonomously troubleshoot Kubernetes, GCP, Datadog, and Traefik resources.
 
 ## ✨ Features
 
-- **Multi-Agent Orchestration**: Specialized agents for K8s, GCP, Datadog, Azion, etc.
-- **Contextual Routing**: Smart routing (e.g., Latency -> Azion -> Backend).
+- **Multi-Agent Orchestration**: Specialized agents for K8s, GCP, Datadog, Traefik, etc.
+- **Contextual Routing**: Smart routing (e.g., Latency -> Traefik -> Backend).
 - **RAG Integration**: Uses a vector database for incident history.
 - **Dual LLM Support**: Runs locally with Ollama (default) or Gemini Pro.
 
@@ -32,8 +32,8 @@ GOOGLE_APPLICATION_CREDENTIALS=/path/to/credentials.json
 DD_API_KEY=your_dd_api_key
 DD_APP_KEY=your_dd_app_key
 
-# Azion
-AZION_TOKEN=your_azion_personal_token
+# Traefik
+TRAEFIK_API_URL=http://traefik.kube-system.svc.cluster.local:8080
 
 # GitHub (Optional)
 GITHUB_TOKEN=your_github_token
@@ -60,7 +60,7 @@ GITHUB_TOKEN=your_github_token
 ## 💡 Example Queries
 
 - **Full Check:** "Fazer análise completa da infraestrutura" (Runs `analyze_infrastructure_health`)
-- **Latency Issue:** "O site está lento, verifique o que está acontecendo." (Routes to Azion -> Datadog -> K8s)
+- **Latency Issue:** "O site está lento, verifique o que está acontecendo." (Routes to Traefik -> Datadog -> K8s)
 - **Deployment:** "Verifique o status do último deploy no namespace default."
 
 ## 🖥️ Frontend

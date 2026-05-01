@@ -2,7 +2,7 @@
 
 ## Overview
 This is the backend for the "Best Agent of 2026", an advanced SRE agent manager built with LangGraph.
-It orchestrates specialized agents (K8s, GCP, Datadog, Azion, etc.) to perform complex troubleshooting, root cause analysis, and remediation.
+It orchestrates specialized agents (K8s, GCP, Datadog, Traefik, etc.) to perform complex troubleshooting, root cause analysis, and remediation.
 
 ## Features
 - **LangGraph Architecture**: Supervisor-worker pattern with specialized agents.
@@ -11,7 +11,7 @@ It orchestrates specialized agents (K8s, GCP, Datadog, Azion, etc.) to perform c
   - Kubernetes (Pod analysis, log patterns)
   - Google Cloud (Status, Logs, GMP)
   - Datadog (Metrics, Alerts)
-  - Azion (Edge status, WAF, Cache Purge)
+  - Traefik (Ingress health, Routing, SSL)
   - GitHub (Code fixes, PR creation, CI analysis)
   - Incident Management (Timeline, Post-mortems, Remediation Plans)
   - Runbooks (Automated actions with safety checks)
@@ -33,7 +33,7 @@ It orchestrates specialized agents (K8s, GCP, Datadog, Azion, etc.) to perform c
     GITHUB_TOKEN=...
     DD_API_KEY=...
     DD_APP_KEY=...
-    AZION_TOKEN=...
+    TRAEFIK_API_URL=...
     SLACK_WEBHOOK_URL=...
     LLM_PROVIDER=gemini  # or ollama
     ```

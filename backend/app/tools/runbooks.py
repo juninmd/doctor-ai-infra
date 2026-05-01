@@ -83,7 +83,7 @@ INITIAL_RUNBOOKS = {
     "scale_up": "Increases replica count by 2. Use when CPU is > 80%.",
     "rollback_deploy": "Reverts to the previous stable docker image tag.",
     "flush_cache": "Clears Redis cache keys for the service.",
-    "clear_cdn_cache": "Purges Azion/Cloudflare Edge cache."
+    "refresh_traefik_routes": "Triggers a resync of Traefik dynamic configuration."
 }
 
 def bootstrap_catalog():

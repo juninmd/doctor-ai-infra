@@ -11,17 +11,18 @@ from .llm import get_llm
 from .tools import (
     list_k8s_pods, describe_pod, get_pod_logs, get_cluster_events,
     check_gcp_status, query_gmp_prometheus, list_compute_instances, get_gcp_sql_instances,
-    get_datadog_metrics, get_active_alerts, check_azion_edge,
+    get_datadog_metrics, get_active_alerts,
     check_github_repos, get_pr_status, list_recent_commits,
     check_pipeline_status, get_argocd_sync_status,
     check_vulnerabilities, analyze_iam_policy,
     analyze_log_patterns, diagnose_service_health, analyze_ci_failure, create_issue,
-    trace_service_health, purge_azion_cache, diagnose_azion_configuration,
+    trace_service_health,
     list_datadog_metrics, check_on_call_schedule, send_slack_notification,
     investigate_root_cause, scan_infrastructure, analyze_heavy_logs, analyze_gcp_errors,
     correlate_alerts, optimize_k8s_resources, optimize_gcp_resources,
     analyze_cost_anomalies, suggest_spot_migrations, predict_resource_exhaustion,
-    run_chaos_experiment, analyze_chaos_results
+    run_chaos_experiment, analyze_chaos_results,
+    check_traefik_health, list_traefik_routes, diagnose_traefik_ingress
 )
 from .tools.dashboard import analyze_infrastructure_health
 from .tools.incident import (
@@ -42,10 +43,10 @@ from .state import AgentState
 llm = get_llm()
 
 # 2. Define Tools for each specialist
-k8s_tools = [list_k8s_pods, describe_pod, get_pod_logs, get_cluster_events, analyze_log_patterns, analyze_heavy_logs, diagnose_service_health, trace_service_health, optimize_k8s_resources]
+k8s_tools = [list_k8s_pods, describe_pod, get_pod_logs, get_cluster_events, analyze_log_patterns, analyze_heavy_logs, diagnose_service_health, trace_service_health, optimize_k8s_resources, list_traefik_routes]
 gcp_tools = [check_gcp_status, query_gmp_prometheus, list_compute_instances, get_gcp_sql_instances, analyze_heavy_logs, analyze_gcp_errors, estimate_gcp_cost, optimize_gcp_resources]
 datadog_tools = [get_datadog_metrics, get_active_alerts, list_datadog_metrics, correlate_alerts]
-azion_tools = [check_azion_edge, purge_azion_cache, diagnose_azion_configuration]
+traefik_tools = [check_traefik_health, list_traefik_routes, diagnose_traefik_ingress]
 code_tools = [check_github_repos, get_pr_status, list_recent_commits, generate_code_fix, create_github_pr, read_repo_file, list_repo_files]
 cicd_tools = [check_pipeline_status, get_argocd_sync_status, analyze_ci_failure]
 sec_tools = [check_vulnerabilities, analyze_iam_policy]
@@ -70,21 +71,21 @@ chaos_tools = [run_chaos_experiment, analyze_chaos_results]
 # 3. Create Specialist Agents
 def make_specialist(tools, persona, heuristics=""):
     system_msg = (
-        f"You are a top-tier Infrastructure Specialist focusing on {{persona}}.\n"
+        f"You are a top-tier Infrastructure Specialist focusing on {persona}.\n"
         "Your goal is to troubleshoot issues efficiently and proactively.\n"
         "Use your tools immediately to gather data. Do not guess.\n"
         "If you see an error related to another domain, mention it clearly so the Supervisor can route it.\n"
         "Your tone is relaxed, direct, and technical (hacker-chic, not corporate).\n"
         "Current Year: 2026.\n"
-        f"{{heuristics}}\n"
-    ).format(persona=persona, heuristics=heuristics)
+        f"{heuristics}\n"
+    )
 
     return create_react_agent(llm, tools, prompt=system_msg)
 
 k8s_agent = make_specialist(
     k8s_tools,
     "Kubernetes (K8s) & Container Orchestration",
-    heuristics="SRE TIP: Start by calling `diagnose_service_health` for a full picture. If a pod is crashing, `analyze_log_patterns` is more efficient than reading raw logs. Use `trace_service_health` to check dependencies if the issue seems external."
+    heuristics="SRE TIP: Start by calling `diagnose_service_health` for a full picture. If a pod is crashing, `analyze_log_patterns` is more efficient than reading raw logs. Use `trace_service_health` to check dependencies if the issue seems external. Use `list_traefik_routes` to see how traffic enters."
 )
 gcp_agent = make_specialist(
     gcp_tools,
@@ -96,7 +97,7 @@ datadog_agent = make_specialist(
     "Datadog Observability & Metrics",
     heuristics="SRE TIP: Correlate high latency spikes with error logs. Check for recent alerts."
 )
-azion_agent = make_specialist(azion_tools, "Azion Edge Computing & CDNs")
+traefik_agent = make_specialist(traefik_tools, "Traefik Ingress Controller & Reverse Proxy")
 code_agent = make_specialist(
     code_tools,
     "Source Code, Git, Development & Bug Fixing",
@@ -166,7 +167,7 @@ members = [
     "K8s_Specialist",
     "GCP_Specialist",
     "Datadog_Specialist",
-    "Azion_Specialist",
+    "Traefik_Specialist",
     "Code_Specialist",
     "CICD_Specialist",
     "Security_Specialist",
@@ -196,15 +197,15 @@ supervisor_system_prompt = (
     "   - Cloud Costs / Anomalies / Spot Instances / Savings -> FinOps_Specialist\n"
     "   - Chaos Engineering / Game Days / Injecting Faults -> Chaos_Specialist\n"
     "   - APM/Metrics/Alerts -> Datadog_Specialist\n"
-    "   - Edge/CDN/WAF -> Azion_Specialist\n"
+    "   - Ingress, Reverse Proxy, Routing, SSL, Traefik -> Traefik_Specialist\n"
     "   - Code/PRs/Commits -> Code_Specialist\n"
     "   - CI/CD/ArgoCD -> CICD_Specialist\n"
     "   - Security/IAM/Vulnerabilities -> Security_Specialist\n"
     "   - Incidents/Post-Mortems/Remediation Plans -> Incident_Specialist\n"
     "   - Runbooks/Scripts/Restarting Services -> Automation_Specialist\n"
     "4. SMART TRIAGE (Latency & Errors):\n"
-    "   - 'High Latency' or '5xx Errors' -> Route to Azion_Specialist FIRST to check the Edge.\n"
-    "   - If Azion is healthy, route to Datadog_Specialist (check Backend Metrics).\n"
+    "   - 'High Latency' or '5xx Errors' -> Route to Traefik_Specialist FIRST to check Ingress health.\n"
+    "   - If Traefik is healthy, route to Datadog_Specialist (check Backend Metrics).\n"
     "   - If DB errors are found, route to GCP_Specialist.\n"
     "5. DEPENDENCY AWARENESS: If a dependency fails (e.g., 'ConnectionRefused'), route to the owner of that dependency.\n"
     "6. PROACTIVE AGENT BEHAVIOR:\n"
@@ -219,7 +220,7 @@ class RouterSchema(BaseModel):
     reasoning: str = Field(description="The chain of thought reasoning for the decision.")
     next_agent: Literal[
         "K8s_Specialist", "GCP_Specialist", "Datadog_Specialist",
-        "Azion_Specialist", "Code_Specialist", "CICD_Specialist",
+        "Traefik_Specialist", "Code_Specialist", "CICD_Specialist",
         "Security_Specialist", "Incident_Specialist", "Automation_Specialist",
         "Topology_Specialist", "Planner_Specialist", "FinOps_Specialist", "Chaos_Specialist", "FINISH"
     ] = Field(description="The next agent to route to, or FINISH.")
@@ -233,15 +234,11 @@ def supervisor_node(state: AgentState):
         ("system", "Who should act next? Provide your reasoning and select the next agent.")
     ]).partial(members=", ".join(members))
 
-    # Google Gen AI Best Practice: Structured Output
-    # Try native structured output first (Gemini / New Ollama)
     try:
         chain = prompt | llm.with_structured_output(RouterSchema)
         decision = chain.invoke({"messages": messages})
         return {"next": decision.next_agent}
     except Exception as e:
-        print(f"Structured Output Failed (likely Ollama old version or model limitation): {e}")
-        # Fallback: Use standard JSON prompting
         try:
             parser = JsonOutputParser(pydantic_object=RouterSchema)
             fallback_prompt = ChatPromptTemplate.from_messages([
@@ -252,14 +249,11 @@ def supervisor_node(state: AgentState):
 
             fallback_chain = fallback_prompt | llm | parser
             decision = fallback_chain.invoke({"messages": messages})
-            # decision is a dict here, not a Pydantic model
             return {"next": decision.get("next_agent", "Topology_Specialist")}
         except Exception as e2:
-             print(f"Fallback Routing Error: {e2}")
-             # Robust fallback: Notify user and route to Topology Specialist for a safe check
              return {
                 "next": "Topology_Specialist",
-                "messages": [SystemMessage(content=f"⚠️ Auto-Routing Error (Ollama/LLM issue): {str(e2)}. Falling back to Topology Specialist for a system health scan.")]
+                "messages": [SystemMessage(content=f"⚠️ Auto-Routing Error: {str(e2)}. Falling back to Topology Specialist.")]
              }
 
 # 5. Build the Graph
@@ -269,7 +263,7 @@ workflow.add_node("Supervisor", supervisor_node)
 workflow.add_node("K8s_Specialist", k8s_agent)
 workflow.add_node("GCP_Specialist", gcp_agent)
 workflow.add_node("Datadog_Specialist", datadog_agent)
-workflow.add_node("Azion_Specialist", azion_agent)
+workflow.add_node("Traefik_Specialist", traefik_agent)
 workflow.add_node("Code_Specialist", code_agent)
 workflow.add_node("CICD_Specialist", cicd_agent)
 workflow.add_node("Security_Specialist", sec_agent)
@@ -292,7 +286,7 @@ workflow.add_conditional_edges(
         "K8s_Specialist": "K8s_Specialist",
         "GCP_Specialist": "GCP_Specialist",
         "Datadog_Specialist": "Datadog_Specialist",
-        "Azion_Specialist": "Azion_Specialist",
+        "Traefik_Specialist": "Traefik_Specialist",
         "Code_Specialist": "Code_Specialist",
         "CICD_Specialist": "CICD_Specialist",
         "Security_Specialist": "Security_Specialist",

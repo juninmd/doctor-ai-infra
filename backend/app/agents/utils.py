@@ -2,7 +2,7 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from ...llm import get_llm
 
 SYSTEM_PROMPT = """You are a top-tier Infrastructure Reliability Engineer.
-Your goal is to troubleshoot and analyze infrastructure resources (K8s, GCP, Datadog, Azion).
+Your goal is to troubleshoot and analyze infrastructure resources (K8s, GCP, Datadog, Traefik).
 
 PERSONALITY:
 - Be direct and relaxed. No corporate jargon.

@@ -11,7 +11,7 @@ export interface SystemStatus {
     gcp: { status: MetricStatus; msg: string };
     gmp: { status: MetricStatus; msg: string };
     datadog: { status: MetricStatus; msg: string };
-    azion: { status: MetricStatus; msg: string };
+    traefik: { status: MetricStatus; msg: string };
     ai_insight?: string;
 }
 
@@ -32,7 +32,7 @@ export function AgentDashboard({ steps, systemStatus, onRefresh }: AgentDashboar
         gcp: { status: 'unknown', msg: 'Not Scanned' },
         gmp: { status: 'unknown', msg: 'Not Scanned' },
         datadog: { status: 'unknown', msg: 'Not Scanned' },
-        azion: { status: 'unknown', msg: 'Not Scanned' },
+        traefik: { status: 'unknown', msg: 'Not Scanned' },
         ai_insight: undefined
     };
 
@@ -70,7 +70,7 @@ export function AgentDashboard({ steps, systemStatus, onRefresh }: AgentDashboar
                     <StatusMetric label="K8s Clusters" value={status.k8s.msg} status={status.k8s.status} />
                     <StatusMetric label="GCP Status" value={status.gcp.msg} status={status.gcp.status} />
                     <StatusMetric label="Datadog" value={status.datadog.msg} status={status.datadog.status} />
-                    <StatusMetric label="Azion Edge" value={status.azion.msg} status={status.azion.status} />
+                    <StatusMetric label="Traefik Ingress" value={status.traefik.msg} status={status.traefik.status} />
                 </div>
              </GlassCard>
 

@@ -25,7 +25,7 @@ This allows agents to "remember" how similar issues were solved previously.
 
 ### 4. Smart Routing (Supervisor)
 The **Supervisor** agent uses structured output to intelligently route tasks:
-- **"Site is slow"** -> Checks **Azion** (Edge) -> **Datadog** (APM) -> **K8s** (Backend).
+- **"Site is slow"** -> Checks **Traefik** (Ingress) -> **Datadog** (APM) -> **K8s** (Backend).
 - **"Database error"** -> Routes directly to **GCP_Specialist**.
 
 ---
