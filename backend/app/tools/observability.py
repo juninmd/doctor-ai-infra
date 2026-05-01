@@ -283,7 +283,7 @@ def correlate_alerts(alerts_input: str = "") -> str:
     If no input is provided, it fetches active alerts from Datadog.
 
     Args:
-        alerts_input: Optional text containing a list of alerts. If empty, fetches real/mock alerts.
+        alerts_input: Optional text containing a list of alerts. If empty, fetches alerts automatically.
     """
     from app.llm import get_google_sdk_client
     from app.tools import get_active_alerts

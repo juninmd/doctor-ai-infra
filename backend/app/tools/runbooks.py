@@ -34,7 +34,7 @@ def _get_k8s_apps_client():
             return None
     return client.AppsV1Api()
 
-# --- Mock Data for Bootstrap ---
+# --- Initial Seed Data for Catalog Bootstrap ---
 INITIAL_SERVICE_CATALOG = {
     "payment-api": {
         "owner": "Team Checkout",

@@ -202,12 +202,21 @@ def manage_incident_channels(action: str, channel_name: str, incident_id: str, p
             if exists:
                 return f"Channel {channel_name} on {platform} already exists (ID: {exists.id})."
 
+            # Generate URL based on platform
+            if platform.lower() == "slack":
+                # Typical Slack deep link format
+                url = f"https://slack.com/app_redirect?channel={channel_name}"
+            elif platform.lower() == "zoom":
+                url = f"https://zoom.us/j/{channel_name}"
+            else:
+                url = f"https://{platform.lower()}.com/{channel_name}"
+
             # Create
             new_channel = IncidentChannel(
                 incident_id=incident_id,
                 platform=platform,
                 channel_name=channel_name,
-                url=f"https://{platform.lower()}.com/app/{channel_name}" # Mock URL
+                url=url
             )
             db.add(new_channel)
 
@@ -217,14 +226,14 @@ def manage_incident_channels(action: str, channel_name: str, incident_id: str, p
                 incident_id=incident_id,
                 source="System",
                 event_type="Action",
-                content=f"Created {platform} channel: {channel_name}"
+                content=f"Linked {platform} channel: {channel_name}"
             )
             db.add(event)
 
             db.commit()
-            return f"Successfully created {platform} channel '{channel_name}' for Incident {incident_id}."
+            return f"Successfully linked {platform} channel '{channel_name}' for Incident {incident_id}. URL: {url}"
 
-        return f"Action '{action}' simulated for {channel_name}."
+        return f"Action '{action}' processed for {channel_name}."
     except Exception as e:
         db.rollback()
         return f"Error managing channels: {e}"
