@@ -11,45 +11,29 @@ def estimate_gcp_cost() -> str:
     Scans Compute Engine and Cloud SQL instances, then uses AI to estimate costs.
     Note: This is an estimation based on public pricing knowledge, not the actual Billing API.
     """
-    use_real = os.getenv("USE_REAL_TOOLS", "true").lower() == "true"
-
     list_compute_instances = None
     get_gcp_sql_instances = None
 
-    # Try importing real tools first if requested
-    if use_real:
-        try:
-            # Dynamic import to avoid circular dependency issues at module level
-            real_module = importlib.import_module("app.tools.real")
-            list_compute_instances = getattr(real_module, "list_compute_instances", None)
-            get_gcp_sql_instances = getattr(real_module, "get_gcp_sql_instances", None)
-        except ImportError:
-            print("Warning: Could not import app.tools.real")
-            pass
-
-    # Fallback to mocks if real tools are missing or not requested
-    if not list_compute_instances or not get_gcp_sql_instances:
-        try:
-            mock_module = importlib.import_module("app.tools.mocks")
-            list_compute_instances = getattr(mock_module, "list_compute_instances", None)
-            get_gcp_sql_instances = getattr(mock_module, "get_gcp_sql_instances", None)
-        except ImportError:
-            return "Error: Could not import GCP tools from mocks either."
+    try:
+        # Dynamic import to avoid circular dependency issues at module level
+        real_module = importlib.import_module("app.tools.real")
+        list_compute_instances = getattr(real_module, "list_compute_instances", None)
+        get_gcp_sql_instances = getattr(real_module, "get_gcp_sql_instances", None)
+    except ImportError:
+        return "Error: Could not import production GCP tools from app.tools.real."
 
     if not list_compute_instances or not get_gcp_sql_instances:
-        return "Error: Tools 'list_compute_instances' or 'get_gcp_sql_instances' not found."
+        return "Error: Production tools 'list_compute_instances' or 'get_gcp_sql_instances' not found."
 
     resources = []
 
     # 1. Gather Resource Data
-    # Note: Using ThreadPool for parallel execution
     with concurrent.futures.ThreadPoolExecutor() as executor:
         # Pass empty dict as input for tools taking optional args
         future_vm = executor.submit(list_compute_instances.invoke, {})
         future_sql = executor.submit(get_gcp_sql_instances.invoke, {})
 
         try:
-            # Result might be a string (error) or list string
             vm_res = future_vm.result()
             resources.append(f"Compute Engine Instances:\n{vm_res}")
         except Exception as e:

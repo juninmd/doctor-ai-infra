@@ -442,46 +442,46 @@ def diagnose_azion_configuration(domain: str = "") -> str:
     if not token:
         return "Error: AZION_TOKEN environment variable is missing."
 
-    report = ["Azion Configuration Diagnostic:"]
+    report = ["### ⚡ Azion Edge Configuration Audit"]
 
-    # 1. Check if we can reach the API
     try:
         headers = {
             "Accept": "application/json; version=3",
             "Authorization": f"Token {token}"
         }
+        # 1. Fetch Edge Applications
         resp = requests.get("https://api.azionapi.net/edge_applications", headers=headers, timeout=10)
         resp.raise_for_status()
         apps = resp.json().get("results", [])
+        
+        target_app = None
+        if domain:
+            target_app = next((a for a in apps if domain in a.get("name", "")), None)
+        elif apps:
+            target_app = apps[0]
+            report.append(f"*(No domain specified, auditing: {target_app['name']})*")
+
+        if not target_app:
+            return "No Edge Application found to audit."
+
+        app_id = target_app['id']
+        report.append(f"**Application**: {target_app['name']} (ID: {app_id})")
+
+        # 2. Check WAF
+        waf_resp = requests.get(f"https://api.azionapi.net/edge_applications/{app_id}/waf", headers=headers, timeout=10)
+        if waf_resp.status_code == 200:
+            waf = waf_resp.json().get("results", {})
+            report.append(f"- **WAF**: {'✅ Enabled' if waf.get('active') else '⚠️ Disabled'}")
+        
+        # 3. Check Edge Firewall
+        fw_resp = requests.get("https://api.azionapi.net/edge_firewall", headers=headers, timeout=10)
+        if fw_resp.status_code == 200:
+            fws = fw_resp.json().get("results", [])
+            report.append(f"- **Edge Firewall**: {'✅ Configured' if fws else '⚠️ No firewall rules found'}")
+
+        return "\n".join(report)
     except Exception as e:
-        return f"Error connecting to Azion API: {e}"
-
-    # 2. Find target app
-    target_app = None
-    if domain:
-        target_app = next((a for a in apps if domain in a.get("name", "")), None)
-    elif apps:
-        target_app = apps[0] # Default to first found
-        report.append(f"(No domain specified, analyzing first found app: {target_app['name']})")
-
-    if not target_app:
-        return "No Edge Application found matching the criteria."
-
-    report.append(f"App Name: {target_app['name']} (ID: {target_app['id']})")
-    report.append(f"Active: {target_app['active']}")
-
-    # 3. Simulated Deep Checks
-    if target_app['active']:
-        report.append("- Edge Status: ONLINE")
-        # Mocking WAF check
-        report.append("- WAF: Enabled (Simulated Check - Recommended: 'High Sensitivity')")
-        # Mocking Cache
-        report.append("- Edge Cache: Standard Policy")
-        report.append("- Edge Firewall: Active")
-    else:
-        report.append("- Edge Status: OFFLINE ⚠️")
-
-    return "\n".join(report)
+        return f"Azion Diagnostic Error: {str(e)}"
 
 @tool
 def purge_azion_cache(domain: str, wildcards: List[str]) -> str:
@@ -584,10 +584,26 @@ def check_github_repos(org: str = "my-org") -> str:
         return f"Error connecting to GitHub: {str(e)}"
 
 @tool
-def get_pr_status(pr_id: int) -> str:
-    """Checks the status of a specific Pull Request."""
-    # Simplified placeholder
-    return f"Checking PR #{pr_id}... (Requires repo context)"
+def get_pr_status(owner: str, repo: str, pr_id: int) -> str:
+    """Checks the status of a specific GitHub Pull Request."""
+    token = os.getenv("GITHUB_TOKEN")
+    if not token:
+        return "Error: GITHUB_TOKEN missing."
+    
+    headers = {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"}
+    try:
+        resp = requests.get(f"https://api.github.com/repos/{owner}/{repo}/pulls/{pr_id}", headers=headers, timeout=10)
+        resp.raise_for_status()
+        pr = resp.json()
+        return (
+            f"### 🎋 PR Status: {pr['title']} (#{pr_id})\n"
+            f"- **State**: {pr['state'].upper()}\n"
+            f"- **Author**: {pr['user']['login']}\n"
+            f"- **Mergeable**: {pr.get('mergeable_state', 'unknown')}\n"
+            f"- **Labels**: {', '.join([l['name'] for l in pr['labels']]) or 'None'}"
+        )
+    except Exception as e:
+        return f"GitHub PR Error: {str(e)}"
 
 @tool
 def check_pipeline_status(service: str, repo: str = "", owner: str = "my-org") -> str:
@@ -629,10 +645,33 @@ def check_pipeline_status(service: str, repo: str = "", owner: str = "my-org") -
         return f"Error checking pipeline status: {str(e)}"
 
 @tool
-def get_argocd_sync_status(app_name: str) -> str:
-    """Checks ArgoCD sync status."""
-    # ArgoCD usually runs in K8s, could use K8s client to check Application CRD
-    return f"Checking ArgoCD status for {app_name}... (Recommend using K8s_Specialist to check 'Application' CRD)"
+def get_argocd_sync_status(app_name: str, namespace: str = "argocd") -> str:
+    """Checks ArgoCD sync status using Kubernetes CRD access."""
+    v1 = _get_k8s_client()
+    if not v1:
+        return "Error: K8s client unavailable."
+    
+    try:
+        custom_api = client.CustomObjectsApi()
+        # ArgoCD Applications are typically in the 'argoproj.io' group
+        app = custom_api.get_namespaced_custom_object(
+            group="argoproj.io",
+            version="v1alpha1",
+            namespace=namespace,
+            plural="applications",
+            name=app_name
+        )
+        status = app.get("status", {})
+        sync = status.get("sync", {}).get("status", "Unknown")
+        health = status.get("health", {}).get("status", "Unknown")
+        
+        return (
+            f"### 🐙 ArgoCD App: {app_name}\n"
+            f"- **Sync Status**: {'✅' if sync == 'Synced' else '⚠️'} {sync}\n"
+            f"- **Health Status**: {'✅' if health == 'Healthy' else '❌'} {health}"
+        )
+    except Exception as e:
+        return f"ArgoCD Status Error: {str(e)}. (Ensure ArgoCD is installed in the cluster)"
 
 @tool
 def check_vulnerabilities(image: str) -> str:
@@ -956,24 +995,24 @@ def create_issue(title: str, description: str, project: str = "SRE", severity: s
 # --- Additional SRE Tools (PagerDuty, ChatOps, Extended Datadog) ---
 
 @tool
-def check_on_call_schedule(schedule_id: str = "primary") -> str:
-    """
-    Checks the current on-call schedule in PagerDuty (Simulated).
-    """
-    # In a real 2026 agent, this would query PagerDuty API
-    # Return a rich mock for now
-
-    utc_now = datetime.datetime.now(datetime.UTC)
-    shift_end = utc_now + datetime.timedelta(hours=4)
-
-    return (
-        f"📟 **On-Call Schedule: {schedule_id.title()}**\n\n"
-        f"**Current On-Call:** 👨‍💻 Alice (SRE Tier 2)\n"
-        f"Contact: @alice (Slack) | +1-555-0199\n"
-        f"Shift Ends: {shift_end.strftime('%H:%M UTC')} (in 4 hours)\n\n"
-        f"**Next Up:** 👩‍💻 Bob (starts in 4 hours)\n"
-        f"**Escalation Policy:** Notify Manager if not acked in 15m."
-    )
+def check_on_call_schedule(schedule_id: str) -> str:
+    """Checks the current on-call schedule in PagerDuty."""
+    token = os.getenv("PAGERDUTY_TOKEN")
+    if not token:
+        return "Error: PAGERDUTY_TOKEN missing. Cannot fetch live on-call data."
+    
+    headers = {"Authorization": f"Token token={token}", "Accept": "application/vnd.pagerduty+json;version=2"}
+    try:
+        resp = requests.get(f"https://api.pagerduty.com/oncalls?schedule_ids[]={schedule_id}", headers=headers, timeout=10)
+        resp.raise_for_status()
+        oncalls = resp.json().get("oncalls", [])
+        if not oncalls:
+            return "No one is currently on-call for this schedule."
+        
+        user = oncalls[0]['user']['summary']
+        return f"📟 **PagerDuty On-Call**: {user} is currently active for schedule {schedule_id}."
+    except Exception as e:
+        return f"PagerDuty Error: {str(e)}"
 
 @tool
 def send_slack_notification(channel: str, message: str) -> str:

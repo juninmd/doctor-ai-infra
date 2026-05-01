@@ -227,7 +227,7 @@ def execute_runbook(runbook_name: str, target_service: str, dry_run: bool = Fals
                 except Exception as e:
                     msg.append(f"K8s Error: {e}")
             else:
-                msg.append(f"Simulated: Service '{target_service}' restarted (K8s client unavailable).")
+                msg.append(f"Error: K8s client unavailable. Cannot execute 'restart_service'.")
 
         elif runbook_name == "scale_up":
             apps_v1 = _get_k8s_apps_client()
@@ -245,7 +245,7 @@ def execute_runbook(runbook_name: str, target_service: str, dry_run: bool = Fals
                 except Exception as e:
                     msg.append(f"K8s Error: {e}")
             else:
-                msg.append(f"Simulated: Scaled up '{target_service}' (K8s client unavailable).")
+                msg.append(f"Error: K8s client unavailable. Cannot execute 'scale_up'.")
 
         else:
             msg.append(f"SUCCESS: Executed runbook '{runbook_name}' on '{target_service}'. Operation completed.")
