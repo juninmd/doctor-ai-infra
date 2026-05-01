@@ -19,7 +19,9 @@ from .tools import (
     trace_service_health, purge_azion_cache, diagnose_azion_configuration,
     list_datadog_metrics, check_on_call_schedule, send_slack_notification,
     investigate_root_cause, scan_infrastructure, analyze_heavy_logs, analyze_gcp_errors,
-    correlate_alerts, optimize_k8s_resources, optimize_gcp_resources
+    correlate_alerts, optimize_k8s_resources, optimize_gcp_resources,
+    analyze_cost_anomalies, suggest_spot_migrations, predict_resource_exhaustion,
+    run_chaos_experiment, analyze_chaos_results
 )
 from .tools.dashboard import analyze_infrastructure_health
 from .tools.incident import (
@@ -53,15 +55,17 @@ incident_tools = [
     log_incident_event, build_incident_timeline, manage_incident_channels,
     list_incident_channels, suggest_remediation, generate_remediation_plan,
     check_on_call_schedule, send_slack_notification, generate_runbook_from_incident
-)
+]
 automation_tools = [list_runbooks, execute_runbook, lookup_service, optimize_k8s_resources, optimize_gcp_resources]
 topology_tools = [
     get_service_dependencies, get_service_topology, lookup_service,
     generate_topology_diagram, trace_service_health, analyze_infrastructure_health,
     investigate_root_cause, scan_infrastructure, analyze_heavy_logs,
-    generate_service_catalog_docs
+    generate_service_catalog_docs, predict_resource_exhaustion
 ]
 planner_tools = [generate_hypothesis, search_knowledge_base]
+finops_tools = [analyze_cost_anomalies, suggest_spot_migrations, estimate_gcp_cost, optimize_gcp_resources]
+chaos_tools = [run_chaos_experiment, analyze_chaos_results]
 
 # 3. Create Specialist Agents
 def make_specialist(tools, persona, heuristics=""):
@@ -131,7 +135,7 @@ topology_agent = make_specialist(
         "Use `analyze_infrastructure_health` or `scan_infrastructure` to provide a global status report when asked about general health.\n"
         "Use `trace_service_health` to visualize cascading failures across the stack.\n"
         "Use `generate_topology_diagram` for architectural overviews.\n"
-        "Use `generate_service_catalog_docs` to produce a full documentation report of the system."
+        "Use `predict_resource_exhaustion` to forecast outages."
     )
 )
 planner_agent = make_specialist(
@@ -143,6 +147,18 @@ planner_agent = make_specialist(
         "2. Use `search_knowledge_base` to see if this has happened before.\n"
         "3. Provide a structured plan to the Supervisor."
     )
+)
+
+finops_agent = make_specialist(
+    finops_tools,
+    "FinOps & Cloud Cost Optimization",
+    heuristics="SRE TIP: Look for cost anomalies and underutilized resources. Suggest Spot migrations where possible."
+)
+
+chaos_agent = make_specialist(
+    chaos_tools,
+    "Chaos Engineering & Resilience Testing",
+    heuristics="SRE TIP: ALWAYS use dry_run=True first. Inject faults to verify self-healing capabilities."
 )
 
 # 4. Define the Supervisor (Router)
@@ -157,7 +173,9 @@ members = [
     "Incident_Specialist",
     "Automation_Specialist",
     "Topology_Specialist",
-    "Planner_Specialist"
+    "Planner_Specialist",
+    "FinOps_Specialist",
+    "Chaos_Specialist"
 ]
 options = ["FINISH"] + members
 
@@ -170,10 +188,13 @@ supervisor_system_prompt = (
     "2. Analyze the user's request or the previous agent's findings.\n"
     "3. ROUTING LOGIC:\n"
     "   - General Status / Dashboard / 'How is the system?' -> Topology_Specialist\n"
+    "   - Predictive Maintenance / Future Outages -> Topology_Specialist\n"
     "   - Complex/Unknown Issues / 'Hypothesize' / 'Plan' -> Planner_Specialist\n"
     "   - Issues with pods, containers, or Large Log Analysis -> K8s_Specialist\n"
     "   - Cluster Optimization / Right-sizing / Resource limits -> K8s_Specialist\n"
-    "   - Issues with Cloud/VMs, SQL, GMP, or Cost -> GCP_Specialist\n"
+    "   - Issues with Cloud/VMs, SQL, GMP -> GCP_Specialist\n"
+    "   - Cloud Costs / Anomalies / Spot Instances / Savings -> FinOps_Specialist\n"
+    "   - Chaos Engineering / Game Days / Injecting Faults -> Chaos_Specialist\n"
     "   - APM/Metrics/Alerts -> Datadog_Specialist\n"
     "   - Edge/CDN/WAF -> Azion_Specialist\n"
     "   - Code/PRs/Commits -> Code_Specialist\n"
@@ -200,7 +221,7 @@ class RouterSchema(BaseModel):
         "K8s_Specialist", "GCP_Specialist", "Datadog_Specialist",
         "Azion_Specialist", "Code_Specialist", "CICD_Specialist",
         "Security_Specialist", "Incident_Specialist", "Automation_Specialist",
-        "Topology_Specialist", "Planner_Specialist", "FINISH"
+        "Topology_Specialist", "Planner_Specialist", "FinOps_Specialist", "Chaos_Specialist", "FINISH"
     ] = Field(description="The next agent to route to, or FINISH.")
 
 def supervisor_node(state: AgentState):
@@ -256,6 +277,8 @@ workflow.add_node("Incident_Specialist", incident_agent)
 workflow.add_node("Automation_Specialist", automation_agent)
 workflow.add_node("Topology_Specialist", topology_agent)
 workflow.add_node("Planner_Specialist", planner_agent)
+workflow.add_node("FinOps_Specialist", finops_agent)
+workflow.add_node("Chaos_Specialist", chaos_agent)
 
 workflow.add_edge(START, "Supervisor")
 
@@ -277,10 +300,12 @@ workflow.add_conditional_edges(
         "Automation_Specialist": "Automation_Specialist",
         "Topology_Specialist": "Topology_Specialist",
         "Planner_Specialist": "Planner_Specialist",
+        "FinOps_Specialist": "FinOps_Specialist",
+        "Chaos_Specialist": "Chaos_Specialist",
         "FINISH": END
     }
 )
 
 # Human-in-the-Loop: Interrupt before risky actions
 checkpointer = MemorySaver()
-app_graph = workflow.compile(checkpointer=checkpointer, interrupt_before=["Automation_Specialist"])
+app_graph = workflow.compile(checkpointer=checkpointer, interrupt_before=["Automation_Specialist", "Chaos_Specialist"])
