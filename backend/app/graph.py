@@ -19,7 +19,7 @@ from .tools import (
     trace_service_health, purge_azion_cache, diagnose_azion_configuration,
     list_datadog_metrics, check_on_call_schedule, send_slack_notification,
     investigate_root_cause, scan_infrastructure, analyze_heavy_logs, analyze_gcp_errors,
-    correlate_alerts, optimize_k8s_resources
+    correlate_alerts, optimize_k8s_resources, optimize_gcp_resources
 )
 from .tools.dashboard import analyze_infrastructure_health
 from .tools.incident import (
@@ -41,7 +41,7 @@ llm = get_llm()
 
 # 2. Define Tools for each specialist
 k8s_tools = [list_k8s_pods, describe_pod, get_pod_logs, get_cluster_events, analyze_log_patterns, analyze_heavy_logs, diagnose_service_health, trace_service_health, optimize_k8s_resources]
-gcp_tools = [check_gcp_status, query_gmp_prometheus, list_compute_instances, get_gcp_sql_instances, analyze_heavy_logs, analyze_gcp_errors, estimate_gcp_cost]
+gcp_tools = [check_gcp_status, query_gmp_prometheus, list_compute_instances, get_gcp_sql_instances, analyze_heavy_logs, analyze_gcp_errors, estimate_gcp_cost, optimize_gcp_resources]
 datadog_tools = [get_datadog_metrics, get_active_alerts, list_datadog_metrics, correlate_alerts]
 azion_tools = [check_azion_edge, purge_azion_cache, diagnose_azion_configuration]
 code_tools = [check_github_repos, get_pr_status, list_recent_commits, generate_code_fix, create_github_pr, read_repo_file, list_repo_files]
@@ -53,8 +53,8 @@ incident_tools = [
     log_incident_event, build_incident_timeline, manage_incident_channels,
     list_incident_channels, suggest_remediation, generate_remediation_plan,
     check_on_call_schedule, send_slack_notification, generate_runbook_from_incident
-]
-automation_tools = [list_runbooks, execute_runbook, lookup_service, optimize_k8s_resources]
+)
+automation_tools = [list_runbooks, execute_runbook, lookup_service, optimize_k8s_resources, optimize_gcp_resources]
 topology_tools = [
     get_service_dependencies, get_service_topology, lookup_service,
     generate_topology_diagram, trace_service_health, analyze_infrastructure_health,

@@ -22,57 +22,58 @@ def _get_k8s_apps_client():
     return client.AppsV1Api()
 
 @tool
-def optimize_k8s_resources(namespace: str = "default", dry_run: bool = True) -> str:
+def optimize_k8s_resources(namespace: str = "default") -> str:
     """
-    Analyzes Kubernetes deployments in a namespace for resource optimization.
-    Checks for missing CPU/Memory limits and requests, and suggests 'right-sizing'.
-    If dry_run is False, it could potentially apply recommendations (not implemented for safety).
+    Performs a multi-dimensional optimization audit of Kubernetes resources.
+    Checks: Resource Limits/Requests, Probes (Liveness/Readiness), HPA usage, and Image Tags.
     """
     apps_v1 = _get_k8s_apps_client()
     if not apps_v1:
-        return "Error: Kubernetes client unavailable. Use Mock tools or check configuration."
+        return "Error: K8s client unavailable."
 
     try:
         deployments = apps_v1.list_namespaced_deployment(namespace)
+        # Try to get HPAs to check coverage
+        autoscaling_v2 = client.AutoscalingV2Api() if config else None
+        hpas = []
+        if autoscaling_v2:
+            try: hpas = autoscaling_v2.list_namespaced_horizontal_pod_autoscaler(namespace).items
+            except: pass
+        
+        hpa_targets = [h.spec.scale_target_ref.name for h in hpas]
         recommendations = []
 
         for dep in deployments.items:
             name = dep.metadata.name
-            containers = dep.spec.template.spec.containers
+            template = dep.spec.template.spec
+            containers = template.containers
             
             for container in containers:
                 c_name = container.name
-                resources = container.resources
-                
-                # Check for missing limits/requests
+                res = container.resources
                 issues = []
-                if not resources.limits or 'cpu' not in resources.limits:
-                    issues.append("Missing CPU limit")
-                if not resources.limits or 'memory' not in resources.limits:
-                    issues.append("Missing Memory limit")
-                if not resources.requests or 'cpu' not in resources.requests:
-                    issues.append("Missing CPU request")
                 
+                # 1. Resource Constraints
+                if not res.limits or 'cpu' not in res.limits: issues.append("Missing CPU limit")
+                if not res.requests or 'memory' not in res.requests: issues.append("Missing Memory request")
+                
+                # 2. Reliability (Probes)
+                if not container.liveness_probe: issues.append("No Liveness Probe")
+                if not container.readiness_probe: issues.append("No Readiness Probe")
+                
+                # 3. Best Practices (Tags)
+                if container.image.endswith(":latest"): issues.append("Using ':latest' tag (unreliable)")
+
+                # 4. Scalability (HPA)
+                if name not in hpa_targets: issues.append("No HPA configured (manual scaling)")
+
                 if issues:
-                    recommendations.append(
-                        f"- Deployment '{name}' (Container: {c_name}): {', '.join(issues)}. "
-                        "Recommendation: Add standard resource constraints (e.g., 100m CPU, 128Mi RAM)."
-                    )
-                else:
-                    # Right-sizing suggestion (Simulated)
-                    recommendations.append(
-                        f"- Deployment '{name}' (Container: {c_name}): Resources are configured. "
-                        "Recommendation: Monitor usage via Datadog to confirm if '250m CPU' can be reduced to '100m'."
-                    )
+                    recommendations.append(f"**{name}** ({c_name}):\n  - " + "\n  - ".join(issues))
 
         if not recommendations:
-            return f"No deployments found in namespace '{namespace}' or all are perfectly optimized."
+            return f"✅ All resources in '{namespace}' follow optimization best practices."
 
-        header = f"### 🚀 K8s Resource Optimization Report (Namespace: {namespace})\n"
-        if dry_run:
-            header += "*Note: This is a diagnostic analysis (Dry Run).*\n\n"
-        
-        return header + "\n".join(recommendations)
+        return f"### 🚀 Optimization Audit for '{namespace}'\n\n" + "\n".join(recommendations)
 
     except Exception as e:
-        return f"Error during optimization analysis: {str(e)}"
+        return f"Error: {str(e)}"

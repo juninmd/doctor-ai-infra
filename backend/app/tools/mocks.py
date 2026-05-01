@@ -293,13 +293,23 @@ def suggest_remediation(incident_id: str) -> str:
     return "Remediation: Restart the pod or rollback to v1.2.3."
 
 @tool
-def optimize_k8s_resources(namespace: str = "default", dry_run: bool = True) -> str:
+def optimize_k8s_resources(namespace: str = "default") -> str:
     """
     Analyzes Kubernetes deployments for resource optimization (Mock).
     """
     return (
         f"### 🚀 [MOCK] K8s Resource Optimization Report (Namespace: {namespace})\n"
-        "- Deployment 'frontend-web': Missing CPU limits. Recommendation: Add 200m CPU limit.\n"
-        "- Deployment 'payment-api': High memory reservation (1Gi) but low usage (100Mi). Recommendation: Reduce memory request to 256Mi.\n"
-        "- Deployment 'auth-service': Optimized. No changes needed."
+        "- **frontend-web**: Missing CPU limits & Readiness Probe. Recommendation: Add 200m CPU limit and /health path check.\n"
+        "- **payment-api**: High memory reservation (1Gi) but low usage (100Mi). No HPA found. Recommendation: Reduce request to 256Mi and enable HPA.\n"
+        "- **auth-service**: Optimized. No changes needed."
+    )
+
+@tool
+def optimize_gcp_resources() -> str:
+    """Identifies GCP optimization opportunities (Mock)."""
+    return (
+        "### ☁️ [MOCK] GCP Infrastructure Optimization\n"
+        "- **Orphaned Disks**: `db-backup-old` (us-central1-a, 500GB) - Attached to nothing since 30 days.\n"
+        "- **Stopped VMs**: `dev-worker-test` (Stopped) - Consider deleting to save on disk costs.\n"
+        "- **Underutilized**: `compute-heavy-1` (Avg 2% CPU) - Recommend downgrading to e2-small."
     )
