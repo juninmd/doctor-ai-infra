@@ -291,3 +291,15 @@ def send_slack_notification(channel: str, message: str) -> str:
 def suggest_remediation(incident_id: str) -> str:
     """Suggests remediation steps for an incident (Mock)."""
     return "Remediation: Restart the pod or rollback to v1.2.3."
+
+@tool
+def optimize_k8s_resources(namespace: str = "default", dry_run: bool = True) -> str:
+    """
+    Analyzes Kubernetes deployments for resource optimization (Mock).
+    """
+    return (
+        f"### 🚀 [MOCK] K8s Resource Optimization Report (Namespace: {namespace})\n"
+        "- Deployment 'frontend-web': Missing CPU limits. Recommendation: Add 200m CPU limit.\n"
+        "- Deployment 'payment-api': High memory reservation (1Gi) but low usage (100Mi). Recommendation: Reduce memory request to 256Mi.\n"
+        "- Deployment 'auth-service': Optimized. No changes needed."
+    )

@@ -16,6 +16,7 @@ if os.getenv("USE_REAL_TOOLS", "true").lower() == "true":
         list_datadog_metrics, check_on_call_schedule, send_slack_notification,
         analyze_gcp_errors
     )
+    from .k8s_optimizer import optimize_k8s_resources
 else:
     from .mocks import (
         list_k8s_pods, describe_pod, get_pod_logs, get_cluster_events,
@@ -27,5 +28,5 @@ else:
         analyze_log_patterns, diagnose_service_health, analyze_ci_failure, create_issue,
         trace_service_health, purge_azion_cache, diagnose_azion_configuration,
         list_datadog_metrics, check_on_call_schedule, send_slack_notification,
-        analyze_gcp_errors
+        analyze_gcp_errors, optimize_k8s_resources
     )

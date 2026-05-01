@@ -19,7 +19,7 @@ from .tools import (
     trace_service_health, purge_azion_cache, diagnose_azion_configuration,
     list_datadog_metrics, check_on_call_schedule, send_slack_notification,
     investigate_root_cause, scan_infrastructure, analyze_heavy_logs, analyze_gcp_errors,
-    correlate_alerts
+    correlate_alerts, optimize_k8s_resources
 )
 from .tools.dashboard import analyze_infrastructure_health
 from .tools.incident import (
@@ -40,7 +40,7 @@ from .state import AgentState
 llm = get_llm()
 
 # 2. Define Tools for each specialist
-k8s_tools = [list_k8s_pods, describe_pod, get_pod_logs, get_cluster_events, analyze_log_patterns, analyze_heavy_logs, diagnose_service_health, trace_service_health]
+k8s_tools = [list_k8s_pods, describe_pod, get_pod_logs, get_cluster_events, analyze_log_patterns, analyze_heavy_logs, diagnose_service_health, trace_service_health, optimize_k8s_resources]
 gcp_tools = [check_gcp_status, query_gmp_prometheus, list_compute_instances, get_gcp_sql_instances, analyze_heavy_logs, analyze_gcp_errors, estimate_gcp_cost]
 datadog_tools = [get_datadog_metrics, get_active_alerts, list_datadog_metrics, correlate_alerts]
 azion_tools = [check_azion_edge, purge_azion_cache, diagnose_azion_configuration]
@@ -54,7 +54,7 @@ incident_tools = [
     list_incident_channels, suggest_remediation, generate_remediation_plan,
     check_on_call_schedule, send_slack_notification, generate_runbook_from_incident
 ]
-automation_tools = [list_runbooks, execute_runbook, lookup_service]
+automation_tools = [list_runbooks, execute_runbook, lookup_service, optimize_k8s_resources]
 topology_tools = [
     get_service_dependencies, get_service_topology, lookup_service,
     generate_topology_diagram, trace_service_health, analyze_infrastructure_health,
@@ -172,6 +172,7 @@ supervisor_system_prompt = (
     "   - General Status / Dashboard / 'How is the system?' -> Topology_Specialist\n"
     "   - Complex/Unknown Issues / 'Hypothesize' / 'Plan' -> Planner_Specialist\n"
     "   - Issues with pods, containers, or Large Log Analysis -> K8s_Specialist\n"
+    "   - Cluster Optimization / Right-sizing / Resource limits -> K8s_Specialist\n"
     "   - Issues with Cloud/VMs, SQL, GMP, or Cost -> GCP_Specialist\n"
     "   - APM/Metrics/Alerts -> Datadog_Specialist\n"
     "   - Edge/CDN/WAF -> Azion_Specialist\n"
