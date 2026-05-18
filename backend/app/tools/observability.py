@@ -144,6 +144,15 @@ def scan_infrastructure() -> str:
             health_data["k8s"] = {"status": "error", "msg": str(e)}
 
         try:
+            gmp_res = f_gmp.result()
+            raw_scan_results.append(f"[GMP] {gmp_res}")
+            report.append(f"- GMP: 🟢 Active")
+            health_data["gmp"] = {"status": "healthy", "msg": "Active"}
+        except Exception as e:
+            report.append(f"- GMP: 🔴 Failed")
+            health_data["gmp"] = {"status": "error", "msg": str(e)}
+
+        try:
             gcp_res = f_gcp.result()
             raw_scan_results.append(f"[GCP] {gcp_res}")
             report.append(f"- GCP: {gcp_res}")
