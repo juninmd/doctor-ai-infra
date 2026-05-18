@@ -158,11 +158,25 @@ class TestBestOf2026Features(unittest.TestCase):
         self.assertIn("- Step 1: Check logs (Ollama)", plan)
         mock_llm.invoke.assert_called_once()
 
-    def test_check_on_call_schedule_mock(self):
+    @patch.dict('os.environ', {'PAGERDUTY_TOKEN': 'fake-token'})
+    @patch('app.tools.real.requests.get')
+    def test_check_on_call_schedule_mock(self, mock_get):
         """
         Verifies check_on_call_schedule returns the expected mock structure.
         """
-        result = real.check_on_call_schedule.invoke({})
-        self.assertIn("On-Call Schedule: Primary", result)
-        self.assertIn("Current On-Call:", result)
-        self.assertIn("Shift Ends:", result)
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            "oncalls": [
+                {
+                    "user": {"summary": "John Doe"},
+                    "end": "2026-01-01T00:00:00Z"
+                }
+            ]
+        }
+        mock_response.raise_for_status.return_value = None
+        mock_get.return_value = mock_response
+
+        result = real.check_on_call_schedule.invoke({"schedule_id": "mock-schedule"})
+        self.assertIn("PagerDuty On-Call", result)
+        self.assertIn("John Doe", result)
+        self.assertIn("mock-schedule", result)

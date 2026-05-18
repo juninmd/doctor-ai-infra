@@ -23,10 +23,11 @@ def test_list_k8s_pods_success():
 
 def test_list_k8s_pods_failure():
     """Test k8s pod listing failure."""
-    with patch('app.tools.real.config.load_kube_config', side_effect=Exception("No config")):
-        with patch('app.tools.real.config.load_incluster_config', side_effect=Exception("No cluster")):
-            result = list_k8s_pods.invoke({"namespace": "default"})
-            assert "Error" in result or "No config" in result
+    # We patch the internal helper rather than the config methods, since real handles the exceptions
+    # inside _get_k8s_client
+    with patch('app.tools.real._get_k8s_client', return_value=None):
+        result = list_k8s_pods.invoke({"namespace": "default"})
+        assert "Error: Could not load Kubernetes configuration" in result
 
 def test_check_gcp_status_success():
     """Test GCP status check."""

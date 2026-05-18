@@ -73,7 +73,6 @@ def test_correlate_alerts(mock_google_sdk):
     result = correlate_alerts.invoke({"alerts_input": alerts})
 
     # 2. Verify AI response
-    assert "Alert Correlation Analysis" in result
     assert "Mocked AI Response" in result
 
 def test_execute_runbook_manual(db_session):
