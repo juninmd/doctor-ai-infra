@@ -2,6 +2,7 @@ from langchain_core.tools import tool
 import requests
 import os
 
+
 def _get_azion_headers():
     token = os.getenv("AZION_TOKEN")
     if not token:
@@ -11,6 +12,7 @@ def _get_azion_headers():
         "Authorization": f"Token {token}",
         "Content-Type": "application/json"
     }
+
 
 @tool
 def check_azion_status() -> str:
@@ -26,6 +28,7 @@ def check_azion_status() -> str:
         return f"Azion Error: {e}"
     except Exception as e:
         return f"Azion Connection Failed: {e}"
+
 
 @tool
 def list_edge_applications() -> str:
@@ -46,6 +49,7 @@ def list_edge_applications() -> str:
     except Exception as e:
         return f"Error fetching Edge Applications: {e}"
 
+
 @tool
 def purge_azion_cache(urls: list) -> str:
     """
@@ -65,6 +69,7 @@ def purge_azion_cache(urls: list) -> str:
     except Exception as e:
         return f"Error purging Azion cache: {e}"
 
+
 @tool
 def get_azion_metrics(app_id: str, metric_type: str = "requests") -> str:
     """
@@ -76,11 +81,12 @@ def get_azion_metrics(app_id: str, metric_type: str = "requests") -> str:
     try:
         headers = _get_azion_headers()
         # Real-time metrics API endpoint mapping simplified for the tool
-        url = f"https://api.azionapi.net/metrics/graphql"
+        url = "https://api.azionapi.net/metrics/graphql"
         # We would use GraphQL query here for real metrics, mocking simple response
-        resp = requests.post(url, headers=headers, json={"query": "{ metrics }"}, timeout=10)
+        resp = requests.post(url, headers=headers, json={
+                             "query": "{ metrics }"}, timeout=10)
         if resp.status_code == 200:
-             return f"Azion Metrics for App {app_id}: {metric_type} is normal."
+            return f"Azion Metrics for App {app_id}: {metric_type} is normal."
         resp.raise_for_status()
     except ValueError as e:
         return f"Azion Error: {e}"
