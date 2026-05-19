@@ -47,7 +47,7 @@ def investigate_root_cause(service_name: str, owner: str = "my-org", repo: str =
     """
     from app.tools import (
         get_cluster_events, get_active_alerts, list_recent_commits,
-        check_gcp_status, check_traefik_health
+        check_gcp_status, check_traefik_health, check_azion_status
     )
 
     if not repo:
@@ -60,6 +60,7 @@ def investigate_root_cause(service_name: str, owner: str = "my-org", repo: str =
         future_dd = executor.submit(get_active_alerts.invoke, {"tags": f"service:{service_name}"})
         future_gcp = executor.submit(check_gcp_status.invoke, {})
         future_traefik = executor.submit(check_traefik_health.invoke, {})
+        future_azion = executor.submit(check_azion_status.invoke, {})
 
         hours = max(1, time_window_minutes // 60)
         future_git = executor.submit(list_recent_commits.invoke, {"owner": owner, "repo": repo, "hours": hours})
@@ -75,6 +76,9 @@ def investigate_root_cause(service_name: str, owner: str = "my-org", repo: str =
 
         try: report.append(f"\n[Traefik Ingress]\n{future_traefik.result()}")
         except Exception as e: report.append(f"\n[Traefik Ingress] Failed: {e}")
+
+        try: report.append(f"\n[Azion Edge Status]\n{future_azion.result()}")
+        except Exception as e: report.append(f"\n[Azion Edge Status] Failed: {e}")
 
         try: report.append(f"\n[Recent Code Changes]\n{future_git.result()}")
         except Exception as e: report.append(f"\n[Recent Code Changes] Failed: {e}")
@@ -102,7 +106,7 @@ def scan_infrastructure() -> str:
     """
     from app.tools import (
         list_k8s_pods, check_gcp_status, get_active_alerts, check_traefik_health,
-        query_gmp_prometheus
+        query_gmp_prometheus, check_azion_status
     )
     from app.llm import get_google_sdk_client
     import concurrent.futures
@@ -118,6 +122,7 @@ def scan_infrastructure() -> str:
         "gmp": {"status": "unknown", "msg": ""},
         "datadog": {"status": "unknown", "msg": ""},
         "traefik": {"status": "unknown", "msg": ""},
+        "azion": {"status": "unknown", "msg": ""},
         "ai_insight": ""
     }
 
@@ -129,6 +134,7 @@ def scan_infrastructure() -> str:
         f_gmp = executor.submit(query_gmp_prometheus.invoke, {"query": "up"})
         f_dd = executor.submit(get_active_alerts.invoke, {}) 
         f_traefik = executor.submit(check_traefik_health.invoke, {})
+        f_azion = executor.submit(check_azion_status.invoke, {})
 
         try:
             k8s_res = f_k8s.result()
@@ -186,6 +192,19 @@ def scan_infrastructure() -> str:
         except Exception as e:
              report.append(f"- Traefik: 🔴 Failed")
              health_data["traefik"] = {"status": "error", "msg": str(e)}
+
+        try:
+            azion_res = f_azion.result()
+            raw_scan_results.append(f"[Azion] {azion_res}")
+            if "🟢" in azion_res:
+                 report.append(f"- Azion: 🟢 OK")
+                 health_data["azion"] = {"status": "healthy", "msg": "OK"}
+            else:
+                 report.append(f"- Azion: 🔴 Issue")
+                 health_data["azion"] = {"status": "critical", "msg": "Issue detected"}
+        except Exception as e:
+             report.append(f"- Azion: 🔴 Failed")
+             health_data["azion"] = {"status": "error", "msg": str(e)}
 
     ai_summary = "System Normal."
     client = get_google_sdk_client()
