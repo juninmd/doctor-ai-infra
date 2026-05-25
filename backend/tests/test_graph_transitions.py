@@ -45,6 +45,30 @@ def test_supervisor_routes_to_gcp_specialist():
             result = supervisor_node(state)
             assert result["next"] == "GCP_Specialist"
 
+def test_supervisor_routes_to_azion_specialist():
+    """
+    Test that the supervisor_node routes to the Azion_Specialist
+    when the query mentions Edge Computing, CDN, or Azion.
+    """
+    state = {"messages": [HumanMessage(content="Clear the Azion CDN cache for the new deployment")]}
+
+    with patch("app.graph.llm") as mock_llm:
+        mock_chain = mock_llm.with_structured_output.return_value
+        class MockDecision:
+            next_agent = "Azion_Specialist"
+            reasoning = "Test reasoning"
+
+        mock_chain.invoke.return_value = MockDecision()
+
+        mock_llm.with_structured_output.side_effect = Exception("Not supported")
+
+        with patch("app.graph.ChatPromptTemplate.from_messages") as mock_prompt:
+            mock_chain_fallback = mock_prompt.return_value.partial.return_value.__or__.return_value.__or__.return_value
+            mock_chain_fallback.invoke.return_value = {"next_agent": "Azion_Specialist", "reasoning": "testing"}
+            result = supervisor_node(state)
+            assert result["next"] == "Azion_Specialist"
+
+
 def test_supervisor_routes_to_finish():
     """
     Test that the supervisor_node routes to FINISH
