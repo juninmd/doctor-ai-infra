@@ -57,7 +57,7 @@ pyee==13.0.0
 Pygments==2.19.2
 pytest==9.0.2
 pytest-asyncio
-python-dotenv==1.2.1
+python-dotenv==1.2.2
 PyYAML==6.0.3
 regex==2026.1.15
 requests==2.32.5
