@@ -11,6 +11,7 @@ from .llm import get_llm
 from .tools import (
     list_k8s_pods, describe_pod, get_pod_logs, get_cluster_events,
     check_gcp_status, query_gmp_prometheus, list_compute_instances, get_gcp_sql_instances,
+    check_azion_status, purge_azion_cache,
     get_datadog_metrics, get_active_alerts,
     check_github_repos, get_pr_status, list_recent_commits,
     check_pipeline_status, get_argocd_sync_status,
@@ -175,6 +176,7 @@ members = [
     "GCP_Specialist",
     "Datadog_Specialist",
     "Traefik_Specialist",
+    "Azion_Specialist",
     "Code_Specialist",
     "CICD_Specialist",
     "Security_Specialist",
@@ -183,8 +185,7 @@ members = [
     "Topology_Specialist",
     "Planner_Specialist",
     "FinOps_Specialist",
-    "Chaos_Specialist",
-    "Azion_Specialist"
+    "Chaos_Specialist"
 ]
 options = ["FINISH"] + members
 
@@ -229,9 +230,9 @@ class RouterSchema(BaseModel):
     reasoning: str = Field(description="The chain of thought reasoning for the decision.")
     next_agent: Literal[
         "K8s_Specialist", "GCP_Specialist", "Datadog_Specialist",
-        "Traefik_Specialist", "Code_Specialist", "CICD_Specialist",
+        "Traefik_Specialist", "Azion_Specialist", "Code_Specialist", "CICD_Specialist",
         "Security_Specialist", "Incident_Specialist", "Automation_Specialist",
-        "Topology_Specialist", "Planner_Specialist", "FinOps_Specialist", "Chaos_Specialist", "Azion_Specialist", "FINISH"
+        "Topology_Specialist", "Planner_Specialist", "FinOps_Specialist", "Chaos_Specialist", "FINISH"
     ] = Field(description="The next agent to route to, or FINISH.")
 
 def supervisor_node(state: AgentState):
@@ -273,6 +274,7 @@ workflow.add_node("K8s_Specialist", k8s_agent)
 workflow.add_node("GCP_Specialist", gcp_agent)
 workflow.add_node("Datadog_Specialist", datadog_agent)
 workflow.add_node("Traefik_Specialist", traefik_agent)
+workflow.add_node("Azion_Specialist", azion_agent)
 workflow.add_node("Code_Specialist", code_agent)
 workflow.add_node("CICD_Specialist", cicd_agent)
 workflow.add_node("Security_Specialist", sec_agent)
@@ -282,7 +284,6 @@ workflow.add_node("Topology_Specialist", topology_agent)
 workflow.add_node("Planner_Specialist", planner_agent)
 workflow.add_node("FinOps_Specialist", finops_agent)
 workflow.add_node("Chaos_Specialist", chaos_agent)
-workflow.add_node("Azion_Specialist", azion_agent)
 
 workflow.add_edge(START, "Supervisor")
 
@@ -297,6 +298,7 @@ workflow.add_conditional_edges(
         "GCP_Specialist": "GCP_Specialist",
         "Datadog_Specialist": "Datadog_Specialist",
         "Traefik_Specialist": "Traefik_Specialist",
+        "Azion_Specialist": "Azion_Specialist",
         "Code_Specialist": "Code_Specialist",
         "CICD_Specialist": "CICD_Specialist",
         "Security_Specialist": "Security_Specialist",
@@ -306,7 +308,6 @@ workflow.add_conditional_edges(
         "Planner_Specialist": "Planner_Specialist",
         "FinOps_Specialist": "FinOps_Specialist",
         "Chaos_Specialist": "Chaos_Specialist",
-        "Azion_Specialist": "Azion_Specialist",
         "FINISH": END
     }
 )
