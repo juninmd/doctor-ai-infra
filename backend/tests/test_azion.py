@@ -1,12 +1,16 @@
 import os
 import pytest
 from unittest.mock import patch, MagicMock
-from app.tools.azion import check_azion_status, purge_azion_cache
+from app.tools.azion import (
+    check_azion_status,
+    list_edge_applications,
+    purge_azion_cache,
+    get_azion_metrics
+)
 
 @patch.dict(os.environ, {"AZION_TOKEN": "test_token"})
 @patch("app.tools.azion.requests.get")
 def test_check_azion_status_success(mock_get):
-    """Verifies check_azion_status returns active count correctly."""
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.json.return_value = {"count": 5}
@@ -24,14 +28,24 @@ def test_check_azion_status_success(mock_get):
 
 @patch.dict(os.environ, {"AZION_TOKEN": ""}, clear=True)
 def test_check_azion_status_missing_token():
-    """Verifies check_azion_status handles missing token."""
     result = check_azion_status.invoke({})
     assert "Error: AZION_TOKEN missing" in result
 
 @patch.dict(os.environ, {"AZION_TOKEN": "test_token"})
+@patch("app.tools.azion.requests.get")
+def test_list_edge_applications_success(mock_get):
+    mock_resp = MagicMock()
+    mock_resp.status_code = 200
+    mock_resp.json.return_value = {"results": [{"name": "My App", "id": 123}]}
+    mock_get.return_value = mock_resp
+
+    result = list_edge_applications.invoke({})
+    assert "My App" in result
+    assert "123" in result
+
+@patch.dict(os.environ, {"AZION_TOKEN": "test_token"})
 @patch("app.tools.azion.requests.post")
 def test_purge_azion_cache_success(mock_post):
-    """Verifies purge_azion_cache handles valid URLs correctly."""
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_post.return_value = mock_response
@@ -48,12 +62,21 @@ def test_purge_azion_cache_success(mock_post):
 
 @patch.dict(os.environ, {"AZION_TOKEN": ""}, clear=True)
 def test_purge_azion_cache_missing_token():
-    """Verifies purge_azion_cache handles missing token."""
     result = purge_azion_cache.invoke({"urls": "http://example.com"})
     assert "Error: AZION_TOKEN missing" in result
 
 @patch.dict(os.environ, {"AZION_TOKEN": "test_token"})
 def test_purge_azion_cache_no_urls():
-    """Verifies purge_azion_cache handles empty or blank URLs."""
     result = purge_azion_cache.invoke({"urls": " ,  , "})
     assert "No URLs provided" in result
+
+@patch.dict(os.environ, {"AZION_TOKEN": "test_token"})
+@patch("app.tools.azion.requests.post")
+def test_get_azion_metrics_success(mock_post):
+    mock_resp = MagicMock()
+    mock_resp.status_code = 200
+    mock_post.return_value = mock_resp
+
+    result = get_azion_metrics.invoke({"app_id": "123", "metric_type": "bandwidth"})
+    assert "Azion Metrics for App 123" in result
+    assert "bandwidth is normal" in result
