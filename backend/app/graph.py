@@ -22,7 +22,8 @@ from .tools import (
     correlate_alerts, optimize_k8s_resources, optimize_gcp_resources,
     analyze_cost_anomalies, suggest_spot_migrations, predict_resource_exhaustion,
     run_chaos_experiment, analyze_chaos_results,
-    check_traefik_health, list_traefik_routes, diagnose_traefik_ingress
+    check_traefik_health, list_traefik_routes, diagnose_traefik_ingress,
+    check_azion_edge, check_azion_waf, purge_azion_cache
 )
 from .tools.dashboard import analyze_infrastructure_health
 from .tools.incident import (
@@ -47,6 +48,7 @@ k8s_tools = [list_k8s_pods, describe_pod, get_pod_logs, get_cluster_events, anal
 gcp_tools = [check_gcp_status, query_gmp_prometheus, list_compute_instances, get_gcp_sql_instances, analyze_heavy_logs, analyze_gcp_errors, estimate_gcp_cost, optimize_gcp_resources]
 datadog_tools = [get_datadog_metrics, get_active_alerts, list_datadog_metrics, correlate_alerts]
 traefik_tools = [check_traefik_health, list_traefik_routes, diagnose_traefik_ingress]
+azion_tools = [check_azion_edge, check_azion_waf, purge_azion_cache]
 code_tools = [check_github_repos, get_pr_status, list_recent_commits, generate_code_fix, create_github_pr, read_repo_file, list_repo_files]
 cicd_tools = [check_pipeline_status, get_argocd_sync_status, analyze_ci_failure]
 sec_tools = [check_vulnerabilities, analyze_iam_policy]
@@ -98,6 +100,7 @@ datadog_agent = make_specialist(
     heuristics="SRE TIP: Correlate high latency spikes with error logs. Check for recent alerts."
 )
 traefik_agent = make_specialist(traefik_tools, "Traefik Ingress Controller & Reverse Proxy")
+azion_agent = make_specialist(azion_tools, "Azion Edge, WAF & Content Delivery")
 code_agent = make_specialist(
     code_tools,
     "Source Code, Git, Development & Bug Fixing",
@@ -168,6 +171,7 @@ members = [
     "GCP_Specialist",
     "Datadog_Specialist",
     "Traefik_Specialist",
+    "Azion_Specialist",
     "Code_Specialist",
     "CICD_Specialist",
     "Security_Specialist",
@@ -198,6 +202,7 @@ supervisor_system_prompt = (
     "   - Chaos Engineering / Game Days / Injecting Faults -> Chaos_Specialist\n"
     "   - APM/Metrics/Alerts -> Datadog_Specialist\n"
     "   - Ingress, Reverse Proxy, Routing, SSL, Traefik -> Traefik_Specialist\n"
+    "   - Edge Cache, CDN, WAF, Azion Edge Applications -> Azion_Specialist\n"
     "   - Code/PRs/Commits -> Code_Specialist\n"
     "   - CI/CD/ArgoCD -> CICD_Specialist\n"
     "   - Security/IAM/Vulnerabilities -> Security_Specialist\n"
@@ -220,7 +225,7 @@ class RouterSchema(BaseModel):
     reasoning: str = Field(description="The chain of thought reasoning for the decision.")
     next_agent: Literal[
         "K8s_Specialist", "GCP_Specialist", "Datadog_Specialist",
-        "Traefik_Specialist", "Code_Specialist", "CICD_Specialist",
+        "Traefik_Specialist", "Azion_Specialist", "Code_Specialist", "CICD_Specialist",
         "Security_Specialist", "Incident_Specialist", "Automation_Specialist",
         "Topology_Specialist", "Planner_Specialist", "FinOps_Specialist", "Chaos_Specialist", "FINISH"
     ] = Field(description="The next agent to route to, or FINISH.")
@@ -264,6 +269,7 @@ workflow.add_node("K8s_Specialist", k8s_agent)
 workflow.add_node("GCP_Specialist", gcp_agent)
 workflow.add_node("Datadog_Specialist", datadog_agent)
 workflow.add_node("Traefik_Specialist", traefik_agent)
+workflow.add_node("Azion_Specialist", azion_agent)
 workflow.add_node("Code_Specialist", code_agent)
 workflow.add_node("CICD_Specialist", cicd_agent)
 workflow.add_node("Security_Specialist", sec_agent)
@@ -287,6 +293,7 @@ workflow.add_conditional_edges(
         "GCP_Specialist": "GCP_Specialist",
         "Datadog_Specialist": "Datadog_Specialist",
         "Traefik_Specialist": "Traefik_Specialist",
+        "Azion_Specialist": "Azion_Specialist",
         "Code_Specialist": "Code_Specialist",
         "CICD_Specialist": "CICD_Specialist",
         "Security_Specialist": "Security_Specialist",
