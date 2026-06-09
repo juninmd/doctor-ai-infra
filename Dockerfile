@@ -8,7 +8,7 @@ COPY frontend/ .
 RUN pnpm run build
 
 # Stage 2: Final image with Python backend + Nginx
-FROM python:3.12-slim
+FROM python:3.14-slim
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends nginx supervisor && \
