@@ -10,6 +10,8 @@ from .gcp_optimizer import optimize_gcp_resources
 from .traefik import check_traefik_health, list_traefik_routes, diagnose_traefik_ingress
 from .azion import check_azion_edge, check_azion_waf, purge_azion_cache
 
+from .azion import list_edge_applications, purge_azion_cache, check_azion_status, get_azion_metrics
+
 from .real import (
     list_k8s_pods, describe_pod, get_pod_logs, get_cluster_events,
     check_gcp_status, query_gmp_prometheus, list_compute_instances, get_gcp_sql_instances,

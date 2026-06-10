@@ -1,5 +1,5 @@
 # Stage 1: Build frontend
-FROM node:20-slim AS frontend-builder
+FROM node:26-slim AS frontend-builder
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@latest --activate
 COPY frontend/package.json frontend/pnpm-lock.yaml ./
@@ -8,7 +8,7 @@ COPY frontend/ .
 RUN pnpm run build
 
 # Stage 2: Final image with Python backend + Nginx
-FROM python:3.12-slim
+FROM python:3.14-slim
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends nginx supervisor && \

@@ -10,8 +10,8 @@ def test_estimate_gcp_cost_success(monkeypatch):
     # Force use of mocks to make it predictable
     monkeypatch.setenv("USE_REAL_TOOLS", "false")
 
-    with patch("app.tools.mocks.list_compute_instances._run", return_value="Instance: vm-1, Type: e2-medium"), \
-         patch("app.tools.mocks.get_gcp_sql_instances._run", return_value="Instance: sql-1, Type: db-f1-micro"), \
+    with patch("app.tools.real.list_compute_instances._run", return_value="Instance: vm-1, Type: e2-medium"), \
+         patch("app.tools.real.get_gcp_sql_instances._run", return_value="Instance: sql-1, Type: db-f1-micro"), \
          patch("app.tools.cost.get_google_sdk_client") as mock_sdk, \
          patch("app.tools.cost.get_llm") as mock_llm:
 
@@ -34,8 +34,8 @@ def test_estimate_gcp_cost_gemini():
     """
     os.environ["USE_REAL_TOOLS"] = "false"
 
-    with patch("app.tools.mocks.list_compute_instances._run", return_value="vm"), \
-         patch("app.tools.mocks.get_gcp_sql_instances._run", return_value="sql"), \
+    with patch("app.tools.real.list_compute_instances._run", return_value="vm"), \
+         patch("app.tools.real.get_gcp_sql_instances._run", return_value="sql"), \
          patch("app.tools.cost.get_google_sdk_client") as mock_sdk:
 
         class MockGeminiResponse:
@@ -54,8 +54,8 @@ def test_estimate_gcp_cost_resource_error():
     """
     os.environ["USE_REAL_TOOLS"] = "false"
 
-    with patch("app.tools.mocks.list_compute_instances._run", side_effect=Exception("API Error")), \
-         patch("app.tools.mocks.get_gcp_sql_instances._run", side_effect=Exception("API Error")), \
+    with patch("app.tools.real.list_compute_instances._run", side_effect=Exception("API Error")), \
+         patch("app.tools.real.get_gcp_sql_instances._run", side_effect=Exception("API Error")), \
          patch("app.tools.cost.get_google_sdk_client") as mock_sdk, \
          patch("app.tools.cost.get_llm") as mock_llm:
 
