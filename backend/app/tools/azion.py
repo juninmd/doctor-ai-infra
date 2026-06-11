@@ -15,6 +15,50 @@ def _get_azion_headers():
 
 
 @tool
+def check_azion_edge() -> str:
+    """Checks the status of Azion Edge Applications."""
+    try:
+        headers = _get_azion_headers()
+        resp = requests.get("https://api.azionapi.net/edge_applications", headers=headers, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+        apps = data.get("results", [])
+        if not apps:
+            return "No Azion Edge Applications found."
+
+        result = [f"Found {len(apps)} Azion Edge Applications:"]
+        for app in apps[:5]:
+            result.append(f"- {app.get('name')} (ID: {app.get('id')}) - Active: {app.get('active')}")
+        return "\n".join(result)
+    except ValueError as e:
+        return f"Azion Error: {e}"
+    except Exception as e:
+        return f"Error checking Azion Edge Applications: {str(e)}"
+
+
+@tool
+def check_azion_waf() -> str:
+    """Checks the status of Azion WAF (Web Application Firewall)."""
+    try:
+        headers = _get_azion_headers()
+        resp = requests.get("https://api.azionapi.net/edge_firewall", headers=headers, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+        firewalls = data.get("results", [])
+        if not firewalls:
+            return "No Azion WAF Configurations found."
+
+        result = [f"Found {len(firewalls)} Azion WAF Configurations:"]
+        for fw in firewalls[:5]:
+            result.append(f"- {fw.get('name')} (ID: {fw.get('id')}) - Active: {fw.get('is_active')}")
+        return "\n".join(result)
+    except ValueError as e:
+        return f"Azion Error: {e}"
+    except Exception as e:
+        return f"Error checking Azion WAF: {str(e)}"
+
+
+@tool
 def check_azion_status() -> str:
     """Checks the status of the Azion Edge CDN infrastructure."""
     try:

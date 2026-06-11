@@ -23,7 +23,8 @@ from .tools import (
     correlate_alerts, optimize_k8s_resources, optimize_gcp_resources,
     analyze_cost_anomalies, suggest_spot_migrations, predict_resource_exhaustion,
     run_chaos_experiment, analyze_chaos_results,
-    check_traefik_health, list_traefik_routes, diagnose_traefik_ingress
+    check_traefik_health, list_traefik_routes, diagnose_traefik_ingress,
+    check_azion_edge, check_azion_waf, purge_azion_cache
 )
 from .tools.azion import list_edge_applications, purge_azion_cache, check_azion_status, get_azion_metrics
 from .tools.dashboard import analyze_infrastructure_health
@@ -49,7 +50,7 @@ k8s_tools = [list_k8s_pods, describe_pod, get_pod_logs, get_cluster_events, anal
 gcp_tools = [check_gcp_status, query_gmp_prometheus, list_compute_instances, get_gcp_sql_instances, analyze_heavy_logs, analyze_gcp_errors, estimate_gcp_cost, optimize_gcp_resources]
 datadog_tools = [get_datadog_metrics, get_active_alerts, list_datadog_metrics, correlate_alerts]
 traefik_tools = [check_traefik_health, list_traefik_routes, diagnose_traefik_ingress]
-azion_tools = [list_edge_applications, purge_azion_cache, check_azion_status, get_azion_metrics]
+azion_tools = [check_azion_edge, check_azion_waf, list_edge_applications, check_azion_status, get_azion_metrics, purge_azion_cache]
 code_tools = [check_github_repos, get_pr_status, list_recent_commits, generate_code_fix, create_github_pr, read_repo_file, list_repo_files]
 cicd_tools = [check_pipeline_status, get_argocd_sync_status, analyze_ci_failure]
 sec_tools = [check_vulnerabilities, analyze_iam_policy]
@@ -103,8 +104,8 @@ datadog_agent = make_specialist(
 traefik_agent = make_specialist(traefik_tools, "Traefik Ingress Controller & Reverse Proxy")
 azion_agent = make_specialist(
     azion_tools,
-    "Azion Edge Computing & CDN",
-    heuristics="SRE TIP: When users mention Edge, CDN, Cache, or Azion, route to me. Use `check_azion_status` for health, `list_edge_applications` to find apps, `get_azion_metrics` for traffic/errors, and `purge_azion_cache` when asked to clear cache."
+    "Azion Edge Computing, CDN & WAF",
+    heuristics="SRE TIP: When users mention Edge, CDN, Cache, WAF, or Azion, route to me. Use `check_azion_status` for health, `list_edge_applications` to find apps, `get_azion_metrics` for traffic/errors, and `purge_azion_cache` when asked to clear cache."
 )
 code_agent = make_specialist(
     code_tools,
@@ -207,7 +208,7 @@ supervisor_system_prompt = (
     "   - Chaos Engineering / Game Days / Injecting Faults -> Chaos_Specialist\n"
     "   - APM/Metrics/Alerts -> Datadog_Specialist\n"
     "   - Ingress, Reverse Proxy, Routing, SSL, Traefik -> Traefik_Specialist\n"
-    "   - Edge/CDN, Azion, Cache, Edge Functions -> Azion_Specialist\n"
+    "   - Edge Cache, CDN, WAF, Azion Edge Applications, Edge Functions -> Azion_Specialist\n"
     "   - Code/PRs/Commits -> Code_Specialist\n"
     "   - CI/CD/ArgoCD -> CICD_Specialist\n"
     "   - Security/IAM/Vulnerabilities -> Security_Specialist\n"
@@ -254,7 +255,7 @@ def supervisor_node(state: AgentState):
             fallback_prompt = ChatPromptTemplate.from_messages([
                 ("system", supervisor_system_prompt),
                 MessagesPlaceholder(variable_name="messages"),
-                ("system", "Who should act next? Respond with a JSON object having 'reasoning' and 'next_agent' keys.\n{format_instructions}")
+                ("system", "Who should act next? Respond with a JSON object having 'reasoning' and 'next_agent' keys.\n{format_instructions}\n")
             ]).partial(members=", ".join(members), format_instructions=parser.get_format_instructions())
 
             fallback_chain = fallback_prompt | llm | parser

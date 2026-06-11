@@ -8,6 +8,7 @@ from .k8s_optimizer import optimize_k8s_resources
 from .gcp_optimizer import optimize_gcp_resources
 
 from .traefik import check_traefik_health, list_traefik_routes, diagnose_traefik_ingress
+from .azion import check_azion_edge, check_azion_waf, purge_azion_cache
 
 from .azion import list_edge_applications, purge_azion_cache, check_azion_status, get_azion_metrics
 
