@@ -1,7 +1,7 @@
 # Stage 1: Build frontend
 FROM node:26-slim AS frontend-builder
 WORKDIR /app
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN npm install -g corepack@latest && corepack enable && corepack prepare pnpm@latest --activate
 COPY frontend/package.json frontend/pnpm-lock.yaml ./
 RUN pnpm install
 COPY frontend/ .
