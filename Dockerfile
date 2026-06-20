@@ -2,7 +2,7 @@
 FROM node:26-slim AS frontend-builder
 WORKDIR /app
 RUN npm install -g corepack@latest && corepack enable && corepack prepare pnpm@latest --activate
-COPY frontend/package.json frontend/pnpm-lock.yaml ./
+COPY frontend/package.json frontend/pnpm-lock.yaml frontend/pnpm-workspace.yaml ./
 RUN pnpm install
 COPY frontend/ .
 RUN pnpm run build
