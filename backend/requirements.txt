@@ -58,7 +58,7 @@ pytest==9.0.3
 pytest-asyncio
 python-dotenv==1.2.2
 PyYAML==6.0.3
-regex==2026.1.15
+regex==2026.5.9
 requests==2.33.0
 requests-toolbelt==1.0.0
 rsa==4.9.1
