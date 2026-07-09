@@ -22,14 +22,14 @@ def test_check_azion_status_success(mock_get):
     assert "5 edge applications found" in result
     mock_get.assert_called_once_with(
         "https://api.azionapi.net/edge_applications",
-        headers={"Authorization": "Token test_token", "Accept": "application/json"},
+        headers={"Authorization": "Token test_token", "Accept": "application/json; version=3", "Content-Type": "application/json"},
         timeout=10
     )
 
 @patch.dict(os.environ, {"AZION_TOKEN": ""}, clear=True)
 def test_check_azion_status_missing_token():
     result = check_azion_status.invoke({})
-    assert "Error: AZION_TOKEN missing" in result
+    assert "Azion Error: AZION_TOKEN is missing" in result
 
 @patch.dict(os.environ, {"AZION_TOKEN": "test_token"})
 @patch("app.tools.azion.requests.get")
@@ -56,14 +56,14 @@ def test_purge_azion_cache_success(mock_post):
     mock_post.assert_called_once_with(
         "https://api.azionapi.net/purge/url",
         json={"urls": ["http://example.com/1", "http://example.com/2"], "method": "delete"},
-        headers={"Authorization": "Token test_token", "Accept": "application/json", "Content-Type": "application/json"},
+        headers={"Authorization": "Token test_token", "Accept": "application/json; version=3", "Content-Type": "application/json"},
         timeout=10
     )
 
 @patch.dict(os.environ, {"AZION_TOKEN": ""}, clear=True)
 def test_purge_azion_cache_missing_token():
     result = purge_azion_cache.invoke({"urls": "http://example.com"})
-    assert "Error: AZION_TOKEN missing" in result
+    assert "Azion Error: AZION_TOKEN is missing" in result
 
 @patch.dict(os.environ, {"AZION_TOKEN": "test_token"})
 def test_purge_azion_cache_no_urls():
