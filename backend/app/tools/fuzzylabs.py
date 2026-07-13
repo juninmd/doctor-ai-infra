@@ -33,26 +33,8 @@ def fuzzylabs_sre_workflow(service_name: str, log_group: str = "", slack_channel
             f"Recent Commits:\n{commits}"
         )
 
-        client = get_google_sdk_client()
-        diagnosis = "Analysis failed."
-
-        if client:
-            try:
-                response = client.models.generate_content(
-                    model="gemini-1.5-flash",
-                    contents=[prompt]
-                )
-                diagnosis = response.text
-            except Exception:
-                pass
-
-        if diagnosis == "Analysis failed.":
-            try:
-                llm = get_llm()
-                res = llm.invoke(prompt)
-                diagnosis = res.content
-            except Exception as e:
-                diagnosis = f"Could not perform diagnosis: {e}"
+        from app.llm import generate_diagnosis
+        diagnosis = generate_diagnosis(prompt=prompt)
 
         # 4. Send results to Slack
         report_message = f"🚨 *FuzzyLabs SRE Agent Diagnosis for {service_name}* 🚨\n\n{diagnosis}"

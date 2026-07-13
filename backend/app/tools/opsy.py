@@ -23,28 +23,8 @@ def opsy_backup_and_ticket_failing_pods(namespace: str = "default", project: str
         # Using a structured prompt to find failure reasons
         context = f"Analyze the following pod status output to identify any failing pods and their reasons:\n{pods_info}"
 
-        client = get_google_sdk_client()
-        diagnosis = "Analysis failed."
-        if client:
-            try:
-                response = client.models.generate_content(
-                    model="gemini-1.5-flash",
-                    contents=[
-                        "You are an expert SRE log analyzer.",
-                        context
-                    ]
-                )
-                diagnosis = response.text
-            except Exception:
-                pass
-
-        if diagnosis == "Analysis failed.":
-            try:
-                llm = get_llm()
-                res = llm.invoke(context)
-                diagnosis = res.content
-            except Exception as e:
-                diagnosis = f"Could not perform diagnosis: {e}"
+        from app.llm import generate_diagnosis
+        diagnosis = generate_diagnosis(prompt=context, system_instruction="You are an expert SRE log analyzer.")
 
         # 3. Create Ticket
         ticket_title = f"Kubernetes issues in {project} project"
