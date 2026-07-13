@@ -6,7 +6,14 @@ import {
   GitBranch,
   Workflow,
   ShieldCheck,
-  BrainCircuit
+  BrainCircuit,
+  Globe,
+  AlertTriangle,
+  Zap,
+  Network,
+  Lightbulb,
+  DollarSign,
+  Bomb
 } from "lucide-react"
 
 interface AgentNetworkProps {
@@ -17,18 +24,26 @@ const agents = [
   { name: "K8s_Specialist", label: "Kubernetes", icon: Server, color: "text-blue-400", border: "border-blue-500", shadow: "shadow-[0_0_15px_rgba(59,130,246,0.5)]" },
   { name: "GCP_Specialist", label: "Google Cloud", icon: Cloud, color: "text-red-400", border: "border-red-500", shadow: "shadow-[0_0_15px_rgba(239,68,68,0.5)]" },
   { name: "Datadog_Specialist", label: "Datadog", icon: Activity, color: "text-purple-400", border: "border-purple-500", shadow: "shadow-[0_0_15px_rgba(168,85,247,0.5)]" },
-  { name: "Traefik_Specialist", label: "Traefik Ingress", icon: ArrowRightLeft, color: "text-orange-400", border: "border-orange-500", shadow: "shadow-[0_0_15px_rgba(249,115,22,0.5)]" },
-  { name: "Git_Specialist", label: "Git / Repo", icon: GitBranch, color: "text-slate-200", border: "border-slate-500", shadow: "shadow-[0_0_15px_rgba(100,116,139,0.5)]" },
+  { name: "Traefik_Specialist", label: "Traefik", icon: ArrowRightLeft, color: "text-orange-400", border: "border-orange-500", shadow: "shadow-[0_0_15px_rgba(249,115,22,0.5)]" },
+  { name: "Azion_Specialist", label: "Azion Edge", icon: Globe, color: "text-cyan-400", border: "border-cyan-500", shadow: "shadow-[0_0_15px_rgba(6,182,212,0.5)]" },
+  { name: "Code_Specialist", label: "Code/Git", icon: GitBranch, color: "text-slate-200", border: "border-slate-500", shadow: "shadow-[0_0_15px_rgba(100,116,139,0.5)]" },
   { name: "CICD_Specialist", label: "CI/CD", icon: Workflow, color: "text-green-400", border: "border-green-500", shadow: "shadow-[0_0_15px_rgba(34,197,94,0.5)]" },
   { name: "Security_Specialist", label: "Security", icon: ShieldCheck, color: "text-yellow-400", border: "border-yellow-500", shadow: "shadow-[0_0_15px_rgba(234,179,8,0.5)]" },
+  { name: "Incident_Specialist", label: "Incident", icon: AlertTriangle, color: "text-rose-400", border: "border-rose-500", shadow: "shadow-[0_0_15px_rgba(244,63,94,0.5)]" },
+  { name: "Automation_Specialist", label: "Automation", icon: Zap, color: "text-amber-400", border: "border-amber-500", shadow: "shadow-[0_0_15px_rgba(245,158,11,0.5)]" },
+  { name: "Topology_Specialist", label: "Topology", icon: Network, color: "text-indigo-400", border: "border-indigo-500", shadow: "shadow-[0_0_15px_rgba(99,102,241,0.5)]" },
+  { name: "Planner_Specialist", label: "Planner", icon: Lightbulb, color: "text-fuchsia-400", border: "border-fuchsia-500", shadow: "shadow-[0_0_15px_rgba(217,70,239,0.5)]" },
+  { name: "FinOps_Specialist", label: "FinOps", icon: DollarSign, color: "text-emerald-400", border: "border-emerald-500", shadow: "shadow-[0_0_15px_rgba(16,185,129,0.5)]" },
+  { name: "Chaos_Specialist", label: "Chaos", icon: Bomb, color: "text-pink-400", border: "border-pink-500", shadow: "shadow-[0_0_15px_rgba(236,72,153,0.5)]" },
 ]
 
 export function AgentNetwork({ activeAgent }: AgentNetworkProps) {
-  // We arrange agents in a circle
-  const radius = 120 // px
+  // Use a slightly smaller radius so it doesn't clip on the edges of the box
+  // but keep the box a bit taller
+  const radius = 125 // px
 
   return (
-    <div className="relative w-full h-[300px] flex items-center justify-center rounded-xl overflow-hidden mb-2">
+    <div className="relative w-full h-[350px] flex items-center justify-center rounded-xl overflow-hidden mb-2">
       {/* Background Grid Effect */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:24px_24px]" />
 
@@ -66,10 +81,10 @@ export function AgentNetwork({ activeAgent }: AgentNetworkProps) {
       {/* Central Supervisor Node */}
       <div className="absolute z-20 flex flex-col items-center justify-center">
         <div className={`
-          relative flex items-center justify-center w-16 h-16 rounded-full border-4 bg-black/50 backdrop-blur z-10 transition-all duration-500
+          relative flex items-center justify-center w-14 h-14 rounded-full border-4 bg-black/50 backdrop-blur z-10 transition-all duration-500
           ${activeAgent === 'Supervisor' || !activeAgent ? 'border-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.6)]' : 'border-white/20'}
         `}>
-          <BrainCircuit className={`w-8 h-8 ${activeAgent === 'Supervisor' || !activeAgent ? 'text-blue-400 animate-pulse' : 'text-white/50'}`} />
+          <BrainCircuit className={`w-6 h-6 ${activeAgent === 'Supervisor' || !activeAgent ? 'text-blue-400 animate-pulse' : 'text-white/50'}`} />
           {/* Ripple effect */}
           {(activeAgent === 'Supervisor' || !activeAgent) && (
              <div className="absolute inset-0 rounded-full border-2 border-blue-500 animate-ping opacity-20" />
@@ -97,16 +112,16 @@ export function AgentNetwork({ activeAgent }: AgentNetworkProps) {
             }}
           >
             <div className={`
-              relative flex items-center justify-center w-10 h-10 rounded-full border-2 bg-black/50 backdrop-blur transition-all duration-300
+              relative flex items-center justify-center w-8 h-8 rounded-full border-2 bg-black/50 backdrop-blur transition-all duration-300
               ${isActive ? `${agent.border} ${agent.shadow} scale-110` : 'border-white/20 grayscale opacity-60'}
             `}>
-              <agent.icon className={`w-5 h-5 ${isActive ? agent.color : 'text-white/50'}`} />
+              <agent.icon className={`w-4 h-4 ${isActive ? agent.color : 'text-white/50'}`} />
               {isActive && (
                 <div className={`absolute inset-0 rounded-full border ${agent.border} animate-ping opacity-30`} />
               )}
             </div>
             <span className={`
-              mt-1 text-[9px] font-mono font-bold bg-black/80 px-1.5 py-0.5 rounded transition-colors whitespace-nowrap
+              mt-0.5 text-[8px] font-mono font-bold bg-black/80 px-1 py-0.5 rounded transition-colors whitespace-nowrap
               ${isActive ? agent.color : 'text-white/50'}
             `}>
               {agent.label}
