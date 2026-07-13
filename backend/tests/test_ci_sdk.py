@@ -33,8 +33,8 @@ def test_analyze_ci_failure_uses_sdk():
             mock_response.text = "Gemini found the error."
             mock_client.models.generate_content.return_value = mock_response
 
-            # Patch get_google_sdk_client in real.py
-            with patch("app.tools.real.get_google_sdk_client", return_value=mock_client) as mock_get_client:
+            # Patch get_google_sdk_client directly in app.llm where generate_diagnosis looks for it
+            with patch("app.llm.get_google_sdk_client", return_value=mock_client) as mock_get_client:
 
                 result = analyze_ci_failure.invoke({"build_id": "999", "repo_name": "test-repo"})
 
@@ -42,7 +42,7 @@ def test_analyze_ci_failure_uses_sdk():
                 mock_get_client.assert_called_once()
                 mock_client.models.generate_content.assert_called_once()
 
-                assert "Gemini Analysis" in result
+                assert "Gemini found the error" in result
 
 def test_analyze_ci_failure_fallback():
     # Same setup but SDK returns None
@@ -59,13 +59,13 @@ def test_analyze_ci_failure_fallback():
             mock_get.side_effect = [mock_jobs_resp, mock_log_resp]
 
             # Mock SDK as None
-            with patch("app.tools.real.get_google_sdk_client", return_value=None):
+            with patch("app.llm.get_google_sdk_client", return_value=None):
                 # Mock Standard LLM
-                with patch("app.tools.real.get_llm") as mock_get_llm:
+                with patch("app.llm.get_llm") as mock_get_llm:
                     mock_llm = MagicMock()
                     mock_llm.invoke.return_value.content = "Standard LLM Analysis"
                     mock_get_llm.return_value = mock_llm
 
                     result = analyze_ci_failure.invoke({"build_id": "999", "repo_name": "test-repo"})
 
-                    assert "AI Analysis (Standard)" in result
+                    assert "Standard LLM Analysis" in result

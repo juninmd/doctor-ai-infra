@@ -24,7 +24,8 @@ from .tools import (
     analyze_cost_anomalies, suggest_spot_migrations, predict_resource_exhaustion,
     run_chaos_experiment, analyze_chaos_results,
     check_traefik_health, list_traefik_routes, diagnose_traefik_ingress,
-    check_azion_edge, check_azion_waf, purge_azion_cache
+    check_azion_edge, check_azion_waf, purge_azion_cache,
+    opsy_backup_and_ticket_failing_pods, fuzzylabs_sre_workflow
 )
 from .tools.azion import list_edge_applications, purge_azion_cache, check_azion_status, get_azion_metrics
 from .tools.dashboard import analyze_infrastructure_health
@@ -59,9 +60,10 @@ incident_tools = [
     generate_postmortem, search_knowledge_base, create_issue,
     log_incident_event, build_incident_timeline, manage_incident_channels,
     list_incident_channels, suggest_remediation, generate_remediation_plan,
-    check_on_call_schedule, send_slack_notification, generate_runbook_from_incident
+    check_on_call_schedule, send_slack_notification, generate_runbook_from_incident,
+    fuzzylabs_sre_workflow
 ]
-automation_tools = [list_runbooks, execute_runbook, lookup_service, optimize_k8s_resources, optimize_gcp_resources]
+automation_tools = [list_runbooks, execute_runbook, lookup_service, optimize_k8s_resources, optimize_gcp_resources, opsy_backup_and_ticket_failing_pods]
 topology_tools = [
     get_service_dependencies, get_service_topology, lookup_service,
     generate_topology_diagram, trace_service_health, analyze_infrastructure_health,
@@ -122,7 +124,8 @@ incident_agent = make_specialist(
         "1. Create a channel with `manage_incident_channels`.\n"
         "2. Use `log_incident_event` to record your Hypotheses, Evidence, and Actions in real-time. This builds the timeline.\n"
         "3. Use `build_incident_timeline` (default text) or `build_incident_timeline(format='mermaid')` to visualize the sequence of events.\n"
-        "4. Always act on facts, not assumptions."
+        "4. Always act on facts, not assumptions.\n"
+        "5. If a user asks to run the 'FuzzyLabs' workflow, use `fuzzylabs_sre_workflow`."
     )
 )
 automation_agent = make_specialist(
@@ -133,7 +136,8 @@ automation_agent = make_specialist(
         "1. Always use `execute_runbook` with `dry_run=True` FIRST to verify the action.\n"
         "2. Show the dry-run output to the user and ask for explicit confirmation.\n"
         "3. Only run with `dry_run=False` after receiving user approval.\n"
-        "4. If a service is unknown, use `lookup_service`."
+        "4. If a service is unknown, use `lookup_service`.\n"
+        "5. If a user asks to run the 'Opsy' workflow (backup and ticket failing pods), use `opsy_backup_and_ticket_failing_pods`."
     )
 )
 topology_agent = make_specialist(
@@ -212,8 +216,8 @@ supervisor_system_prompt = (
     "   - Code/PRs/Commits -> Code_Specialist\n"
     "   - CI/CD/ArgoCD -> CICD_Specialist\n"
     "   - Security/IAM/Vulnerabilities -> Security_Specialist\n"
-    "   - Incidents/Post-Mortems/Remediation Plans -> Incident_Specialist\n"
-    "   - Runbooks/Scripts/Restarting Services -> Automation_Specialist\n"
+    "   - Incidents/Post-Mortems/Remediation Plans / 'FuzzyLabs' workflow -> Incident_Specialist\n"
+    "   - Runbooks/Scripts/Restarting Services / 'Opsy' workflow -> Automation_Specialist\n"
     "4. SMART TRIAGE (Latency & Errors):\n"
     "   - 'High Latency' or '5xx Errors' -> Route to Traefik_Specialist FIRST to check Ingress health.\n"
     "   - If Traefik is healthy, route to Datadog_Specialist (check Backend Metrics).\n"

@@ -30,3 +30,8 @@ dependencies = [
     "langchain-huggingface>=0.0.1",
     "sentence-transformers>=2.2.0",
 ]
+
+[dependency-groups]
+dev = [
+    "flake8>=7.3.0",
+]

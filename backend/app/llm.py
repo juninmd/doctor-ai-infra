@@ -40,6 +40,35 @@ def get_llm():
         temperature=0, # Precision for SRE tasks
     )
 
+def generate_diagnosis(prompt: str, system_instruction: str = None) -> str:
+    """Helper to generate a diagnosis using Google GenAI SDK with fallback to LangChain LLM."""
+    client = get_google_sdk_client()
+    diagnosis = "Analysis failed."
+
+    if client:
+        try:
+            contents = []
+            if system_instruction:
+                contents.append(system_instruction)
+            contents.append(prompt)
+            response = client.models.generate_content(
+                model="gemini-1.5-flash",
+                contents=contents
+            )
+            diagnosis = response.text
+        except Exception:
+            pass
+
+    if diagnosis == "Analysis failed.":
+        try:
+            llm = get_llm()
+            res = llm.invoke(prompt)
+            diagnosis = res.content
+        except Exception as e:
+            diagnosis = f"Could not perform diagnosis: {e}"
+
+    return diagnosis
+
 def get_google_sdk_client():
     """
     Returns the raw Google Gen AI SDK client (v1.0+) for advanced features like File API.
