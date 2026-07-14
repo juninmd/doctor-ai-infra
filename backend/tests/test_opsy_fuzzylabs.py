@@ -78,7 +78,7 @@ def test_opsy_backup_and_ticket_failing_pods_llm_fallback(mock_get_llm, mock_get
 
         assert "Diagnosis: Missing ENV var." in result
         assert "Issue #123 created." in result
-        assert "datolabs-io-sandbox" in result
+        assert "datolabs-io/sandbox" in result
         mock_get_llm.assert_called_once()
         mock_llm_instance.invoke.assert_called_once()
 

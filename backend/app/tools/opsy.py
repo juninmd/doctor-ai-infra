@@ -2,7 +2,7 @@ from langchain_core.tools import tool
 import os
 
 @tool
-def opsy_backup_and_ticket_failing_pods(namespace: str = "default", project: str = "OPSY") -> str:
+def opsy_backup_and_ticket_failing_pods(namespace: str = "default", project: str = "OPSY", backup_repo_owner: str = "datolabs-io", backup_repo_name: str = "sandbox") -> str:
     """
     Analyzes failing pods in a namespace, diagnoses the reason, creates a Jira/GitHub ticket,
     and backs up their manifests to a private repo.
@@ -11,6 +11,8 @@ def opsy_backup_and_ticket_failing_pods(namespace: str = "default", project: str
     Args:
         namespace: The Kubernetes namespace to check for failing pods.
         project: The Jira or GitHub project/repo to create the ticket in.
+        backup_repo_owner: The GitHub repository owner for backup.
+        backup_repo_name: The GitHub repository name for backup.
     """
     from app.tools import list_k8s_pods, analyze_heavy_logs, create_issue
     from app.llm import get_google_sdk_client, get_llm
@@ -38,7 +40,7 @@ def opsy_backup_and_ticket_failing_pods(namespace: str = "default", project: str
         })
 
         # 4. Backup manifests (Mocked action since we don't have a real git push mechanism easily configured for new repos)
-        backup_result = f"Successfully backed up deployment manifests to datolabs-io-sandbox private repo."
+        backup_result = f"Successfully backed up deployment manifests to {backup_repo_owner}/{backup_repo_name} private repo."
 
         return (
             f"### 🤖 Opsy Workflow Execution Complete\n\n"

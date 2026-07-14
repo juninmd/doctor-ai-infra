@@ -26,3 +26,5 @@ from .cost import estimate_gcp_cost
 from .reasoning import generate_hypothesis
 from .opsy import opsy_backup_and_ticket_failing_pods
 from .fuzzylabs import fuzzylabs_sre_workflow
+from .opsmate import opsmate_troubleshooting_workflow
+from .smythos import smythos_unified_resource_manager
