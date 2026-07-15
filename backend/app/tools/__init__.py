@@ -28,3 +28,5 @@ from .opsy import opsy_backup_and_ticket_failing_pods
 from .fuzzylabs import fuzzylabs_sre_workflow
 from .opsmate import opsmate_troubleshooting_workflow
 from .smythos import smythos_unified_resource_manager
+from .bits_ai import bits_ai_investigate_monitor
+from .incidentfox import incidentfox_auto_investigate

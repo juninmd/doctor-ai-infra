@@ -26,7 +26,8 @@ from .tools import (
     check_traefik_health, list_traefik_routes, diagnose_traefik_ingress,
     check_azion_edge, check_azion_waf, purge_azion_cache,
     opsy_backup_and_ticket_failing_pods, fuzzylabs_sre_workflow,
-    opsmate_troubleshooting_workflow, smythos_unified_resource_manager
+    opsmate_troubleshooting_workflow, smythos_unified_resource_manager,
+    bits_ai_investigate_monitor, incidentfox_auto_investigate
 )
 from .tools.azion import list_edge_applications, purge_azion_cache, check_azion_status, get_azion_metrics
 from .tools.dashboard import analyze_infrastructure_health
@@ -50,7 +51,7 @@ llm = get_llm()
 # 2. Define Tools for each specialist
 k8s_tools = [list_k8s_pods, describe_pod, get_pod_logs, get_cluster_events, analyze_log_patterns, analyze_heavy_logs, diagnose_service_health, trace_service_health, optimize_k8s_resources, list_traefik_routes]
 gcp_tools = [check_gcp_status, query_gmp_prometheus, list_compute_instances, get_gcp_sql_instances, analyze_heavy_logs, analyze_gcp_errors, estimate_gcp_cost, optimize_gcp_resources]
-datadog_tools = [get_datadog_metrics, get_active_alerts, list_datadog_metrics, correlate_alerts]
+datadog_tools = [get_datadog_metrics, get_active_alerts, list_datadog_metrics, correlate_alerts, bits_ai_investigate_monitor]
 traefik_tools = [check_traefik_health, list_traefik_routes, diagnose_traefik_ingress]
 azion_tools = [check_azion_edge, check_azion_waf, list_edge_applications, check_azion_status, get_azion_metrics, purge_azion_cache]
 code_tools = [check_github_repos, get_pr_status, list_recent_commits, generate_code_fix, create_github_pr, read_repo_file, list_repo_files]
@@ -62,7 +63,7 @@ incident_tools = [
     log_incident_event, build_incident_timeline, manage_incident_channels,
     list_incident_channels, suggest_remediation, generate_remediation_plan,
     check_on_call_schedule, send_slack_notification, generate_runbook_from_incident,
-    fuzzylabs_sre_workflow, opsmate_troubleshooting_workflow
+    fuzzylabs_sre_workflow, opsmate_troubleshooting_workflow, incidentfox_auto_investigate
 ]
 automation_tools = [list_runbooks, execute_runbook, lookup_service, optimize_k8s_resources, optimize_gcp_resources, opsy_backup_and_ticket_failing_pods, smythos_unified_resource_manager]
 topology_tools = [
@@ -102,7 +103,7 @@ gcp_agent = make_specialist(
 datadog_agent = make_specialist(
     datadog_tools,
     "Datadog Observability & Metrics",
-    heuristics="SRE TIP: Correlate high latency spikes with error logs. Check for recent alerts."
+    heuristics="SRE TIP: Correlate high latency spikes with error logs. Check for recent alerts. If the user asks for a 'Bits AI' style investigation, use `bits_ai_investigate_monitor`."
 )
 traefik_agent = make_specialist(traefik_tools, "Traefik Ingress Controller & Reverse Proxy")
 azion_agent = make_specialist(
@@ -127,7 +128,8 @@ incident_agent = make_specialist(
         "3. Use `build_incident_timeline` (default text) or `build_incident_timeline(format='mermaid')` to visualize the sequence of events.\n"
         "4. Always act on facts, not assumptions.\n"
         "5. If a user asks to run the 'FuzzyLabs' workflow, use `fuzzylabs_sre_workflow`.\n"
-        "6. If a user asks to run the 'OpsMate' workflow or needs an SRE copilot to troubleshoot with natural language, use `opsmate_troubleshooting_workflow`."
+        "6. If a user asks to run the 'OpsMate' workflow or needs an SRE copilot to troubleshoot with natural language, use `opsmate_troubleshooting_workflow`.\n"
+        "7. If a user mentions 'IncidentFox' or wants to auto-investigate an alert and notify Slack, use `incidentfox_auto_investigate`."
     )
 )
 automation_agent = make_specialist(
@@ -219,7 +221,7 @@ supervisor_system_prompt = (
     "   - Code/PRs/Commits -> Code_Specialist\n"
     "   - CI/CD/ArgoCD -> CICD_Specialist\n"
     "   - Security/IAM/Vulnerabilities -> Security_Specialist\n"
-    "   - Incidents/Post-Mortems/Remediation Plans / 'FuzzyLabs' workflow / 'OpsMate' workflow -> Incident_Specialist\n"
+    "   - Incidents/Post-Mortems/Remediation Plans / 'FuzzyLabs' workflow / 'OpsMate' workflow / 'IncidentFox' workflow -> Incident_Specialist\n"
     "   - Runbooks/Scripts/Restarting Services / 'Opsy' workflow / 'SmythOS' resource manager -> Automation_Specialist\n"
     "4. SMART TRIAGE (Latency & Errors):\n"
     "   - 'High Latency' or '5xx Errors' -> Route to Traefik_Specialist FIRST to check Ingress health.\n"
