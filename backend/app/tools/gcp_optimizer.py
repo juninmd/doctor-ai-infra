@@ -13,13 +13,13 @@ def optimize_gcp_resources() -> str:
         credentials, project = default()
         if not project:
             return "Error: GCP Project not found. Ensure GOOGLE_APPLICATION_CREDENTIALS is set."
-        
+
         credentials.refresh(GoogleAuthRequest())
         token = credentials.token
         headers = {"Authorization": f"Bearer {token}"}
-        
+
         report = ["### ☁️ GCP Infrastructure Optimization Report"]
-        
+
         # 1. Orphaned Disks Check
         url_disks = f"https://compute.googleapis.com/compute/v1/projects/{project}/aggregated/disks"
         resp = requests.get(url_disks, headers=headers, timeout=15)
@@ -49,10 +49,10 @@ def optimize_gcp_resources() -> str:
             if stopped:
                 report.append("\n**Stopped VMs (Incurring storage costs):**")
                 report.extend(stopped[:10])
-        
+
         if len(report) == 1:
             return "GCP Optimization: No significant opportunities found or permission denied."
-            
+
         return "\n".join(report)
     except Exception as e:
         return f"GCP Optimization Tool Error: {str(e)}"

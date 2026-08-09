@@ -27,7 +27,7 @@ def run_chaos_experiment(experiment_type: str, target: str, duration_sec: int, d
             return f"Error: No pod found matching '{target}'."
         except Exception as e:
             return f"Chaos Error: {str(e)}"
-            
+
     return f"Chaos type '{experiment_type}' not yet fully implemented for automated execution."
 
 @tool
