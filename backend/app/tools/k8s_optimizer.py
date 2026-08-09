@@ -39,7 +39,7 @@ def optimize_k8s_resources(namespace: str = "default") -> str:
 
     try:
         deployments = apps_v1.list_namespaced_deployment(namespace)
-        
+
         # Try to get HPAs to check coverage
         autoscaling_v2 = _get_k8s_autoscaling_client()
         hpas = []
@@ -48,7 +48,7 @@ def optimize_k8s_resources(namespace: str = "default") -> str:
                 hpas = autoscaling_v2.list_namespaced_horizontal_pod_autoscaler(namespace).items
             except:
                 pass
-        
+
         hpa_targets = [h.spec.scale_target_ref.name for h in hpas]
         recommendations = []
 
@@ -56,24 +56,24 @@ def optimize_k8s_resources(namespace: str = "default") -> str:
             name = dep.metadata.name
             template = dep.spec.template.spec
             containers = template.containers
-            
+
             for container in containers:
                 c_name = container.name
                 res = container.resources
                 issues = []
-                
+
                 # 1. Resource Constraints
                 if not res or not res.limits or 'cpu' not in res.limits:
                     issues.append("Missing CPU limit")
                 if not res or not res.requests or 'memory' not in res.requests:
                     issues.append("Missing Memory request")
-                
+
                 # 2. Reliability (Probes)
                 if not container.liveness_probe:
                     issues.append("No Liveness Probe")
                 if not container.readiness_probe:
                     issues.append("No Readiness Probe")
-                
+
                 # 3. Best Practices (Tags)
                 if container.image and container.image.endswith(":latest"):
                     issues.append("Using ':latest' tag (unreliable for production)")

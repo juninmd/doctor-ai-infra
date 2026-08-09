@@ -464,7 +464,7 @@ def get_pr_status(owner: str, repo: str, pr_id: int) -> str:
     token = os.getenv("GITHUB_TOKEN")
     if not token:
         return "Error: GITHUB_TOKEN missing."
-    
+
     headers = {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"}
     try:
         resp = requests.get(f"https://api.github.com/repos/{owner}/{repo}/pulls/{pr_id}", headers=headers, timeout=10)
@@ -525,7 +525,7 @@ def get_argocd_sync_status(app_name: str, namespace: str = "argocd") -> str:
     v1 = _get_k8s_client()
     if not v1:
         return "Error: K8s client unavailable."
-    
+
     try:
         custom_api = client.CustomObjectsApi()
         # ArgoCD Applications are typically in the 'argoproj.io' group
@@ -539,7 +539,7 @@ def get_argocd_sync_status(app_name: str, namespace: str = "argocd") -> str:
         status = app.get("status", {})
         sync = status.get("sync", {}).get("status", "Unknown")
         health = status.get("health", {}).get("status", "Unknown")
-        
+
         return (
             f"### 🐙 ArgoCD App: {app_name}\n"
             f"- **Sync Status**: {'✅' if sync == 'Synced' else '⚠️'} {sync}\n"
@@ -832,11 +832,11 @@ def create_issue(title: str, description: str, project: str = "SRE", severity: s
     elif system.lower() == "github":
         token = os.getenv("GITHUB_TOKEN")
         if not token: return "Error: GITHUB_TOKEN not set."
-        
+
         target = project if "/" in project else f"{project}/{repo}"
         headers = {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"}
         payload = {"title": title, "body": description, "labels": [severity]}
-        
+
         try:
             resp = requests.post(f"https://api.github.com/repos/{target}/issues", json=payload, headers=headers)
             resp.raise_for_status()
@@ -855,7 +855,7 @@ def check_on_call_schedule(schedule_id: str) -> str:
     token = os.getenv("PAGERDUTY_TOKEN")
     if not token:
         return "Error: PAGERDUTY_TOKEN missing. Cannot fetch live on-call data."
-    
+
     headers = {"Authorization": f"Token token={token}", "Accept": "application/vnd.pagerduty+json;version=2"}
     try:
         resp = requests.get(f"https://api.pagerduty.com/oncalls?schedule_ids[]={schedule_id}", headers=headers, timeout=10)
@@ -863,7 +863,7 @@ def check_on_call_schedule(schedule_id: str) -> str:
         oncalls = resp.json().get("oncalls", [])
         if not oncalls:
             return "No one is currently on-call for this schedule."
-        
+
         user = oncalls[0]['user']['summary']
         return f"📟 **PagerDuty On-Call**: {user} is currently active for schedule {schedule_id}."
     except Exception as e:

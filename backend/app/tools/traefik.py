@@ -23,13 +23,13 @@ def check_traefik_health() -> str:
         resp = requests.get(f"{api_url}/health", timeout=5)
         if resp.status_code == 200:
             return f"🟢 Traefik Health: OK (Status: {resp.status_code})"
-        
+
         # 2. Try /api/overview (if dashboard enabled)
         resp = requests.get(f"{api_url}/api/overview", timeout=5)
         if resp.status_code == 200:
             data = resp.json()
             return f"🟢 Traefik Active. Providers: {len(data.get('providers', []))}, HTTP Services: {data.get('statistics', {}).get('http', {}).get('services', 0)}"
-            
+
         return f"🟡 Traefik reachable but returned {resp.status_code} at {api_url}"
     except Exception as e:
         # Fallback: Check Kubernetes pod status for Traefik
@@ -39,7 +39,7 @@ def check_traefik_health() -> str:
             pods = v1.list_pod_for_all_namespaces(label_selector="app.kubernetes.io/name=traefik")
             if not pods.items:
                 pods = v1.list_pod_for_all_namespaces(label_selector="app=traefik")
-            
+
             if pods.items:
                 p = pods.items[0]
                 return f"🟢 Traefik Pod '{p.metadata.name}' is {p.status.phase} in {p.metadata.namespace}. (API Unreachable: {e})"
@@ -55,9 +55,9 @@ def list_traefik_routes(namespace: str = "") -> str:
     try:
         config.load_kube_config()
         custom_api = client.CustomObjectsApi()
-        
+
         report = ["### 🛣️ Traefik Routing Table"]
-        
+
         # 1. Custom IngressRoutes (Traefik CRD)
         try:
             routes = custom_api.list_cluster_custom_object(
@@ -87,7 +87,7 @@ def list_traefik_routes(namespace: str = "") -> str:
 
         if len(report) == 1:
             return "No Traefik routes found."
-            
+
         return "\n".join(report)
     except Exception as e:
         return f"Error listing Traefik routes: {e}"
@@ -102,9 +102,9 @@ def diagnose_traefik_ingress(ingress_name: str, namespace: str = "default") -> s
         config.load_kube_config()
         v1_net = client.NetworkingV1Api()
         v1_core = client.CoreV1Api()
-        
+
         report = [f"### 🔍 Traefik Diagnosis: {namespace}/{ingress_name}"]
-        
+
         # 1. Fetch Ingress
         try:
             ing = v1_net.read_namespaced_ingress(ingress_name, namespace)

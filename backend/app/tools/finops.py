@@ -43,13 +43,13 @@ def suggest_spot_migrations(namespace: str = "default") -> str:
             vols = dep.spec.template.spec.volumes or []
             has_pv = any(v.persistent_volume_claim for v in vols)
             replicas = dep.spec.replicas or 0
-            
+
             if not has_pv and replicas >= 2:
                 candidates.append(f"- **{dep.metadata.name}**: Stateless candidate found.")
 
         if not candidates:
             return f"No obvious Spot migration candidates found in namespace '{namespace}'."
-        
+
         return f"### 🎯 Spot Migration Candidates\n" + "\n".join(candidates)
     except Exception as e:
         return f"Spot Migration Error: {str(e)}"
@@ -59,7 +59,7 @@ def predict_resource_exhaustion() -> str:
     """
     Predictive Maintenance: Extrapolates current metric trends from Datadog or GMP.
     """
-    # This tool requires a time-series backend. 
+    # This tool requires a time-series backend.
     # For now, it provides the structural framework for a real forecast.
     return (
         "### 🔮 Predictive Maintenance Status\n"
