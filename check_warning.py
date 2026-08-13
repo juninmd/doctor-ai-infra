@@ -1,3 +1,7 @@
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "backend"))
+
 from langgraph.prebuilt import create_react_agent
 from langchain_core.tools import tool
 from app.llm import get_llm
