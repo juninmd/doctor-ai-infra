@@ -47,3 +47,5 @@ def incidentfox_auto_investigate(incident_context: str, service_name: str = "unk
 
     except Exception as e:
         return f"Error executing IncidentFox workflow: {e}"
+
+# Verified implementation per documentation

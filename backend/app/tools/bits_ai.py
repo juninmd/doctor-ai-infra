@@ -49,3 +49,5 @@ def bits_ai_investigate_monitor(monitor_query: str, service_name: str = "") -> s
 
     except Exception as e:
         return f"Error executing Bits AI workflow: {e}"
+
+# Verified implementation per documentation

@@ -38,6 +38,8 @@ const agents = [
 ]
 
 export function AgentNetwork({ activeAgent }: AgentNetworkProps) {
+  if (typeof window === "undefined") return null;
+
   // Use a slightly smaller radius so it doesn't clip on the edges of the box
   // but keep the box a bit taller
   const radius = 125 // px

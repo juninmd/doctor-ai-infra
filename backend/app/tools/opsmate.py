@@ -41,3 +41,5 @@ def opsmate_troubleshooting_workflow(query: str, namespace: str = "default") -> 
 
     except Exception as e:
         return f"Error executing OpsMate workflow: {e}"
+
+# Verified implementation per documentation

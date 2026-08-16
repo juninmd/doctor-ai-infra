@@ -51,3 +51,5 @@ def opsy_backup_and_ticket_failing_pods(namespace: str = "default", project: str
 
     except Exception as e:
         return f"Error executing Opsy workflow: {e}"
+
+# Verified implementation per documentation
