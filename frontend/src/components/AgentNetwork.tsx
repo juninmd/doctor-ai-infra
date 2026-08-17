@@ -13,7 +13,13 @@ import {
   Network,
   Lightbulb,
   DollarSign,
-  Bomb
+  Bomb,
+  HardDrive,
+  Search,
+  Wrench,
+  Cpu,
+  Flame,
+  Sparkles
 } from "lucide-react"
 
 interface AgentNetworkProps {
@@ -35,6 +41,12 @@ const agents = [
   { name: "Planner_Specialist", label: "Planner", icon: Lightbulb, color: "text-fuchsia-400", border: "border-fuchsia-500", shadow: "shadow-[0_0_15px_rgba(217,70,239,0.5)]" },
   { name: "FinOps_Specialist", label: "FinOps", icon: DollarSign, color: "text-emerald-400", border: "border-emerald-500", shadow: "shadow-[0_0_15px_rgba(16,185,129,0.5)]" },
   { name: "Chaos_Specialist", label: "Chaos", icon: Bomb, color: "text-pink-400", border: "border-pink-500", shadow: "shadow-[0_0_15px_rgba(236,72,153,0.5)]" },
+  { name: "Opsy_Specialist", label: "Opsy", icon: HardDrive, color: "text-blue-300", border: "border-blue-400", shadow: "shadow-[0_0_15px_rgba(147,197,253,0.5)]" },
+  { name: "FuzzyLabs_Specialist", label: "FuzzyLabs", icon: Search, color: "text-purple-300", border: "border-purple-400", shadow: "shadow-[0_0_15px_rgba(216,180,254,0.5)]" },
+  { name: "OpsMate_Specialist", label: "OpsMate", icon: Wrench, color: "text-orange-300", border: "border-orange-400", shadow: "shadow-[0_0_15px_rgba(253,186,116,0.5)]" },
+  { name: "SmythOS_Specialist", label: "SmythOS", icon: Cpu, color: "text-red-300", border: "border-red-400", shadow: "shadow-[0_0_15px_rgba(252,165,165,0.5)]" },
+  { name: "IncidentFox_Specialist", label: "IncidentFox", icon: Flame, color: "text-amber-300", border: "border-amber-400", shadow: "shadow-[0_0_15px_rgba(252,211,77,0.5)]" },
+  { name: "BitsAI_Specialist", label: "Bits AI", icon: Sparkles, color: "text-cyan-300", border: "border-cyan-400", shadow: "shadow-[0_0_15px_rgba(103,232,249,0.5)]" },
 ]
 
 export function AgentNetwork({ activeAgent }: AgentNetworkProps) {
