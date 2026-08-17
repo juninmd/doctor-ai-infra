@@ -29,4 +29,5 @@ dependencies = [
     "langchain-chroma>=0.1.0",
     "langchain-huggingface>=0.0.1",
     "sentence-transformers>=2.2.0",
+    "flake8>=7.3.0",
 ]

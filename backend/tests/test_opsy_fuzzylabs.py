@@ -32,11 +32,11 @@ def test_supervisor_opsy_routing():
         ]
     }
 
-    fake_llm = _create_mock_llm("Automation_Specialist", "Request requires executing the Opsy workflow, routing to Automation_Specialist.")
+    fake_llm = _create_mock_llm("Opsy_Specialist", "Request requires executing the Opsy workflow, routing to Opsy_Specialist.")
 
     with patch("app.graph.llm", fake_llm):
         result = supervisor_node(state)
-        assert result["next"] == "Automation_Specialist"
+        assert result["next"] == "Opsy_Specialist"
 
 def test_supervisor_fuzzylabs_routing():
     """Verifies the supervisor correctly routes FuzzyLabs requests to the Incident_Specialist."""
@@ -46,11 +46,11 @@ def test_supervisor_fuzzylabs_routing():
         ]
     }
 
-    fake_llm = _create_mock_llm("Incident_Specialist", "Request involves the FuzzyLabs workflow, routing to Incident_Specialist.")
+    fake_llm = _create_mock_llm("FuzzyLabs_Specialist", "Request involves the FuzzyLabs workflow, routing to FuzzyLabs_Specialist.")
 
     with patch("app.graph.llm", fake_llm):
         result = supervisor_node(state)
-        assert result["next"] == "Incident_Specialist"
+        assert result["next"] == "FuzzyLabs_Specialist"
 
 @patch("app.tools.opsy.list_k8s_pods", create=True)
 @patch("app.tools.opsy.create_issue", create=True)

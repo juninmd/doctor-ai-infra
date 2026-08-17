@@ -1,5 +1,5 @@
 from typing import Literal
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.messages import SystemMessage
 from langgraph.graph import StateGraph, END, START
 from langgraph.prebuilt import create_react_agent
 from langgraph.checkpoint.memory import MemorySaver
@@ -11,7 +11,6 @@ from .llm import get_llm
 from .tools import (
     list_k8s_pods, describe_pod, get_pod_logs, get_cluster_events,
     check_gcp_status, query_gmp_prometheus, list_compute_instances, get_gcp_sql_instances,
-    check_azion_status, purge_azion_cache,
     get_datadog_metrics, get_active_alerts,
     check_github_repos, get_pr_status, list_recent_commits,
     check_pipeline_status, get_argocd_sync_status,
@@ -29,7 +28,7 @@ from .tools import (
     opsmate_troubleshooting_workflow, smythos_unified_resource_manager,
     bits_ai_investigate_monitor, incidentfox_auto_investigate
 )
-from .tools.azion import list_edge_applications, purge_azion_cache, check_azion_status, get_azion_metrics
+from .tools.azion import list_edge_applications, check_azion_status, get_azion_metrics
 from .tools.dashboard import analyze_infrastructure_health
 from .tools.incident import (
     create_incident, update_incident_status, list_incidents, get_incident_details,
@@ -37,7 +36,7 @@ from .tools.incident import (
     list_incident_channels, suggest_remediation, generate_remediation_plan,
     generate_runbook_from_incident
 )
-from .tools.runbooks import list_runbooks, execute_runbook, lookup_service, get_service_dependencies, get_service_topology
+from .tools.runbooks import list_runbooks, execute_runbook, lookup_service, get_service_dependencies, get_service_topology  # noqa: E501
 from .tools.visualizer import generate_topology_diagram
 from .tools.knowledge import search_knowledge_base, generate_service_catalog_docs
 from .tools.code import generate_code_fix, create_github_pr, read_repo_file, list_repo_files
@@ -49,12 +48,12 @@ from .state import AgentState
 llm = get_llm()
 
 # 2. Define Tools for each specialist
-k8s_tools = [list_k8s_pods, describe_pod, get_pod_logs, get_cluster_events, analyze_log_patterns, analyze_heavy_logs, diagnose_service_health, trace_service_health, optimize_k8s_resources, list_traefik_routes]
-gcp_tools = [check_gcp_status, query_gmp_prometheus, list_compute_instances, get_gcp_sql_instances, analyze_heavy_logs, analyze_gcp_errors, estimate_gcp_cost, optimize_gcp_resources]
-datadog_tools = [get_datadog_metrics, get_active_alerts, list_datadog_metrics, correlate_alerts, bits_ai_investigate_monitor]
+k8s_tools = [list_k8s_pods, describe_pod, get_pod_logs, get_cluster_events, analyze_log_patterns, analyze_heavy_logs, diagnose_service_health, trace_service_health, optimize_k8s_resources, list_traefik_routes]  # noqa: E501
+gcp_tools = [check_gcp_status, query_gmp_prometheus, list_compute_instances, get_gcp_sql_instances, analyze_heavy_logs, analyze_gcp_errors, estimate_gcp_cost, optimize_gcp_resources]  # noqa: E501
+datadog_tools = [get_datadog_metrics, get_active_alerts, list_datadog_metrics, correlate_alerts, bits_ai_investigate_monitor]  # noqa: E501
 traefik_tools = [check_traefik_health, list_traefik_routes, diagnose_traefik_ingress]
-azion_tools = [check_azion_edge, check_azion_waf, list_edge_applications, check_azion_status, get_azion_metrics, purge_azion_cache]
-code_tools = [check_github_repos, get_pr_status, list_recent_commits, generate_code_fix, create_github_pr, read_repo_file, list_repo_files]
+azion_tools = [check_azion_edge, check_azion_waf, list_edge_applications, check_azion_status, get_azion_metrics, purge_azion_cache]  # noqa: E501
+code_tools = [check_github_repos, get_pr_status, list_recent_commits, generate_code_fix, create_github_pr, read_repo_file, list_repo_files]  # noqa: E501
 cicd_tools = [check_pipeline_status, get_argocd_sync_status, analyze_ci_failure]
 sec_tools = [check_vulnerabilities, analyze_iam_policy]
 incident_tools = [
@@ -65,7 +64,7 @@ incident_tools = [
     check_on_call_schedule, send_slack_notification, generate_runbook_from_incident,
     fuzzylabs_sre_workflow, opsmate_troubleshooting_workflow, incidentfox_auto_investigate
 ]
-automation_tools = [list_runbooks, execute_runbook, lookup_service, optimize_k8s_resources, optimize_gcp_resources, opsy_backup_and_ticket_failing_pods, smythos_unified_resource_manager]
+automation_tools = [list_runbooks, execute_runbook, lookup_service, optimize_k8s_resources, optimize_gcp_resources, opsy_backup_and_ticket_failing_pods, smythos_unified_resource_manager]  # noqa: E501
 topology_tools = [
     get_service_dependencies, get_service_topology, lookup_service,
     generate_topology_diagram, trace_service_health, analyze_infrastructure_health,
@@ -77,6 +76,8 @@ finops_tools = [analyze_cost_anomalies, suggest_spot_migrations, estimate_gcp_co
 chaos_tools = [run_chaos_experiment, analyze_chaos_results]
 
 # 3. Create Specialist Agents
+
+
 def make_specialist(tools, persona, heuristics=""):
     system_msg = (
         f"You are a top-tier Infrastructure Specialist focusing on {persona}.\n"
@@ -90,31 +91,32 @@ def make_specialist(tools, persona, heuristics=""):
 
     return create_react_agent(llm, tools, prompt=system_msg)
 
+
 k8s_agent = make_specialist(
     k8s_tools,
     "Kubernetes (K8s) & Container Orchestration",
-    heuristics="SRE TIP: Start by calling `diagnose_service_health` for a full picture. If a pod is crashing, `analyze_log_patterns` is more efficient than reading raw logs. Use `trace_service_health` to check dependencies if the issue seems external. Use `list_traefik_routes` to see how traffic enters."
+    heuristics="SRE TIP: Start by calling `diagnose_service_health` for a full picture. If a pod is crashing, `analyze_log_patterns` is more efficient than reading raw logs. Use `trace_service_health` to check dependencies if the issue seems external. Use `list_traefik_routes` to see how traffic enters."  # noqa: E501
 )
 gcp_agent = make_specialist(
     gcp_tools,
     "Google Cloud Platform (GCP) & Cloud Infrastructure",
-    heuristics="SRE TIP: If a service is down or unreachable, check `check_gcp_status` for maintenance windows or outages first. Use `analyze_gcp_errors` to check Cloud Logging for severe errors. Use `estimate_gcp_cost` for billing questions."
+    heuristics="SRE TIP: If a service is down or unreachable, check `check_gcp_status` for maintenance windows or outages first. Use `analyze_gcp_errors` to check Cloud Logging for severe errors. Use `estimate_gcp_cost` for billing questions."  # noqa: E501
 )
 datadog_agent = make_specialist(
     datadog_tools,
     "Datadog Observability & Metrics",
-    heuristics="SRE TIP: Correlate high latency spikes with error logs. Check for recent alerts. If the user asks for a 'Bits AI' style investigation, use `bits_ai_investigate_monitor`."
+    heuristics="SRE TIP: Correlate high latency spikes with error logs. Check for recent alerts. If the user asks for a 'Bits AI' style investigation, use `bits_ai_investigate_monitor`."  # noqa: E501
 )
 traefik_agent = make_specialist(traefik_tools, "Traefik Ingress Controller & Reverse Proxy")
 azion_agent = make_specialist(
     azion_tools,
     "Azion Edge Computing, CDN & WAF",
-    heuristics="SRE TIP: When users mention Edge, CDN, Cache, WAF, or Azion, route to me. Use `check_azion_status` for health, `list_edge_applications` to find apps, `get_azion_metrics` for traffic/errors, and `purge_azion_cache` when asked to clear cache."
+    heuristics="SRE TIP: When users mention Edge, CDN, Cache, WAF, or Azion, route to me. Use `check_azion_status` for health, `list_edge_applications` to find apps, `get_azion_metrics` for traffic/errors, and `purge_azion_cache` when asked to clear cache."  # noqa: E501
 )
 code_agent = make_specialist(
     code_tools,
     "Source Code, Git, Development & Bug Fixing",
-    heuristics="SRE TIP: You are the 'Bits Dev Agent'. You can fix bugs! Use `generate_code_fix` to propose fixes and `create_github_pr` to submit them. Always check recent commits first."
+    heuristics="SRE TIP: You are the 'Bits Dev Agent'. You can fix bugs! Use `generate_code_fix` to propose fixes and `create_github_pr` to submit them. Always check recent commits first."  # noqa: E501
 )
 cicd_agent = make_specialist(cicd_tools, "CI/CD Pipelines & ArgoCD")
 sec_agent = make_specialist(sec_tools, "DevSecOps, Vulnerability Scanning & IAM")
@@ -124,12 +126,9 @@ incident_agent = make_specialist(
     heuristics=(
         "SRE TIP: You are the Incident Commander. \n"
         "1. Create a channel with `manage_incident_channels`.\n"
-        "2. Use `log_incident_event` to record your Hypotheses, Evidence, and Actions in real-time. This builds the timeline.\n"
-        "3. Use `build_incident_timeline` (default text) or `build_incident_timeline(format='mermaid')` to visualize the sequence of events.\n"
-        "4. Always act on facts, not assumptions.\n"
-        "5. If a user asks to run the 'FuzzyLabs' workflow, use `fuzzylabs_sre_workflow`.\n"
-        "6. If a user asks to run the 'OpsMate' workflow or needs an SRE copilot to troubleshoot with natural language, use `opsmate_troubleshooting_workflow`.\n"
-        "7. If a user mentions 'IncidentFox' or wants to auto-investigate an alert and notify Slack, use `incidentfox_auto_investigate`."
+        "2. Use `log_incident_event` to record your Hypotheses, Evidence, and Actions in real-time. This builds the timeline.\n"  # noqa: E501
+        "3. Use `build_incident_timeline` (default text) or `build_incident_timeline(format='mermaid')` to visualize the sequence of events.\n"  # noqa: E501
+        "4. Always act on facts, not assumptions."
     )
 )
 automation_agent = make_specialist(
@@ -140,9 +139,7 @@ automation_agent = make_specialist(
         "1. Always use `execute_runbook` with `dry_run=True` FIRST to verify the action.\n"
         "2. Show the dry-run output to the user and ask for explicit confirmation.\n"
         "3. Only run with `dry_run=False` after receiving user approval.\n"
-        "4. If a service is unknown, use `lookup_service`.\n"
-        "5. If a user asks to run the 'Opsy' workflow (backup and ticket failing pods), use `opsy_backup_and_ticket_failing_pods`.\n"
-        "6. If a user asks to interact with SmythOS unified resources (LLM, Storage, VectorDB), use `smythos_unified_resource_manager`."
+        "4. If a service is unknown, use `lookup_service`."
     )
 )
 topology_agent = make_specialist(
@@ -151,7 +148,7 @@ topology_agent = make_specialist(
     heuristics=(
         "SRE TIP: You hold the map of the entire system.\n"
         "Use the scan_infrastructure tool immediately when the user asks for help or status updates.\n"
-        "Use `analyze_infrastructure_health` or `scan_infrastructure` to provide a global status report when asked about general health.\n"
+        "Use `analyze_infrastructure_health` or `scan_infrastructure` to provide a global status report when asked about general health.\n"  # noqa: E501
         "Use `trace_service_health` to visualize cascading failures across the stack.\n"
         "Use `generate_topology_diagram` for architectural overviews.\n"
         "Use `predict_resource_exhaustion` to forecast outages."
@@ -180,7 +177,51 @@ chaos_agent = make_specialist(
     heuristics="SRE TIP: ALWAYS use dry_run=True first. Inject faults to verify self-healing capabilities."
 )
 
+
+opsy_tools = [opsy_backup_and_ticket_failing_pods]
+opsy_agent = make_specialist(
+    opsy_tools,
+    "Opsy SRE AI (Mocked Operations)",
+    heuristics="SRE TIP: You use `opsy_backup_and_ticket_failing_pods` when asked to run the Opsy workflow."
+)
+
+fuzzylabs_tools = [fuzzylabs_sre_workflow]
+fuzzylabs_agent = make_specialist(
+    fuzzylabs_tools,
+    "FuzzyLabs SRE Agent",
+    heuristics="SRE TIP: You use `fuzzylabs_sre_workflow` when asked to run the FuzzyLabs workflow."
+)
+
+opsmate_tools = [opsmate_troubleshooting_workflow]
+opsmate_agent = make_specialist(
+    opsmate_tools,
+    "OpsMate AI Copilot",
+    heuristics="SRE TIP: You use `opsmate_troubleshooting_workflow` when asked to run the OpsMate workflow."
+)
+
+smythos_tools = [smythos_unified_resource_manager]
+smythos_agent = make_specialist(
+    smythos_tools,
+    "SmythOS Agent",
+    heuristics="SRE TIP: You use `smythos_unified_resource_manager` when asked to interact with SmythOS unified resources."  # noqa: E501
+)
+
+incidentfox_tools = [incidentfox_auto_investigate]
+incidentfox_agent = make_specialist(
+    incidentfox_tools,
+    "IncidentFox Auto-Investigator",
+    heuristics="SRE TIP: You use `incidentfox_auto_investigate` when asked to run the IncidentFox workflow."
+)
+
+bits_ai_tools = [bits_ai_investigate_monitor]
+bits_ai_agent = make_specialist(
+    bits_ai_tools,
+    "Bits AI Copilot",
+    heuristics="SRE TIP: You use `bits_ai_investigate_monitor` when asked to run the Bits AI workflow."
+)
+
 # 4. Define the Supervisor (Router)
+
 members = [
     "K8s_Specialist",
     "GCP_Specialist",
@@ -195,7 +236,13 @@ members = [
     "Topology_Specialist",
     "Planner_Specialist",
     "FinOps_Specialist",
-    "Chaos_Specialist"
+    "Chaos_Specialist",
+    "Opsy_Specialist",
+    "FuzzyLabs_Specialist",
+    "OpsMate_Specialist",
+    "SmythOS_Specialist",
+    "IncidentFox_Specialist",
+    "BitsAI_Specialist"
 ]
 options = ["FINISH"] + members
 
@@ -204,7 +251,7 @@ supervisor_system_prompt = (
     "Your team consists of: {members}.\n"
     "Your job is to orchestrate the troubleshooting session from Code to Deploy.\n"
     "If the user speaks Portuguese, reply in Portuguese.\n"
-    "1. INTELLIGENT START: If the user's request is vague (e.g., 'Help', 'System is slow'), ALWAYS route to Topology_Specialist to run `scan_infrastructure` first.\n"
+    "1. INTELLIGENT START: If the user's request is vague (e.g., 'Help', 'System is slow'), ALWAYS route to Topology_Specialist to run `scan_infrastructure` first.\n"  # noqa: E501
     "2. Analyze the user's request or the previous agent's findings.\n"
     "3. ROUTING LOGIC:\n"
     "   - General Status / Dashboard / 'How is the system?' -> Topology_Specialist\n"
@@ -221,13 +268,19 @@ supervisor_system_prompt = (
     "   - Code/PRs/Commits -> Code_Specialist\n"
     "   - CI/CD/ArgoCD -> CICD_Specialist\n"
     "   - Security/IAM/Vulnerabilities -> Security_Specialist\n"
-    "   - Incidents/Post-Mortems/Remediation Plans / 'FuzzyLabs' workflow / 'OpsMate' workflow / 'IncidentFox' workflow -> Incident_Specialist\n"
-    "   - Runbooks/Scripts/Restarting Services / 'Opsy' workflow / 'SmythOS' resource manager -> Automation_Specialist\n"
+    "   - Incidents/Post-Mortems/Remediation Plans -> Incident_Specialist\n"
+    "   - 'FuzzyLabs' workflow / SRE agent diagnosis -> FuzzyLabs_Specialist\n"
+    "   - 'OpsMate' workflow / Copilot troubleshooting -> OpsMate_Specialist\n"
+    "   - 'IncidentFox' workflow / Auto-investigate -> IncidentFox_Specialist\n"
+    "   - Runbooks/Scripts/Restarting Services -> Automation_Specialist\n"
+    "   - 'Opsy' workflow / backup and ticket failing pods -> Opsy_Specialist\n"
+    "   - 'SmythOS' resource manager -> SmythOS_Specialist\n"
+    "   - 'Bits AI' workflow / Investigate monitor -> BitsAI_Specialist\n"
     "4. SMART TRIAGE (Latency & Errors):\n"
     "   - 'High Latency' or '5xx Errors' -> Route to Traefik_Specialist FIRST to check Ingress health.\n"
     "   - If Traefik is healthy, route to Datadog_Specialist (check Backend Metrics).\n"
     "   - If DB errors are found, route to GCP_Specialist.\n"
-    "5. DEPENDENCY AWARENESS: If a dependency fails (e.g., 'ConnectionRefused'), route to the owner of that dependency.\n"
+    "5. DEPENDENCY AWARENESS: If a dependency fails (e.g., 'ConnectionRefused'), route to the owner of that dependency.\n"  # noqa: E501
     "6. PROACTIVE AGENT BEHAVIOR:\n"
     "   - If a Root Cause is found, AUTOMATICALLY route to Incident_Specialist to `generate_remediation_plan`.\n"
     "   - If a risky action is needed, route to Automation_Specialist.\n"
@@ -236,14 +289,18 @@ supervisor_system_prompt = (
     "Tone: Friendly 🤖, professional, and confident. Use emojis."
 )
 
+
 class RouterSchema(BaseModel):
     reasoning: str = Field(description="The chain of thought reasoning for the decision.")
     next_agent: Literal[
         "K8s_Specialist", "GCP_Specialist", "Datadog_Specialist",
         "Traefik_Specialist", "Azion_Specialist", "Code_Specialist", "CICD_Specialist",
         "Security_Specialist", "Incident_Specialist", "Automation_Specialist",
-        "Topology_Specialist", "Planner_Specialist", "FinOps_Specialist", "Chaos_Specialist", "FINISH"
+        "Topology_Specialist", "Planner_Specialist", "FinOps_Specialist", "Chaos_Specialist",
+        "Opsy_Specialist", "FuzzyLabs_Specialist", "OpsMate_Specialist", "SmythOS_Specialist",
+        "IncidentFox_Specialist", "BitsAI_Specialist", "FINISH"
     ] = Field(description="The next agent to route to, or FINISH.")
+
 
 def supervisor_node(state: AgentState):
     messages = state["messages"]
@@ -258,23 +315,24 @@ def supervisor_node(state: AgentState):
         chain = prompt | llm.with_structured_output(RouterSchema)
         decision = chain.invoke({"messages": messages})
         return {"next": decision.next_agent}
-    except Exception as e:
+    except Exception:
         try:
             parser = JsonOutputParser(pydantic_object=RouterSchema)
             fallback_prompt = ChatPromptTemplate.from_messages([
                 ("system", supervisor_system_prompt),
                 MessagesPlaceholder(variable_name="messages"),
-                ("system", "Who should act next? Respond with a JSON object having 'reasoning' and 'next_agent' keys.\n{format_instructions}\n")
+                ("system", "Who should act next? Respond with a JSON object having 'reasoning' and 'next_agent' keys.\n{format_instructions}\n")  # noqa: E501
             ]).partial(members=", ".join(members), format_instructions=parser.get_format_instructions())
 
             fallback_chain = fallback_prompt | llm | parser
             decision = fallback_chain.invoke({"messages": messages})
             return {"next": decision.get("next_agent", "Topology_Specialist")}
         except Exception as e2:
-             return {
+            return {
                 "next": "Topology_Specialist",
-                "messages": [SystemMessage(content=f"⚠️ Auto-Routing Error: {str(e2)}. Falling back to Topology Specialist.")]
-             }
+                "messages": [SystemMessage(content=f"⚠️ Auto-Routing Error: {str(e2)}. Falling back to Topology Specialist.")]  # noqa: E501
+            }
+
 
 # 5. Build the Graph
 workflow = StateGraph(AgentState)
@@ -294,6 +352,12 @@ workflow.add_node("Topology_Specialist", topology_agent)
 workflow.add_node("Planner_Specialist", planner_agent)
 workflow.add_node("FinOps_Specialist", finops_agent)
 workflow.add_node("Chaos_Specialist", chaos_agent)
+workflow.add_node("Opsy_Specialist", opsy_agent)
+workflow.add_node("FuzzyLabs_Specialist", fuzzylabs_agent)
+workflow.add_node("OpsMate_Specialist", opsmate_agent)
+workflow.add_node("SmythOS_Specialist", smythos_agent)
+workflow.add_node("IncidentFox_Specialist", incidentfox_agent)
+workflow.add_node("BitsAI_Specialist", bits_ai_agent)
 
 workflow.add_edge(START, "Supervisor")
 
@@ -318,6 +382,12 @@ workflow.add_conditional_edges(
         "Planner_Specialist": "Planner_Specialist",
         "FinOps_Specialist": "FinOps_Specialist",
         "Chaos_Specialist": "Chaos_Specialist",
+        "Opsy_Specialist": "Opsy_Specialist",
+        "FuzzyLabs_Specialist": "FuzzyLabs_Specialist",
+        "OpsMate_Specialist": "OpsMate_Specialist",
+        "SmythOS_Specialist": "SmythOS_Specialist",
+        "IncidentFox_Specialist": "IncidentFox_Specialist",
+        "BitsAI_Specialist": "BitsAI_Specialist",
         "FINISH": END
     }
 )
