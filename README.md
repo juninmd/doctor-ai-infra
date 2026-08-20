@@ -7,14 +7,15 @@
 [![ArgoCD](https://img.shields.io/badge/ArgoCD-Synced-success?style=for-the-badge&logo=argocd)](https://argocd.antonio-code.duckdns.org)
 
 > A secure, monorepo-style infrastructure for the **Doctor AI** network, featuring a robust backend, modern frontend, and automated verification agents.
+> *O melhor gerenciador de agentes de infraestrutura para 2026, com análise completa e troubleshoot focado em Open Source.*
 
-## ✨ Features
+## ✨ Features / Funcionalidades
 
 - **Monorepo Architecture**: Clean separation between `backend/`, `frontend/`, and `docs/`.
 - **Agent Network**: Integrated AI agents for system monitoring, security audits, and automated fixes.
-- **Infrastructure Management**: Complete troubleshooting and resource analysis for Kubernetes (k8s), GCP, GMP, Datadog, and Azion.
-- **Advanced SRE Copilots**: Specialized agents inspired by Bits AI, SmythOS, Opsy, FuzzyLabs, OpsMate, and IncidentFox. All fully integrated into the agent supervisor workflow.
-- **Hybrid AI Engine**: Open-source first, running on Ollama for cost efficiency (`LLM_PROVIDER=ollama`), while maintaining full compatibility with Google Gemini (`LLM_PROVIDER=gemini`).
+- **Gerenciamento Completo de Infra**: Troubleshoot avançado e análise completa para k8s (infra própria), GCP Cloud, GMP, Datadog e Azion.
+- **Advanced SRE Copilots**: Agentes especializados inspirados nos melhores do mercado (Bits AI, SmythOS, Opsy, FuzzyLabs, OpsMate, e IncidentFox). Implementados com a melhor arquitetura de roteamento supervisor.
+- **Hybrid AI Engine**: Open-source first, projetado para rodar com **Ollama** para custo zero (`LLM_PROVIDER=ollama`), mas 100% compatível com **Gemini** (`LLM_PROVIDER=gemini`).
 - **Design System**: Comprehensive `DESIGN.md` and `DOCS.md` for consistent development.
 - **Verification Agents**: Automated verification of the entire infrastructure state.
 - **Migration Logic**: Secure and documented migration paths for system updates.
