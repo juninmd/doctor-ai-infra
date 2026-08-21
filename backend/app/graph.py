@@ -9,33 +9,70 @@ from pydantic import BaseModel, Field
 
 from .llm import get_llm
 from .tools import (
-    list_k8s_pods, describe_pod, get_pod_logs, get_cluster_events,
-    check_gcp_status, query_gmp_prometheus, list_compute_instances, get_gcp_sql_instances,
-    get_datadog_metrics, get_active_alerts,
-    check_github_repos, get_pr_status, list_recent_commits,
-    check_pipeline_status, get_argocd_sync_status,
-    check_vulnerabilities, analyze_iam_policy,
-    analyze_log_patterns, diagnose_service_health, analyze_ci_failure, create_issue,
+    list_k8s_pods,
+    describe_pod,
+    get_pod_logs,
+    get_cluster_events,
+    check_gcp_status,
+    query_gmp_prometheus,
+    list_compute_instances,
+    get_gcp_sql_instances,
+    get_datadog_metrics,
+    get_active_alerts,
+    check_github_repos,
+    get_pr_status,
+    list_recent_commits,
+    check_pipeline_status,
+    get_argocd_sync_status,
+    check_vulnerabilities,
+    analyze_iam_policy,
+    analyze_log_patterns,
+    diagnose_service_health,
+    analyze_ci_failure,
+    create_issue,
     trace_service_health,
-    list_datadog_metrics, check_on_call_schedule, send_slack_notification,
-    investigate_root_cause, scan_infrastructure, analyze_heavy_logs, analyze_gcp_errors,
-    correlate_alerts, optimize_k8s_resources, optimize_gcp_resources,
-    analyze_cost_anomalies, suggest_spot_migrations, predict_resource_exhaustion,
-    run_chaos_experiment, analyze_chaos_results,
-    check_traefik_health, list_traefik_routes, diagnose_traefik_ingress,
-    check_azion_edge, check_azion_waf, purge_azion_cache,
-    opsy_backup_and_ticket_failing_pods, fuzzylabs_sre_workflow,
-    opsmate_troubleshooting_workflow, smythos_unified_resource_manager,
-    bits_ai_investigate_monitor, incidentfox_auto_investigate
-)
+    list_datadog_metrics,
+    check_on_call_schedule,
+    send_slack_notification,
+    investigate_root_cause,
+    scan_infrastructure,
+    analyze_heavy_logs,
+    analyze_gcp_errors,
+    correlate_alerts,
+    optimize_k8s_resources,
+    optimize_gcp_resources,
+    analyze_cost_anomalies,
+    suggest_spot_migrations,
+    predict_resource_exhaustion,
+    run_chaos_experiment,
+    analyze_chaos_results,
+    check_traefik_health,
+    list_traefik_routes,
+    diagnose_traefik_ingress,
+    check_azion_edge,
+    check_azion_waf,
+    purge_azion_cache,
+    opsy_backup_and_ticket_failing_pods,
+    fuzzylabs_sre_workflow,
+    opsmate_troubleshooting_workflow,
+    smythos_unified_resource_manager,
+    bits_ai_investigate_monitor,
+    incidentfox_auto_investigate)
 from .tools.azion import list_edge_applications, check_azion_status, get_azion_metrics
 from .tools.dashboard import analyze_infrastructure_health
 from .tools.incident import (
-    create_incident, update_incident_status, list_incidents, get_incident_details,
-    generate_postmortem, log_incident_event, build_incident_timeline, manage_incident_channels,
-    list_incident_channels, suggest_remediation, generate_remediation_plan,
-    generate_runbook_from_incident
-)
+    create_incident,
+    update_incident_status,
+    list_incidents,
+    get_incident_details,
+    generate_postmortem,
+    log_incident_event,
+    build_incident_timeline,
+    manage_incident_channels,
+    list_incident_channels,
+    suggest_remediation,
+    generate_remediation_plan,
+    generate_runbook_from_incident)
 from .tools.runbooks import list_runbooks, execute_runbook, lookup_service, get_service_dependencies, get_service_topology  # noqa: E501
 from .tools.visualizer import generate_topology_diagram
 from .tools.knowledge import search_knowledge_base, generate_service_catalog_docs
@@ -51,28 +88,56 @@ llm = get_llm()
 k8s_tools = [list_k8s_pods, describe_pod, get_pod_logs, get_cluster_events, analyze_log_patterns, analyze_heavy_logs, diagnose_service_health, trace_service_health, optimize_k8s_resources, list_traefik_routes]  # noqa: E501
 gcp_tools = [check_gcp_status, query_gmp_prometheus, list_compute_instances, get_gcp_sql_instances, analyze_heavy_logs, analyze_gcp_errors, estimate_gcp_cost, optimize_gcp_resources]  # noqa: E501
 datadog_tools = [get_datadog_metrics, get_active_alerts, list_datadog_metrics, correlate_alerts, bits_ai_investigate_monitor]  # noqa: E501
-traefik_tools = [check_traefik_health, list_traefik_routes, diagnose_traefik_ingress]
+traefik_tools = [
+    check_traefik_health,
+    list_traefik_routes,
+    diagnose_traefik_ingress]
 azion_tools = [check_azion_edge, check_azion_waf, list_edge_applications, check_azion_status, get_azion_metrics, purge_azion_cache]  # noqa: E501
 code_tools = [check_github_repos, get_pr_status, list_recent_commits, generate_code_fix, create_github_pr, read_repo_file, list_repo_files]  # noqa: E501
-cicd_tools = [check_pipeline_status, get_argocd_sync_status, analyze_ci_failure]
+cicd_tools = [
+    check_pipeline_status,
+    get_argocd_sync_status,
+    analyze_ci_failure]
 sec_tools = [check_vulnerabilities, analyze_iam_policy]
 incident_tools = [
-    create_incident, update_incident_status, list_incidents, get_incident_details,
-    generate_postmortem, search_knowledge_base, create_issue,
-    log_incident_event, build_incident_timeline, manage_incident_channels,
-    list_incident_channels, suggest_remediation, generate_remediation_plan,
-    check_on_call_schedule, send_slack_notification, generate_runbook_from_incident,
-    fuzzylabs_sre_workflow, opsmate_troubleshooting_workflow, incidentfox_auto_investigate
-]
+    create_incident,
+    update_incident_status,
+    list_incidents,
+    get_incident_details,
+    generate_postmortem,
+    search_knowledge_base,
+    create_issue,
+    log_incident_event,
+    build_incident_timeline,
+    manage_incident_channels,
+    list_incident_channels,
+    suggest_remediation,
+    generate_remediation_plan,
+    check_on_call_schedule,
+    send_slack_notification,
+    generate_runbook_from_incident,
+    fuzzylabs_sre_workflow,
+    opsmate_troubleshooting_workflow,
+    incidentfox_auto_investigate]
 automation_tools = [list_runbooks, execute_runbook, lookup_service, optimize_k8s_resources, optimize_gcp_resources, opsy_backup_and_ticket_failing_pods, smythos_unified_resource_manager]  # noqa: E501
 topology_tools = [
-    get_service_dependencies, get_service_topology, lookup_service,
-    generate_topology_diagram, trace_service_health, analyze_infrastructure_health,
-    investigate_root_cause, scan_infrastructure, analyze_heavy_logs,
-    generate_service_catalog_docs, predict_resource_exhaustion
-]
+    get_service_dependencies,
+    get_service_topology,
+    lookup_service,
+    generate_topology_diagram,
+    trace_service_health,
+    analyze_infrastructure_health,
+    investigate_root_cause,
+    scan_infrastructure,
+    analyze_heavy_logs,
+    generate_service_catalog_docs,
+    predict_resource_exhaustion]
 planner_tools = [generate_hypothesis, search_knowledge_base]
-finops_tools = [analyze_cost_anomalies, suggest_spot_migrations, estimate_gcp_cost, optimize_gcp_resources]
+finops_tools = [
+    analyze_cost_anomalies,
+    suggest_spot_migrations,
+    estimate_gcp_cost,
+    optimize_gcp_resources]
 chaos_tools = [run_chaos_experiment, analyze_chaos_results]
 
 # 3. Create Specialist Agents
@@ -107,7 +172,8 @@ datadog_agent = make_specialist(
     "Datadog Observability & Metrics",
     heuristics="SRE TIP: Correlate high latency spikes with error logs. Check for recent alerts. If the user asks for a 'Bits AI' style investigation, use `bits_ai_investigate_monitor`."  # noqa: E501
 )
-traefik_agent = make_specialist(traefik_tools, "Traefik Ingress Controller & Reverse Proxy")
+traefik_agent = make_specialist(traefik_tools,
+                                "Traefik Ingress Controller & Reverse Proxy")
 azion_agent = make_specialist(
     azion_tools,
     "Azion Edge Computing, CDN & WAF",
@@ -119,7 +185,9 @@ code_agent = make_specialist(
     heuristics="SRE TIP: You are the 'Bits Dev Agent'. You can fix bugs! Use `generate_code_fix` to propose fixes and `create_github_pr` to submit them. Always check recent commits first."  # noqa: E501
 )
 cicd_agent = make_specialist(cicd_tools, "CI/CD Pipelines & ArgoCD")
-sec_agent = make_specialist(sec_tools, "DevSecOps, Vulnerability Scanning & IAM")
+sec_agent = make_specialist(
+    sec_tools,
+    "DevSecOps, Vulnerability Scanning & IAM")
 incident_agent = make_specialist(
     incident_tools,
     "Incident Management & Post-Mortems",
@@ -132,16 +200,12 @@ incident_agent = make_specialist(
     )
 )
 automation_agent = make_specialist(
-    automation_tools,
-    "Runbook Automation & Site Reliability Engineering",
-    heuristics=(
+    automation_tools, "Runbook Automation & Site Reliability Engineering", heuristics=(
         "SRE TIP: SAFETY FIRST. You have the power to change infrastructure.\n"
         "1. Always use `execute_runbook` with `dry_run=True` FIRST to verify the action.\n"
         "2. Show the dry-run output to the user and ask for explicit confirmation.\n"
         "3. Only run with `dry_run=False` after receiving user approval.\n"
-        "4. If a service is unknown, use `lookup_service`."
-    )
-)
+        "4. If a service is unknown, use `lookup_service`."))
 topology_agent = make_specialist(
     topology_tools,
     "Service Topology & Dependency Mapping",
@@ -155,15 +219,11 @@ topology_agent = make_specialist(
     )
 )
 planner_agent = make_specialist(
-    planner_tools,
-    "Hypothesis Generation & Reasoning Engine",
-    heuristics=(
+    planner_tools, "Hypothesis Generation & Reasoning Engine", heuristics=(
         "SRE TIP: You are the brain. When a problem is complex or the root cause is unclear:\n"
         "1. Use `generate_hypothesis` to brainstorm potential causes.\n"
         "2. Use `search_knowledge_base` to see if this has happened before.\n"
-        "3. Provide a structured plan to the Supervisor."
-    )
-)
+        "3. Provide a structured plan to the Supervisor."))
 
 finops_agent = make_specialist(
     finops_tools,
@@ -291,15 +351,29 @@ supervisor_system_prompt = (
 
 
 class RouterSchema(BaseModel):
-    reasoning: str = Field(description="The chain of thought reasoning for the decision.")
-    next_agent: Literal[
-        "K8s_Specialist", "GCP_Specialist", "Datadog_Specialist",
-        "Traefik_Specialist", "Azion_Specialist", "Code_Specialist", "CICD_Specialist",
-        "Security_Specialist", "Incident_Specialist", "Automation_Specialist",
-        "Topology_Specialist", "Planner_Specialist", "FinOps_Specialist", "Chaos_Specialist",
-        "Opsy_Specialist", "FuzzyLabs_Specialist", "OpsMate_Specialist", "SmythOS_Specialist",
-        "IncidentFox_Specialist", "BitsAI_Specialist", "FINISH"
-    ] = Field(description="The next agent to route to, or FINISH.")
+    reasoning: str = Field(
+        description="The chain of thought reasoning for the decision.")
+    next_agent: Literal["K8s_Specialist",
+                        "GCP_Specialist",
+                        "Datadog_Specialist",
+                        "Traefik_Specialist",
+                        "Azion_Specialist",
+                        "Code_Specialist",
+                        "CICD_Specialist",
+                        "Security_Specialist",
+                        "Incident_Specialist",
+                        "Automation_Specialist",
+                        "Topology_Specialist",
+                        "Planner_Specialist",
+                        "FinOps_Specialist",
+                        "Chaos_Specialist",
+                        "Opsy_Specialist",
+                        "FuzzyLabs_Specialist",
+                        "OpsMate_Specialist",
+                        "SmythOS_Specialist",
+                        "IncidentFox_Specialist",
+                        "BitsAI_Specialist",
+                        "FINISH"] = Field(description="The next agent to route to, or FINISH.")
 
 
 def supervisor_node(state: AgentState):
@@ -394,4 +468,8 @@ workflow.add_conditional_edges(
 
 # Human-in-the-Loop: Interrupt before risky actions
 checkpointer = MemorySaver()
-app_graph = workflow.compile(checkpointer=checkpointer, interrupt_before=["Automation_Specialist", "Chaos_Specialist"])
+app_graph = workflow.compile(
+    checkpointer=checkpointer,
+    interrupt_before=[
+        "Automation_Specialist",
+        "Chaos_Specialist"])

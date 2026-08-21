@@ -3,6 +3,7 @@ from unittest.mock import patch
 from app.tools.cost import estimate_gcp_cost
 import os
 
+
 def test_estimate_gcp_cost_success(monkeypatch):
     """
     Test successful execution of estimate_gcp_cost, mocking GCP resource list and LLM output.
@@ -11,9 +12,9 @@ def test_estimate_gcp_cost_success(monkeypatch):
     monkeypatch.setenv("USE_REAL_TOOLS", "false")
 
     with patch("app.tools.real.list_compute_instances._run", return_value="Instance: vm-1, Type: e2-medium"), \
-         patch("app.tools.real.get_gcp_sql_instances._run", return_value="Instance: sql-1, Type: db-f1-micro"), \
-         patch("app.tools.cost.get_google_sdk_client") as mock_sdk, \
-         patch("app.tools.cost.get_llm") as mock_llm:
+            patch("app.tools.real.get_gcp_sql_instances._run", return_value="Instance: sql-1, Type: db-f1-micro"), \
+            patch("app.tools.cost.get_google_sdk_client") as mock_sdk, \
+            patch("app.tools.cost.get_llm") as mock_llm:
 
         # Ensure it falls back to standard LLM for testing
         mock_sdk.return_value = None
@@ -28,6 +29,7 @@ def test_estimate_gcp_cost_success(monkeypatch):
         assert "Total Estimated Monthly Cost" in result
         assert "$35.00" in result
 
+
 def test_estimate_gcp_cost_gemini():
     """
     Test successful execution with Gemini SDK.
@@ -35,8 +37,8 @@ def test_estimate_gcp_cost_gemini():
     os.environ["USE_REAL_TOOLS"] = "false"
 
     with patch("app.tools.real.list_compute_instances._run", return_value="vm"), \
-         patch("app.tools.real.get_gcp_sql_instances._run", return_value="sql"), \
-         patch("app.tools.cost.get_google_sdk_client") as mock_sdk:
+            patch("app.tools.real.get_gcp_sql_instances._run", return_value="sql"), \
+            patch("app.tools.cost.get_google_sdk_client") as mock_sdk:
 
         class MockGeminiResponse:
             text = "Gemini Cost Estimate: $100.00"
@@ -47,6 +49,7 @@ def test_estimate_gcp_cost_gemini():
 
         assert "Gemini Cost Estimate: $100.00" in result
 
+
 def test_estimate_gcp_cost_resource_error():
     """
     Test when underlying resource gathering fails, but LLM still generates an estimate
@@ -55,9 +58,9 @@ def test_estimate_gcp_cost_resource_error():
     os.environ["USE_REAL_TOOLS"] = "false"
 
     with patch("app.tools.real.list_compute_instances._run", side_effect=Exception("API Error")), \
-         patch("app.tools.real.get_gcp_sql_instances._run", side_effect=Exception("API Error")), \
-         patch("app.tools.cost.get_google_sdk_client") as mock_sdk, \
-         patch("app.tools.cost.get_llm") as mock_llm:
+            patch("app.tools.real.get_gcp_sql_instances._run", side_effect=Exception("API Error")), \
+            patch("app.tools.cost.get_google_sdk_client") as mock_sdk, \
+            patch("app.tools.cost.get_llm") as mock_llm:
 
         mock_sdk.return_value = None
 

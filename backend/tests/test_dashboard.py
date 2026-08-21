@@ -2,16 +2,17 @@ import pytest
 from unittest.mock import patch
 from app.tools.dashboard import analyze_infrastructure_health
 
+
 def test_analyze_infrastructure_health_success():
     """
     Test when all integrations (k8s, GCP, Datadog, Traefik) return healthy status.
     """
     with patch("app.tools.dashboard.list_k8s_pods") as mock_k8s, \
-         patch("app.tools.dashboard.get_cluster_events") as mock_events, \
-         patch("app.tools.dashboard.check_gcp_status") as mock_gcp, \
-         patch("app.tools.dashboard.query_gmp_prometheus") as mock_gmp, \
-         patch("app.tools.dashboard.get_active_alerts") as mock_alerts, \
-         patch("app.tools.dashboard.check_traefik_health") as mock_traefik:
+            patch("app.tools.dashboard.get_cluster_events") as mock_events, \
+            patch("app.tools.dashboard.check_gcp_status") as mock_gcp, \
+            patch("app.tools.dashboard.query_gmp_prometheus") as mock_gmp, \
+            patch("app.tools.dashboard.get_active_alerts") as mock_alerts, \
+            patch("app.tools.dashboard.check_traefik_health") as mock_traefik:
 
         mock_k8s.invoke.return_value = "pod1, pod2"
         mock_events.invoke.return_value = "event1"
@@ -34,16 +35,17 @@ def test_analyze_infrastructure_health_success():
         assert "## 🚦 Traefik Ingress" in result
         assert "✅ Online" in result
 
+
 def test_analyze_infrastructure_health_failure():
     """
     Test when integrations return errors or warnings.
     """
     with patch("app.tools.dashboard.list_k8s_pods") as mock_k8s, \
-         patch("app.tools.dashboard.get_cluster_events") as mock_events, \
-         patch("app.tools.dashboard.check_gcp_status") as mock_gcp, \
-         patch("app.tools.dashboard.query_gmp_prometheus") as mock_gmp, \
-         patch("app.tools.dashboard.get_active_alerts") as mock_alerts, \
-         patch("app.tools.dashboard.check_traefik_health") as mock_traefik:
+            patch("app.tools.dashboard.get_cluster_events") as mock_events, \
+            patch("app.tools.dashboard.check_gcp_status") as mock_gcp, \
+            patch("app.tools.dashboard.query_gmp_prometheus") as mock_gmp, \
+            patch("app.tools.dashboard.get_active_alerts") as mock_alerts, \
+            patch("app.tools.dashboard.check_traefik_health") as mock_traefik:
 
         mock_k8s.invoke.return_value = "CrashLoopBackOff"
         mock_events.invoke.return_value = "Error syncing"
@@ -67,14 +69,15 @@ def test_analyze_infrastructure_health_failure():
         assert "## 🚦 Traefik Ingress" in result
         assert "❌ Erro" in result
 
+
 def test_analyze_infrastructure_health_exception():
     """
     Test when integrations throw raw exceptions instead of returning error strings.
     """
     with patch("app.tools.dashboard.list_k8s_pods") as mock_k8s, \
-         patch("app.tools.dashboard.check_gcp_status") as mock_gcp, \
-         patch("app.tools.dashboard.get_active_alerts") as mock_alerts, \
-         patch("app.tools.dashboard.check_traefik_health") as mock_traefik:
+            patch("app.tools.dashboard.check_gcp_status") as mock_gcp, \
+            patch("app.tools.dashboard.get_active_alerts") as mock_alerts, \
+            patch("app.tools.dashboard.check_traefik_health") as mock_traefik:
 
         mock_k8s.invoke.side_effect = Exception("Timeout")
         mock_gcp.invoke.side_effect = Exception("Timeout")

@@ -31,9 +31,7 @@ def analyze_heavy_logs(log_content: str, context: str = "") -> str:
                 "You are an expert SRE log analyzer.",
                 f"Context: {context}",
                 "Analyze the following logs and find the root cause of errors. Be technical and concise.",
-                log_content
-            ]
-        )
+                log_content])
         return f"Gemini Analysis:\n{response.text}"
     except Exception as e:
         return f"Error analyzing logs with Gemini SDK: {e}"
@@ -41,8 +39,10 @@ def analyze_heavy_logs(log_content: str, context: str = "") -> str:
 
 @tool
 def investigate_root_cause(
-    service_name: str, owner: str = "my-org", repo: str = "", time_window_minutes: int = 60
-) -> str:
+        service_name: str,
+        owner: str = "my-org",
+        repo: str = "",
+        time_window_minutes: int = 60) -> str:
     """
     Investigates potential root causes for a service failure by correlating:
     1. Kubernetes Cluster Events
@@ -72,8 +72,9 @@ def investigate_root_cause(
         future_azion = executor.submit(check_azion_status.invoke, {})
 
         hours = max(1, time_window_minutes // 60)
-        future_git = executor.submit(list_recent_commits.invoke, {
-                                     "owner": owner, "repo": repo, "hours": hours})
+        future_git = executor.submit(
+            list_recent_commits.invoke, {
+                "owner": owner, "repo": repo, "hours": hours})
 
         try:
             report.append(f"\n[Kubernetes Events]\n{future_k8s.result()}")
@@ -128,9 +129,12 @@ def scan_infrastructure() -> str:
     Returns a summary of K8s, GCP, Datadog, and Traefik health.
     """
     from app.tools import (
-        list_k8s_pods, check_gcp_status, get_active_alerts, check_traefik_health,
-        query_gmp_prometheus, check_azion_status
-    )
+        list_k8s_pods,
+        check_gcp_status,
+        get_active_alerts,
+        check_traefik_health,
+        query_gmp_prometheus,
+        check_azion_status)
     from app.llm import get_google_sdk_client
     import concurrent.futures
 

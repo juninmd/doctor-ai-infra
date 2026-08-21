@@ -5,10 +5,12 @@ from app.graph import supervisor_node, app_graph
 from app.state import AgentState
 import os
 
+
 class MockDecision:
     def __init__(self, next_agent, reasoning="Testing"):
         self.next_agent = next_agent
         self.reasoning = reasoning
+
 
 @patch("app.graph.llm")
 @patch("app.tools.incident.SessionLocal")
@@ -27,17 +29,24 @@ def test_complex_troubleshooting(mock_session_local, mock_llm):
         mock_prompt_instance.__or__.return_value = mock_chain
 
         mock_chain.invoke.side_effect = [
-            MockDecision("Topology_Specialist", "Request is vague, scanning infra."),
-            MockDecision("Traefik_Specialist", "Topology found latency, checking ingress."),
-            MockDecision("Incident_Specialist", "Traefik found routing issue, creating incident."),
-            MockDecision("FINISH", "Incident created, done.")
-        ]
+            MockDecision(
+                "Topology_Specialist",
+                "Request is vague, scanning infra."),
+            MockDecision(
+                "Traefik_Specialist",
+                "Topology found latency, checking ingress."),
+            MockDecision(
+                "Incident_Specialist",
+                "Traefik found routing issue, creating incident."),
+            MockDecision(
+                "FINISH",
+                "Incident created, done.")]
 
         with patch("app.tools.list_k8s_pods") as mock_k8s, \
-             patch("app.tools.check_gcp_status") as mock_gcp, \
-             patch("app.tools.query_gmp_prometheus") as mock_gmp, \
-             patch("app.tools.get_active_alerts") as mock_dd, \
-             patch("app.tools.check_traefik_health") as mock_traefik:
+                patch("app.tools.check_gcp_status") as mock_gcp, \
+                patch("app.tools.query_gmp_prometheus") as mock_gmp, \
+                patch("app.tools.get_active_alerts") as mock_dd, \
+                patch("app.tools.check_traefik_health") as mock_traefik:
 
             mock_k8s.invoke.return_value = "K8s: All Systems Go"
             mock_gcp.invoke.return_value = "GCP: Operational"
@@ -57,7 +66,9 @@ def test_complex_troubleshooting(mock_session_local, mock_llm):
             result2 = supervisor_node(state)
             assert result2["next"] == "Traefik_Specialist"
 
-            state["messages"].append(SystemMessage(content="Traefik: Backend Service Unreachable (Simulated)"))
+            state["messages"].append(
+                SystemMessage(
+                    content="Traefik: Backend Service Unreachable (Simulated)"))
 
             result3 = supervisor_node(state)
             assert result3["next"] == "Incident_Specialist"

@@ -2,6 +2,7 @@ from langchain_core.tools import tool
 from sqlalchemy.orm import joinedload
 from app.db import SessionLocal, Service
 
+
 @tool
 def generate_topology_diagram(focus_service: str = "all") -> str:
     """
@@ -15,10 +16,14 @@ def generate_topology_diagram(focus_service: str = "all") -> str:
     mermaid_code = ["graph TD"]
 
     # Styles for nodes
-    mermaid_code.append("    classDef db fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#000;")
-    mermaid_code.append("    classDef service fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#000;")
-    mermaid_code.append("    classDef tier1 fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000;")
-    mermaid_code.append("    classDef unknown fill:#f5f5f5,stroke:#9e9e9e,stroke-width:1px,stroke-dasharray: 5 5,color:#666;")
+    mermaid_code.append(
+        "    classDef db fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#000;")
+    mermaid_code.append(
+        "    classDef service fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#000;")
+    mermaid_code.append(
+        "    classDef tier1 fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000;")
+    mermaid_code.append(
+        "    classDef unknown fill:#f5f5f5,stroke:#9e9e9e,stroke-width:1px,stroke-dasharray: 5 5,color:#666;")
 
     db = SessionLocal()
     try:
@@ -51,7 +56,8 @@ def generate_topology_diagram(focus_service: str = "all") -> str:
             # Find upstream
             for name, details in service_catalog.items():
                 if focus_service in details.get("dependencies", []):
-                    mermaid_code.append(f"    {name}([{name}]) --> {focus_service}")
+                    mermaid_code.append(
+                        f"    {name}([{name}]) --> {focus_service}")
                     if "db" in name:
                         mermaid_code.append(f"    class {name} db;")
                     else:
@@ -71,9 +77,9 @@ def generate_topology_diagram(focus_service: str = "all") -> str:
 
                     # Style unknown dependencies
                     if dep not in service_catalog:
-                         if "db" in dep:
+                        if "db" in dep:
                             mermaid_code.append(f"    class {dep} db;")
-                         else:
+                        else:
                             mermaid_code.append(f"    class {dep} unknown;")
 
                 # Style current node
@@ -85,6 +91,7 @@ def generate_topology_diagram(focus_service: str = "all") -> str:
                     mermaid_code.append(f"    class {name} service;")
 
         # Wrap in markdown block
-        return "Here is the topology diagram:\n\n```mermaid\n" + "\n".join(mermaid_code) + "\n```"
+        return "Here is the topology diagram:\n\n```mermaid\n" + \
+            "\n".join(mermaid_code) + "\n```"
     finally:
         db.close()

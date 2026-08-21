@@ -1,3 +1,4 @@
+from app.tools.code import generate_code_fix, create_github_pr
 import unittest
 from unittest.mock import MagicMock, patch
 import os
@@ -6,21 +7,25 @@ import sys
 # Ensure backend in path
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-from app.tools.code import generate_code_fix, create_github_pr
 
 class TestCodeTools(unittest.TestCase):
 
     @patch("app.tools.code.get_google_sdk_client")
     @patch("app.tools.code.requests")
     @patch("app.tools.code.os.getenv")
-    def test_generate_code_fix_sdk(self, mock_getenv, mock_requests, mock_get_sdk):
+    def test_generate_code_fix_sdk(
+            self,
+            mock_getenv,
+            mock_requests,
+            mock_get_sdk):
         # Setup
         mock_getenv.return_value = "fake_token"
 
         # Mock file fetch
         mock_resp = MagicMock()
         mock_resp.status_code = 200
-        mock_resp.json.return_value = {"content": "cHJpbnQoImhlbGxvIikK"} # print("hello") in base64
+        mock_resp.json.return_value = {
+            "content": "cHJpbnQoImhlbGxvIikK"}  # print("hello") in base64
         mock_requests.get.return_value = mock_resp
 
         # Mock SDK
@@ -67,7 +72,7 @@ class TestCodeTools(unittest.TestCase):
         resp_sha.json.return_value = {"object": {"sha": "base_sha"}}
 
         resp_check_branch = MagicMock()
-        resp_check_branch.status_code = 404 # Branch doesn't exist
+        resp_check_branch.status_code = 404  # Branch doesn't exist
 
         resp_create_branch = MagicMock()
         resp_create_branch.status_code = 201
@@ -83,14 +88,17 @@ class TestCodeTools(unittest.TestCase):
         resp_pr.raise_for_status.return_value = None
         resp_pr.json.return_value = {"html_url": "http://pr/1"}
 
-        # Order of get calls: repo, ref/heads/main, ref/heads/newbranch, contents/file
-        mock_requests.get.side_effect = [resp_repo, resp_sha, resp_check_branch, resp_file]
+        # Order of get calls: repo, ref/heads/main, ref/heads/newbranch,
+        # contents/file
+        mock_requests.get.side_effect = [
+            resp_repo, resp_sha, resp_check_branch, resp_file]
 
         # Order of post/put: post(ref), put(file), post(pr)
         # requests.post called twice (ref, pr), put called once
 
         # Setup post side effects based on URL or just order
-        # It's harder to mock mixed verbs with side_effect list on module.requests unless we mock specific methods
+        # It's harder to mock mixed verbs with side_effect list on
+        # module.requests unless we mock specific methods
         mock_requests.post.side_effect = [resp_create_branch, resp_pr]
         mock_requests.put.return_value = resp_update
 
@@ -112,6 +120,7 @@ class TestCodeTools(unittest.TestCase):
             headers=unittest.mock.ANY,
             json={"ref": "refs/heads/fix/test", "sha": "base_sha"}
         )
+
 
 if __name__ == "__main__":
     unittest.main()

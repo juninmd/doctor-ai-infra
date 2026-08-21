@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch
 from langchain_core.messages import SystemMessage
 from app.graph import make_specialist
 
+
 @patch("app.graph.llm")
 def test_make_specialist_configuration(mock_llm):
     """
@@ -40,7 +41,7 @@ def test_make_specialist_configuration(mock_llm):
         assert "Test Persona" in system_msg
         assert "Test Heuristics: Do X, Y, Z." in system_msg
         assert "Current Year: 2026" in system_msg
-        assert "hacker-chic" in system_msg # Tone check
+        assert "hacker-chic" in system_msg  # Tone check
 
     # 4. Verify return value
     assert agent == mock_graph

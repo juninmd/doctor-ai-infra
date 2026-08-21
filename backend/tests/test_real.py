@@ -7,10 +7,11 @@ from app.tools.real import (
 )
 import os
 
+
 def test_list_k8s_pods_success():
     """Test successful k8s pod listing."""
     with patch('app.tools.real.config.load_kube_config'), \
-         patch('app.tools.real.client.CoreV1Api') as mock_api:
+            patch('app.tools.real.client.CoreV1Api') as mock_api:
         mock_v1 = MagicMock()
         mock_pod = MagicMock()
         mock_pod.metadata.name = "test-pod-1"
@@ -21,6 +22,7 @@ def test_list_k8s_pods_success():
         assert "test-pod-1" in result
         assert "Running" in result
 
+
 def test_list_k8s_pods_failure():
     """Test k8s pod listing failure."""
     # We patch the internal helper rather than the config methods, since real handles the exceptions
@@ -28,6 +30,7 @@ def test_list_k8s_pods_failure():
     with patch('app.tools.real._get_k8s_client', return_value=None):
         result = list_k8s_pods.invoke({"namespace": "default"})
         assert "Error: Could not load Kubernetes configuration" in result
+
 
 def test_check_gcp_status_success():
     """Test GCP status check."""
@@ -42,6 +45,7 @@ def test_check_gcp_status_success():
         assert "GCP Connection Successful" in result
         assert "test-project-1" in result
 
+
 def test_get_active_alerts_success():
     """Test Datadog alerts."""
     os.environ["DD_API_KEY"] = "fake-api"
@@ -54,7 +58,7 @@ def test_get_active_alerts_success():
     mock_monitors_api_instance.list_monitors.return_value = [mock_monitor]
     mock_monitors_api.return_value = mock_monitors_api_instance
     with patch('app.tools.real.ApiClient', create=True), \
-         patch('app.tools.real.MonitorsApi', mock_monitors_api, create=True), \
-         patch('app.tools.real.Configuration', create=True):
-            result = get_active_alerts.invoke({})
-            assert "High CPU" in result
+            patch('app.tools.real.MonitorsApi', mock_monitors_api, create=True), \
+            patch('app.tools.real.Configuration', create=True):
+        result = get_active_alerts.invoke({})
+        assert "High CPU" in result

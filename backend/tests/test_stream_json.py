@@ -1,4 +1,7 @@
-
+from langchain_core.messages import AIMessage, ToolMessage
+import asyncio
+import json
+import pytest
 import sys
 from unittest.mock import MagicMock
 
@@ -8,13 +11,9 @@ mock_rag.rag_engine = MagicMock()
 mock_rag.initialize_rag = MagicMock()
 sys.modules["app.rag"] = mock_rag
 
-import pytest
-import json
-import asyncio
-from langchain_core.messages import AIMessage, ToolMessage
-
 # Now import main
 from main import chat_endpoint, ChatRequest
+
 
 @pytest.mark.asyncio
 async def test_chat_endpoint_streams_tool_output():
@@ -34,11 +33,12 @@ async def test_chat_endpoint_streams_tool_output():
     mock_node_output = {
         "Topology_Specialist": {
             "messages": [
-                ToolMessage(content=tool_output_with_json, tool_call_id="123", name="scan_infrastructure"),
-                AIMessage(content=summary_message)
-            ]
-        }
-    }
+                ToolMessage(
+                    content=tool_output_with_json,
+                    tool_call_id="123",
+                    name="scan_infrastructure"),
+                AIMessage(
+                    content=summary_message)]}}
 
     # Mock astream to yield this once then finish
     async def mock_astream(input, config=None):
@@ -49,11 +49,11 @@ async def test_chat_endpoint_streams_tool_output():
 
     # Mock get_state
     mock_state_start = MagicMock()
-    mock_state_start.values = {} # New thread
+    mock_state_start.values = {}  # New thread
     mock_state_start.next = None
 
     mock_state_end = MagicMock()
-    mock_state_end.next = None # Finished properly
+    mock_state_end.next = None  # Finished properly
 
     mock_graph.get_state.side_effect = [mock_state_start, mock_state_end]
 
@@ -78,14 +78,17 @@ async def test_chat_endpoint_streams_tool_output():
         # 1. The ToolOutput (containing JSON)
         # 2. The Message (summary)
 
-        tool_outputs = [e for e in events if e["type"] == "tool_output" and e["agent"] == "Topology_Specialist"]
-        messages = [e for e in events if e["type"] == "message" and e["agent"] == "Topology_Specialist"]
+        tool_outputs = [e for e in events if e["type"] ==
+                        "tool_output" and e["agent"] == "Topology_Specialist"]
+        messages = [e for e in events if e["type"] ==
+                    "message" and e["agent"] == "Topology_Specialist"]
 
         # Check if we got the JSON content in tool_output
         has_json = any("```json" in t["content"] for t in tool_outputs)
 
         assert has_json, f"The stream did not contain the ToolOutput with the JSON block! Got: {tool_outputs}"
-        assert len(messages) == 1, f"Expected 1 summary message, got {len(messages)}"
+        assert len(messages) == 1, f"Expected 1 summary message, got {
+            len(messages)}"
 
 if __name__ == "__main__":
     asyncio.run(test_chat_endpoint_streams_tool_output())

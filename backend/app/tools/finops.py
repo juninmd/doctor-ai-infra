@@ -3,6 +3,7 @@ import os
 import requests
 from datetime import datetime, UTC
 
+
 @tool
 def analyze_cost_anomalies(days: int = 7) -> str:
     """
@@ -14,13 +15,15 @@ def analyze_cost_anomalies(days: int = 7) -> str:
         return "Error: GOOGLE_CLOUD_PROJECT env var must be set for billing analysis."
 
     # Note: Real billing data requires Cloud Billing API enabled and bigquery access usually
-    # For now, we use a hybrid approach that checks high-level usage metrics that correlate to cost
+    # For now, we use a hybrid approach that checks high-level usage metrics
+    # that correlate to cost
     return (
         f"### 💸 FinOps Cost Analysis for Project: {project_id}\n"
         "Status: Connecting to Cloud Billing API...\n"
         "Observation: No critical anomalies detected in the last 24h.\n"
         "Tip: Check 'optimize_gcp_resources' for orphaned disks which are the #1 cause of silent leaks."
     )
+
 
 @tool
 def suggest_spot_migrations(namespace: str = "default") -> str:
@@ -30,9 +33,11 @@ def suggest_spot_migrations(namespace: str = "default") -> str:
     from kubernetes import client, config
     try:
         config.load_kube_config()
-    except:
-        try: config.load_incluster_config()
-        except: return "Error: K8s config failed."
+    except BaseException:
+        try:
+            config.load_incluster_config()
+        except BaseException:
+            return "Error: K8s config failed."
 
     apps_v1 = client.AppsV1Api()
     try:
@@ -45,7 +50,8 @@ def suggest_spot_migrations(namespace: str = "default") -> str:
             replicas = dep.spec.replicas or 0
 
             if not has_pv and replicas >= 2:
-                candidates.append(f"- **{dep.metadata.name}**: Stateless candidate found.")
+                candidates.append(
+                    f"- **{dep.metadata.name}**: Stateless candidate found.")
 
         if not candidates:
             return f"No obvious Spot migration candidates found in namespace '{namespace}'."
@@ -53,6 +59,7 @@ def suggest_spot_migrations(namespace: str = "default") -> str:
         return f"### 🎯 Spot Migration Candidates\n" + "\n".join(candidates)
     except Exception as e:
         return f"Spot Migration Error: {str(e)}"
+
 
 @tool
 def predict_resource_exhaustion() -> str:

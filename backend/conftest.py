@@ -13,6 +13,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 # Use in-memory SQLite for tests
 TEST_DATABASE_URL = "sqlite:///:memory:"
 
+
 @pytest.fixture(scope="function")
 def db_session():
     """
@@ -29,13 +30,15 @@ def db_session():
     Base.metadata.create_all(bind=engine)
 
     # Create a session factory bound to this engine
-    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    TestingSessionLocal = sessionmaker(
+        autocommit=False, autoflush=False, bind=engine)
 
     # Create a session for the test itself (if needed)
     session = TestingSessionLocal()
 
     # Patch app.db.SessionLocal to use our testing factory
-    # This ensures that when tools call SessionLocal(), they get a session connected to our test DB
+    # This ensures that when tools call SessionLocal(), they get a session
+    # connected to our test DB
     with patch("app.db.SessionLocal", side_effect=TestingSessionLocal):
         # We also need to patch it in specific tools if they imported it directly
         # But since we can't easily patch all, we rely on them importing from app.db
@@ -45,9 +48,12 @@ def db_session():
         # if the module is already imported.
         # So we patch the reference in app.tools.incident as well.
         # And app.rag used by initialize_rag
-        p1 = patch("app.tools.incident.SessionLocal", side_effect=TestingSessionLocal)
+        p1 = patch(
+            "app.tools.incident.SessionLocal",
+            side_effect=TestingSessionLocal)
         p2 = patch("app.rag.SessionLocal", side_effect=TestingSessionLocal)
-        p3 = patch("app.tools.runbooks.SessionLocal", side_effect=TestingSessionLocal) # Just in case
+        p3 = patch("app.tools.runbooks.SessionLocal",
+                   side_effect=TestingSessionLocal)  # Just in case
 
         with p1, p2, p3:
             yield session
@@ -55,6 +61,7 @@ def db_session():
     # Cleanup
     session.close()
     Base.metadata.drop_all(bind=engine)
+
 
 @pytest.fixture
 def mock_rag_engine():
@@ -71,6 +78,7 @@ def mock_rag_engine():
     with p1, p2:
         yield mock_rag
 
+
 @pytest.fixture
 def mock_llm():
     """Mocks the LLM to return predictable text."""
@@ -81,7 +89,8 @@ def mock_llm():
     # Patch get_llm to return our mock
     with patch("app.llm.get_llm", return_value=mock_chat) as mock_get_llm:
         with patch("app.tools.incident.get_llm", return_value=mock_chat):
-             yield mock_chat
+            yield mock_chat
+
 
 @pytest.fixture
 def mock_google_sdk():

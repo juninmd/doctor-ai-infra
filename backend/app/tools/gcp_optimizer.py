@@ -4,6 +4,7 @@ import requests
 from google.auth import default
 from google.auth.transport.requests import Request as GoogleAuthRequest
 
+
 @tool
 def optimize_gcp_resources() -> str:
     """
@@ -28,7 +29,8 @@ def optimize_gcp_resources() -> str:
             for zone, data in resp.json().get("items", {}).items():
                 for disk in data.get("disks", []):
                     if not disk.get("users"):
-                        orphaned.append(f"- {disk['name']} ({zone.split('/')[-1]}, {disk['sizeGb']}GB)")
+                        orphaned.append(
+                            f"- {disk['name']} ({zone.split('/')[-1]}, {disk['sizeGb']}GB)")
             if orphaned:
                 report.append("\n**Orphaned Disks (Not attached):**")
                 report.extend(orphaned[:10])
@@ -45,7 +47,8 @@ def optimize_gcp_resources() -> str:
             for zone, data in resp_vms.json().get("items", {}).items():
                 for inst in data.get("instances", []):
                     if inst['status'] == "TERMINATED":
-                        stopped.append(f"- {inst['name']} (Stopped in {zone.split('/')[-1]})")
+                        stopped.append(
+                            f"- {inst['name']} (Stopped in {zone.split('/')[-1]})")
             if stopped:
                 report.append("\n**Stopped VMs (Incurring storage costs):**")
                 report.extend(stopped[:10])

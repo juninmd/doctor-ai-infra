@@ -4,8 +4,12 @@ from app.rag import rag_engine
 from app.db import SessionLocal, Service, Runbook
 import datetime
 
+
 @tool
-def add_knowledge_base_item(content: str, category: str = "general", source: str = "user_input") -> str:
+def add_knowledge_base_item(
+        content: str,
+        category: str = "general",
+        source: str = "user_input") -> str:
     """
     Adds a new item (note, runbook snippet, or observation) to the SRE Knowledge Base.
     This allows the agent to learn dynamically.
@@ -28,6 +32,7 @@ def add_knowledge_base_item(content: str, category: str = "general", source: str
         return f"Successfully added item to Knowledge Base (Category: {category})."
     except Exception as e:
         return f"Error adding to Knowledge Base: {str(e)}"
+
 
 @tool
 def search_knowledge_base(query: str) -> str:
@@ -65,6 +70,7 @@ def search_knowledge_base(query: str) -> str:
 
     except Exception as e:
         return f"Error searching Knowledge Base: {str(e)}"
+
 
 @tool
 def generate_service_catalog_docs() -> str:

@@ -6,6 +6,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI, HarmBlockThreshold, H
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3")
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 
+
 def get_llm():
     """
     Returns the configured LLM instance based on LLM_PROVIDER env var.
@@ -16,15 +17,18 @@ def get_llm():
 
     if llm_provider == "gemini":
         if not google_api_key:
-            raise ValueError("LLM_PROVIDER is 'gemini' but GOOGLE_API_KEY is not set.")
+            raise ValueError(
+                "LLM_PROVIDER is 'gemini' but GOOGLE_API_KEY is not set.")
 
         # Best practice 2026: Use Flash for speed/cost, disable safety blocks for SRE logs
-        # Using google-genai v1.0+ under the hood via langchain-google-genai v2+
+        # Using google-genai v1.0+ under the hood via langchain-google-genai
+        # v2+
         return ChatGoogleGenerativeAI(
             model="gemini-1.5-flash",
             google_api_key=google_api_key,
-            temperature=0, # Precision for SRE tasks
-            # convert_system_message_to_human=False, # Gemini 1.5 supports system instructions natively
+            temperature=0,  # Precision for SRE tasks
+            # convert_system_message_to_human=False, # Gemini 1.5 supports
+            # system instructions natively
             safety_settings={
                 HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
                 HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
@@ -37,8 +41,9 @@ def get_llm():
     return ChatOllama(
         model=OLLAMA_MODEL,
         base_url=OLLAMA_BASE_URL,
-        temperature=0, # Precision for SRE tasks
+        temperature=0,  # Precision for SRE tasks
     )
+
 
 def generate_diagnosis(prompt: str, system_instruction: str = None) -> str:
     """Helper to generate a diagnosis using Google GenAI SDK with fallback to LangChain LLM."""
@@ -68,6 +73,7 @@ def generate_diagnosis(prompt: str, system_instruction: str = None) -> str:
             diagnosis = f"Could not perform diagnosis: {e}"
 
     return diagnosis
+
 
 def get_google_sdk_client():
     """

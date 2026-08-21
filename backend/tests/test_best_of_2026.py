@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch
 from datetime import datetime, UTC
 from app.tools import knowledge, incident, real
 
+
 class TestBestOf2026Features(unittest.TestCase):
 
     @patch('app.tools.knowledge.SessionLocal')
@@ -99,18 +100,24 @@ class TestBestOf2026Features(unittest.TestCase):
             return MagicMock()
 
         mock_db.query.side_effect = side_effect
-        mock_query_events.filter.return_value.order_by.return_value.all.return_value = [e1, e2]
+        mock_query_events.filter.return_value.order_by.return_value.all.return_value = [
+            e1, e2]
 
         # Execute
-        result = incident.build_incident_timeline.invoke({"incident_id": "inc-123", "format": "mermaid"})
+        result = incident.build_incident_timeline.invoke(
+            {"incident_id": "inc-123", "format": "mermaid"})
 
         # Verify Mermaid Syntax
         self.assertIn("```mermaid", result)
         self.assertIn("gantt", result)
         self.assertIn("title Incident Timeline: Database Outage", result)
         self.assertIn("section Incident inc-123", result)
-        self.assertIn("Creation (System) - Incident created :milestone, 2026-05-20 10:00:00, 0m", result)
-        self.assertIn("Action (K8s_Specialist) - Scaled up replicas :milestone, 2026-05-20 10:05:00, 0m", result)
+        self.assertIn(
+            "Creation (System) - Incident created :milestone, 2026-05-20 10:00:00, 0m",
+            result)
+        self.assertIn(
+            "Action (K8s_Specialist) - Scaled up replicas :milestone, 2026-05-20 10:05:00, 0m",
+            result)
 
     @patch('app.tools.incident.get_google_sdk_client')
     def test_generate_remediation_plan_gemini(self, mock_get_sdk):
@@ -125,7 +132,8 @@ class TestBestOf2026Features(unittest.TestCase):
         mock_get_sdk.return_value = mock_client
 
         # Execute
-        plan = incident.generate_remediation_plan.invoke({"incident_context": "Pod crashing with OOMKilled"})
+        plan = incident.generate_remediation_plan.invoke(
+            {"incident_context": "Pod crashing with OOMKilled"})
 
         # Verify
         self.assertIn("**Generated Remediation Plan (Gemini):**", plan)
@@ -137,12 +145,13 @@ class TestBestOf2026Features(unittest.TestCase):
 
     @patch('app.tools.incident.get_google_sdk_client')
     @patch('app.tools.incident.get_llm')
-    def test_generate_remediation_plan_fallback(self, mock_get_llm, mock_get_sdk):
+    def test_generate_remediation_plan_fallback(
+            self, mock_get_llm, mock_get_sdk):
         """
         Verifies generate_remediation_plan falls back to standard LLM when Gemini SDK is unavailable.
         """
         # Setup
-        mock_get_sdk.return_value = None # No SDK
+        mock_get_sdk.return_value = None  # No SDK
 
         mock_llm = MagicMock()
         mock_res = MagicMock()
@@ -151,10 +160,13 @@ class TestBestOf2026Features(unittest.TestCase):
         mock_get_llm.return_value = mock_llm
 
         # Execute
-        plan = incident.generate_remediation_plan.invoke({"incident_context": "Pod crashing"})
+        plan = incident.generate_remediation_plan.invoke(
+            {"incident_context": "Pod crashing"})
 
         # Verify
-        self.assertIn("**Generated Remediation Plan:**", plan) # No (Gemini) suffix
+        self.assertIn(
+            "**Generated Remediation Plan:**",
+            plan)  # No (Gemini) suffix
         self.assertIn("- Step 1: Check logs (Ollama)", plan)
         mock_llm.invoke.assert_called_once()
 
@@ -176,7 +188,8 @@ class TestBestOf2026Features(unittest.TestCase):
         mock_response.raise_for_status.return_value = None
         mock_get.return_value = mock_response
 
-        result = real.check_on_call_schedule.invoke({"schedule_id": "mock-schedule"})
+        result = real.check_on_call_schedule.invoke(
+            {"schedule_id": "mock-schedule"})
         self.assertIn("PagerDuty On-Call", result)
         self.assertIn("John Doe", result)
         self.assertIn("mock-schedule", result)

@@ -1,8 +1,11 @@
 from langchain_core.tools import tool
 import os
 
+
 @tool
-def opsmate_troubleshooting_workflow(query: str, namespace: str = "default") -> str:
+def opsmate_troubleshooting_workflow(
+        query: str,
+        namespace: str = "default") -> str:
     """
     Acts as an SRE Copilot using the OpsMate philosophy.
     It takes a natural language query, performs infrastructure health scans,
@@ -31,7 +34,9 @@ def opsmate_troubleshooting_workflow(query: str, namespace: str = "default") -> 
         )
 
         # 3. Generate diagnosis using the AI Copilot
-        diagnosis = generate_diagnosis(prompt=prompt, system_instruction="You are an expert SRE log analyzer and copilot.")
+        diagnosis = generate_diagnosis(
+            prompt=prompt,
+            system_instruction="You are an expert SRE log analyzer and copilot.")
 
         return (
             f"### 🤖 OpsMate SRE Copilot Analysis\n\n"

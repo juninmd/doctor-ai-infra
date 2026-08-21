@@ -1,3 +1,5 @@
+import google.genai  # Make sure it is loaded for patching
+from app.llm import get_google_sdk_client, get_llm
 import unittest
 from unittest.mock import patch, MagicMock
 import os
@@ -6,8 +8,6 @@ import sys
 # Ensure backend/app is in path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from app.llm import get_google_sdk_client, get_llm
-import google.genai # Make sure it is loaded for patching
 
 class TestGoogleGenAISDK(unittest.TestCase):
     def setUp(self):
@@ -46,6 +46,7 @@ class TestGoogleGenAISDK(unittest.TestCase):
         self.assertEqual(call_args["model"], "gemini-1.5-flash")
         self.assertEqual(call_args["google_api_key"], "fake-api-key")
         self.assertIn("safety_settings", call_args)
+
 
 if __name__ == '__main__':
     unittest.main()

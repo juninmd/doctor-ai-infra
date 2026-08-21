@@ -1,8 +1,11 @@
 from langchain_core.tools import tool
 import os
 
+
 @tool
-def bits_ai_investigate_monitor(monitor_query: str, service_name: str = "") -> str:
+def bits_ai_investigate_monitor(
+        monitor_query: str,
+        service_name: str = "") -> str:
     """
     Mimics the functionality of Datadog Bits AI.
     It takes a monitor query or active alerts, correlates them with logs and metrics,
@@ -18,15 +21,17 @@ def bits_ai_investigate_monitor(monitor_query: str, service_name: str = "") -> s
     try:
         # 1. Fetch relevant metrics and alerts
         metrics = get_datadog_metrics.invoke({"query": monitor_query})
-        alerts = get_active_alerts.invoke({"tags": f"service:{service_name}" if service_name else ""})
+        alerts = get_active_alerts.invoke(
+            {"tags": f"service:{service_name}" if service_name else ""})
 
         # 2. Optionally fetch logs if a service is specified
         logs = ""
         if service_name:
-             try:
-                 logs = get_pod_logs.invoke({"pod_name": service_name, "namespace": "default", "lines": 20})
-             except:
-                 logs = "Log fetch failed or skipped."
+            try:
+                logs = get_pod_logs.invoke(
+                    {"pod_name": service_name, "namespace": "default", "lines": 20})
+            except BaseException:
+                logs = "Log fetch failed or skipped."
 
         # 3. Formulate the prompt for the Copilot
         prompt = (
@@ -39,7 +44,9 @@ def bits_ai_investigate_monitor(monitor_query: str, service_name: str = "") -> s
         )
 
         # 4. Generate diagnosis using the AI Copilot
-        diagnosis = generate_diagnosis(prompt=prompt, system_instruction="You are an expert SRE log analyzer and Datadog copilot.")
+        diagnosis = generate_diagnosis(
+            prompt=prompt,
+            system_instruction="You are an expert SRE log analyzer and Datadog copilot.")
 
         return (
             f"### 🐶 Bits AI SRE Copilot Investigation\n\n"

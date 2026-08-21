@@ -10,13 +10,15 @@ sys.path.append(os.path.dirname(__file__))
 # Add project root to sys.path
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
+
 def print_stream(stream):
     for event in stream:
         for key, value in event.items():
             if key == "Supervisor":
                 print(f"\n🤖 **Supervisor:** Routing to -> {value.get('next')}")
             elif "messages" in value:
-                # Value is the state update, typically {"messages": [LogMessage]}
+                # Value is the state update, typically {"messages":
+                # [LogMessage]}
                 last_msg = value["messages"][-1]
                 if isinstance(last_msg, (AIMessage, SystemMessage)):
                     sender = key.replace("_", " ")
@@ -25,6 +27,7 @@ def print_stream(stream):
             else:
                 # Other updates
                 print(f"\nEvent: {key} -> {value}")
+
 
 def run_interactive():
     print("🚀 **SRE Agent CLI (2026 Edition)**")
@@ -59,16 +62,25 @@ def run_interactive():
         except Exception as e:
             print(f"❌ Error: {e}")
 
+
 def run_single_shot(query):
     print(f"🚀 Processing: {query}")
     inputs = {"messages": [HumanMessage(content=query)]}
     config = {"configurable": {"thread_id": "cli-oneshot"}}
     print_stream(app_graph.stream(inputs, config=config))
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="SRE Agent CLI")
-    parser.add_argument("-i", "--interactive", action="store_true", help="Run in interactive mode")
-    parser.add_argument("query", nargs="*", help="Query to run (if not interactive)")
+    parser.add_argument(
+        "-i",
+        "--interactive",
+        action="store_true",
+        help="Run in interactive mode")
+    parser.add_argument(
+        "query",
+        nargs="*",
+        help="Query to run (if not interactive)")
 
     args = parser.parse_args()
 

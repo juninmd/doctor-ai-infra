@@ -12,6 +12,7 @@ from app.rag import rag_engine
 # Ensure DB is initialized
 init_db()
 
+
 @tool
 def create_incident(title: str, severity: str, description: str) -> str:
     """
@@ -50,8 +51,13 @@ def create_incident(title: str, severity: str, description: str) -> str:
     finally:
         db.close()
 
+
 @tool
-def log_incident_event(incident_id: str, event_type: str, content: str, source: str = "Agent") -> str:
+def log_incident_event(
+        incident_id: str,
+        event_type: str,
+        content: str,
+        source: str = "Agent") -> str:
     """
     Logs a significant event for an incident timeline.
     Args:
@@ -81,8 +87,12 @@ def log_incident_event(incident_id: str, event_type: str, content: str, source: 
     finally:
         db.close()
 
+
 @tool
-def update_incident_status(incident_id: str, status: str, update_message: str = "") -> str:
+def update_incident_status(
+        incident_id: str,
+        status: str,
+        update_message: str = "") -> str:
     """
     Updates the status of an existing incident.
     Args:
@@ -120,6 +130,7 @@ def update_incident_status(incident_id: str, status: str, update_message: str = 
     finally:
         db.close()
 
+
 @tool
 def build_incident_timeline(incident_id: str, format: str = "text") -> str:
     """
@@ -135,13 +146,16 @@ def build_incident_timeline(incident_id: str, format: str = "text") -> str:
             return f"Incident {incident_id} not found."
 
         # Fetch events sorted by time
-        events = db.query(IncidentEvent).filter(IncidentEvent.incident_id == incident_id).order_by(IncidentEvent.created_at).all()
+        events = db.query(IncidentEvent).filter(
+            IncidentEvent.incident_id == incident_id).order_by(
+            IncidentEvent.created_at).all()
 
         if not events:
             return "No events logged yet."
 
         if format.lower() == "mermaid":
-            # Generate a Mermaid Gantt Chart for the timeline (IncidentFox feature)
+            # Generate a Mermaid Gantt Chart for the timeline (IncidentFox
+            # feature)
             diagram = ["gantt", f"    title Incident Timeline: {inc.title}"]
             diagram.append("    dateFormat YYYY-MM-DD HH:mm:ss")
             diagram.append("    axisFormat %H:%M")
@@ -150,34 +164,50 @@ def build_incident_timeline(incident_id: str, format: str = "text") -> str:
 
             for e in events:
                 # Sanitize content for mermaid
-                safe_content = e.content.replace(':', '-').replace('"', "'")[:40]
+                safe_content = e.content.replace(
+                    ':', '-').replace('"', "'")[:40]
                 t_str = e.created_at.strftime("%Y-%m-%d %H:%M:%S")
                 # Use milestone for events
-                diagram.append(f"    {e.event_type} ({e.source}) - {safe_content} :milestone, {t_str}, 0m")
+                diagram.append(
+                    f"    {
+                        e.event_type} ({
+                        e.source}) - {safe_content} :milestone, {t_str}, 0m")
 
             return "```mermaid\n" + "\n".join(diagram) + "\n```"
 
         # Default Text Format
         timeline = [f"# Incident Timeline: {inc.title} ({inc.id})"]
-        timeline.append(f"**Severity:** {inc.severity} | **Status:** {inc.status}\n")
+        timeline.append(
+            f"**Severity:** {inc.severity} | **Status:** {inc.status}\n")
 
         for e in events:
             timestamp = e.created_at.strftime("%Y-%m-%d %H:%M:%S")
             icon = "ℹ️"
-            if e.event_type == "Hypothesis": icon = "🤔"
-            elif e.event_type == "Evidence": icon = "🔍"
-            elif e.event_type == "Action": icon = "⚡"
-            elif e.event_type == "StatusChange": icon = "🔄"
-            elif e.event_type == "Creation": icon = "🚨"
+            if e.event_type == "Hypothesis":
+                icon = "🤔"
+            elif e.event_type == "Evidence":
+                icon = "🔍"
+            elif e.event_type == "Action":
+                icon = "⚡"
+            elif e.event_type == "StatusChange":
+                icon = "🔄"
+            elif e.event_type == "Creation":
+                icon = "🚨"
 
-            timeline.append(f"- **{timestamp}** {icon} [{e.source}] **{e.event_type}**: {e.content}")
+            timeline.append(
+                f"- **{timestamp}** {icon} [{e.source}] **{e.event_type}**: {e.content}")
 
         return "\n".join(timeline)
     finally:
         db.close()
 
+
 @tool
-def manage_incident_channels(action: str, channel_name: str, incident_id: str, platform: str = "Slack") -> str:
+def manage_incident_channels(
+        action: str,
+        channel_name: str,
+        incident_id: str,
+        platform: str = "Slack") -> str:
     """
     Manages communication channels for incidents.
     Args:
@@ -190,7 +220,7 @@ def manage_incident_channels(action: str, channel_name: str, incident_id: str, p
     try:
         inc = db.query(Incident).filter(Incident.id == incident_id).first()
         if not inc:
-             return f"Incident {incident_id} not found."
+            return f"Incident {incident_id} not found."
 
         if action == "create":
             # Check if exists
@@ -200,7 +230,8 @@ def manage_incident_channels(action: str, channel_name: str, incident_id: str, p
             ).first()
 
             if exists:
-                return f"Channel {channel_name} on {platform} already exists (ID: {exists.id})."
+                return f"Channel {channel_name} on {platform} already exists (ID: {
+                    exists.id})."
 
             # Generate URL based on platform
             if platform.lower() == "slack":
@@ -240,6 +271,7 @@ def manage_incident_channels(action: str, channel_name: str, incident_id: str, p
     finally:
         db.close()
 
+
 @tool
 def list_incident_channels(incident_id: str) -> str:
     """
@@ -247,13 +279,16 @@ def list_incident_channels(incident_id: str) -> str:
     """
     db = SessionLocal()
     try:
-        channels = db.query(IncidentChannel).filter(IncidentChannel.incident_id == incident_id).all()
+        channels = db.query(IncidentChannel).filter(
+            IncidentChannel.incident_id == incident_id).all()
         if not channels:
             return "No channels linked to this incident."
 
-        return "\n".join([f"- {c.platform}: {c.channel_name} ({c.url})" for c in channels])
+        return "\n".join(
+            [f"- {c.platform}: {c.channel_name} ({c.url})" for c in channels])
     finally:
         db.close()
+
 
 @tool
 def list_incidents(status: Optional[str] = None) -> str:
@@ -271,13 +306,15 @@ def list_incidents(status: Optional[str] = None) -> str:
         incidents = query.all()
         results = []
         for inc in incidents:
-            results.append(f"[{inc.id}] {inc.title} ({inc.severity}) - {inc.status}")
+            results.append(
+                f"[{inc.id}] {inc.title} ({inc.severity}) - {inc.status}")
 
         if not results:
             return "No incidents found."
         return "\n".join(results)
     finally:
         db.close()
+
 
 @tool
 def get_incident_details(incident_id: str) -> str:
@@ -297,6 +334,7 @@ def get_incident_details(incident_id: str) -> str:
     finally:
         db.close()
 
+
 @tool
 def generate_postmortem(incident_id: str) -> str:
     """
@@ -314,18 +352,23 @@ def generate_postmortem(incident_id: str) -> str:
 
         # Check if exists
         if inc.post_mortem:
-            return f"Post-Mortem already exists for {incident_id}. (ID: {inc.post_mortem.id})"
+            return f"Post-Mortem already exists for {incident_id}. (ID: {
+                inc.post_mortem.id})"
 
         # Prepare context (include new events)
-        events = db.query(IncidentEvent).filter(IncidentEvent.incident_id == incident_id).order_by(IncidentEvent.created_at).all()
-        events_str = "\n".join([f"[{e.created_at}] {e.event_type} ({e.source}): {e.content}" for e in events])
+        events = db.query(IncidentEvent).filter(
+            IncidentEvent.incident_id == incident_id).order_by(
+            IncidentEvent.created_at).all()
+        events_str = "\n".join(
+            [f"[{e.created_at}] {e.event_type} ({e.source}): {e.content}" for e in events])
 
         # RAG Search for Context
         try:
             rag_results = rag_engine.search(f"{inc.title} {inc.description}")
             rag_context_list = []
             for doc in rag_results:
-                rag_context_list.append(f"--- [Source: {doc.metadata.get('source', 'unknown')}] ---\n{doc.page_content[:300]}...")
+                rag_context_list.append(
+                    f"--- [Source: {doc.metadata.get('source', 'unknown')}] ---\n{doc.page_content[:300]}...")
             rag_context_str = "\n".join(rag_context_list)
         except Exception as e:
             rag_context_str = f"Warning: RAG Search failed: {str(e)}"
@@ -340,7 +383,8 @@ def generate_postmortem(incident_id: str) -> str:
             f"Relevant Knowledge Base Context (Past Incidents/Runbooks):\n{rag_context_str}\n"
         )
 
-        # Best Practice 2026: Use Google GenAI SDK for large context (Incident Logs)
+        # Best Practice 2026: Use Google GenAI SDK for large context (Incident
+        # Logs)
         client = get_google_sdk_client()
         system_msg = (
             "You are an SRE Incident Commander. "
@@ -350,8 +394,7 @@ def generate_postmortem(incident_id: str) -> str:
             "- Executive Summary\n"
             "- Root Cause Analysis (inference based on logs)\n"
             "- Timeline (Use the provided Timeline Log)\n"
-            "- Action Items / Lessons Learned (Reference Knowledge Base if relevant)\n"
-        )
+            "- Action Items / Lessons Learned (Reference Knowledge Base if relevant)\n")
 
         report_content = None
 
@@ -365,8 +408,9 @@ def generate_postmortem(incident_id: str) -> str:
                 if response and response.text:
                     report_content = response.text
             except Exception as e:
-                 print(f"Gemini SDK failed ({e}), falling back to standard LLM.")
-                 report_content = None
+                print(
+                    f"Gemini SDK failed ({e}), falling back to standard LLM.")
+                report_content = None
 
         # Fallback to standard LLM (Ollama or LangChain adapter)
         if not report_content:
@@ -399,12 +443,15 @@ def generate_postmortem(incident_id: str) -> str:
         except Exception as rag_err:
             learn_msg = f"\n(Warning: Failed to index in Knowledge Base: {rag_err})"
 
-        return f"Post-Mortem generated and saved for {incident_id}.{learn_msg}\n\nPreview:\n{report_content[:500]}..."
+        return f"Post-Mortem generated and saved for {incident_id}.{learn_msg}\n\nPreview:\n{
+            report_content[
+                :500]}..."
     except Exception as e:
         db.rollback()
         return f"Error generating post-mortem: {str(e)}"
     finally:
         db.close()
+
 
 @tool
 def generate_runbook_from_incident(incident_id: str, runbook_name: str) -> str:
@@ -454,13 +501,13 @@ def generate_runbook_from_incident(incident_id: str, runbook_name: str) -> str:
                 print(f"Gemini SDK failed: {e}")
 
         if runbook_content == "Runbook Content Generation Failed.":
-             # Fallback
-             try:
-                 llm = get_llm()
-                 res = llm.invoke(prompt)
-                 runbook_content = res.content
-             except Exception as e:
-                 return f"Error generating runbook content: {e}"
+            # Fallback
+            try:
+                llm = get_llm()
+                res = llm.invoke(prompt)
+                runbook_content = res.content
+            except Exception as e:
+                return f"Error generating runbook content: {e}"
 
         # Create Runbook
         new_runbook = Runbook(
@@ -474,12 +521,12 @@ def generate_runbook_from_incident(incident_id: str, runbook_name: str) -> str:
 
         # Index new runbook into RAG immediately
         try:
-             doc = Document(
-                page_content=f"Runbook: {runbook_name}\nDescription: {new_runbook.description}",
-                metadata={"type": "runbook", "name": runbook_name, "source": "auto_gen"}
-            )
-             rag_engine.add_documents([doc])
-        except:
+            doc = Document(
+                page_content=f"Runbook: {runbook_name}\nDescription: {
+                    new_runbook.description}", metadata={
+                    "type": "runbook", "name": runbook_name, "source": "auto_gen"})
+            rag_engine.add_documents([doc])
+        except BaseException:
             pass
 
         return f"Successfully created Runbook '{runbook_name}' from Incident {incident_id}."
@@ -489,6 +536,7 @@ def generate_runbook_from_incident(incident_id: str, runbook_name: str) -> str:
         return f"Error: {e}"
     finally:
         db.close()
+
 
 @tool
 def suggest_remediation(incident_context: str) -> str:
@@ -515,6 +563,7 @@ def suggest_remediation(incident_context: str) -> str:
     except Exception as e:
         return f"Error suggestions: {str(e)}"
 
+
 @tool
 def generate_remediation_plan(incident_context: str) -> str:
     """
@@ -531,9 +580,7 @@ def generate_remediation_plan(incident_context: str) -> str:
         "Based on the following incident context, generate a detailed, step-by-step remediation plan (Runbook).\n"
         "Format it as a Markdown checklist.\n"
         "Include specific commands (kubectl, gcloud, etc.) where possible.\n"
-        "Assess risks for each step.\n\n"
-        f"Incident Context:\n{incident_context}"
-    )
+        "Assess risks for each step.\n\n" f"Incident Context:\n{incident_context}")
 
     plan_content = None
 
@@ -544,9 +591,11 @@ def generate_remediation_plan(incident_context: str) -> str:
                 contents=prompt_text
             )
             if response and response.text:
-                plan_content = f"**Generated Remediation Plan (Gemini):**\n\n{response.text}"
+                plan_content = f"**Generated Remediation Plan (Gemini):**\n\n{
+                    response.text}"
         except Exception as e:
-            print(f"Error generating plan with Gemini SDK: {e}. Falling back to standard LLM.")
+            print(
+                f"Error generating plan with Gemini SDK: {e}. Falling back to standard LLM.")
             plan_content = None
 
     if plan_content:

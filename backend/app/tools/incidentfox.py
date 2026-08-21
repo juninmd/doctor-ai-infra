@@ -1,8 +1,11 @@
 from langchain_core.tools import tool
 import os
 
+
 @tool
-def incidentfox_auto_investigate(incident_context: str, service_name: str = "unknown") -> str:
+def incidentfox_auto_investigate(
+        incident_context: str,
+        service_name: str = "unknown") -> str:
     """
     Mimics the functionality of IncidentFox's automated Slack incident response.
     It triggers an automated investigation across infrastructure and logs,
@@ -33,11 +36,14 @@ def incidentfox_auto_investigate(incident_context: str, service_name: str = "unk
         )
 
         # 3. Generate the summary using the AI Copilot
-        summary = generate_diagnosis(prompt=prompt, system_instruction="You are an expert autonomous Incident Response AI.")
+        summary = generate_diagnosis(
+            prompt=prompt,
+            system_instruction="You are an expert autonomous Incident Response AI.")
 
         # 4. Dispatch the report to Slack
         report_message = f"🦊 *IncidentFox Auto-Investigation: {service_name}* 🦊\n\n{summary}"
-        slack_result = send_slack_notification.invoke({"channel": "#incidents", "message": report_message})
+        slack_result = send_slack_notification.invoke(
+            {"channel": "#incidents", "message": report_message})
 
         return (
             f"### 🦊 IncidentFox Auto-Investigation Complete\n\n"

@@ -12,6 +12,7 @@ sys_modules = {
 with patch.dict("sys.modules", sys_modules):
     from app.tools import runbooks
 
+
 def test_execute_runbook_restart_service_k8s():
     # Mock DB Session
     mock_db = MagicMock()
@@ -44,12 +45,16 @@ def test_execute_runbook_restart_service_k8s():
         # Patch the helper functions using object patch on the imported module
         with patch.object(runbooks, "_get_k8s_client", return_value=mock_k8s_client):
 
-            result = runbooks.execute_runbook.invoke({"runbook_name": "restart_service", "target_service": "payment-api"})
+            result = runbooks.execute_runbook.invoke(
+                {"runbook_name": "restart_service", "target_service": "payment-api"})
 
             # Assertions
-            mock_k8s_client.list_namespaced_pod.assert_called_with("default", label_selector="app=payment-api")
-            mock_k8s_client.delete_namespaced_pod.assert_called_with("pod-123", "default")
+            mock_k8s_client.list_namespaced_pod.assert_called_with(
+                "default", label_selector="app=payment-api")
+            mock_k8s_client.delete_namespaced_pod.assert_called_with(
+                "pod-123", "default")
             assert "Deleted 1 pods" in result
+
 
 def test_execute_runbook_scale_up_k8s():
     # Mock DB
@@ -76,14 +81,16 @@ def test_execute_runbook_scale_up_k8s():
     with patch("app.tools.runbooks.SessionLocal", return_value=mock_db):
         with patch.object(runbooks, "_get_k8s_apps_client", return_value=mock_apps_client):
 
-            result = runbooks.execute_runbook.invoke({"runbook_name": "scale_up", "target_service": "payment-api"})
+            result = runbooks.execute_runbook.invoke(
+                {"runbook_name": "scale_up", "target_service": "payment-api"})
 
-            mock_apps_client.read_namespaced_deployment.assert_called_with("payment-api", "default")
+            mock_apps_client.read_namespaced_deployment.assert_called_with(
+                "payment-api", "default")
             mock_apps_client.patch_namespaced_deployment.assert_called()
 
             # Check args for patch
             args, kwargs = mock_apps_client.patch_namespaced_deployment.call_args
             assert args[0] == "payment-api"
-            assert args[2] == {"spec": {"replicas": 4}} # 2 + 2
+            assert args[2] == {"spec": {"replicas": 4}}  # 2 + 2
 
             assert "Scaled 'payment-api' from 2 to 4" in result

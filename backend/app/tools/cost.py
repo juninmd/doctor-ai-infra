@@ -4,6 +4,7 @@ import concurrent.futures
 import os
 import importlib
 
+
 @tool
 def estimate_gcp_cost() -> str:
     """
@@ -17,8 +18,10 @@ def estimate_gcp_cost() -> str:
     try:
         # Dynamic import to avoid circular dependency issues at module level
         real_module = importlib.import_module("app.tools.real")
-        list_compute_instances = getattr(real_module, "list_compute_instances", None)
-        get_gcp_sql_instances = getattr(real_module, "get_gcp_sql_instances", None)
+        list_compute_instances = getattr(
+            real_module, "list_compute_instances", None)
+        get_gcp_sql_instances = getattr(
+            real_module, "get_gcp_sql_instances", None)
     except ImportError:
         return "Error: Could not import production GCP tools from app.tools.real."
 
@@ -53,14 +56,11 @@ def estimate_gcp_cost() -> str:
         "Based on the following list of active GCP resources, estimate the monthly cost.\n"
         "Assume standard pricing (us-central1), 730 hours/month usage unless status says otherwise.\n"
         "Provide a breakdown by service and a total estimated monthly bill.\n"
-        "Be conservative but realistic.\n\n"
-        f"RESOURCES:\n{resource_summary}\n\n"
-        "OUTPUT FORMAT:\n"
+        "Be conservative but realistic.\n\n" f"RESOURCES:\n{resource_summary}\n\n" "OUTPUT FORMAT:\n"
         "- **Compute Engine**: $X.XX (Breakdown...)\n"
         "- **Cloud SQL**: $X.XX (Breakdown...)\n"
         "- **Total Estimated Monthly Cost**: $X.XX\n"
-        "\n(Disclaimer: AI-generated estimate. Check GCP Billing Console for actuals.)"
-    )
+        "\n(Disclaimer: AI-generated estimate. Check GCP Billing Console for actuals.)")
 
     # Strategy 1: Google GenAI SDK (Gemini 1.5 Flash)
     client = get_google_sdk_client()

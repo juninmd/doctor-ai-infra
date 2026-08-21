@@ -2,6 +2,7 @@ import pytest
 from unittest.mock import MagicMock, patch
 from app.tools.reasoning import generate_hypothesis
 
+
 @patch("app.tools.reasoning.get_google_sdk_client")
 @patch("app.tools.reasoning.get_llm")
 def test_generate_hypothesis_gemini(mock_get_llm, mock_get_client):
@@ -20,6 +21,7 @@ def test_generate_hypothesis_gemini(mock_get_llm, mock_get_client):
     assert "Network Issue" in result
     mock_client.models.generate_content.assert_called_once()
     mock_get_llm.assert_not_called()
+
 
 @patch("app.tools.reasoning.get_google_sdk_client")
 @patch("app.tools.reasoning.get_llm")

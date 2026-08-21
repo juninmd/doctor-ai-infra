@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 # Let's import the module to patch properly.
 from app.tools import real
 
+
 class TestLogAnalysis(unittest.TestCase):
 
     @patch('app.tools.real.get_pod_logs')
@@ -13,7 +14,8 @@ class TestLogAnalysis(unittest.TestCase):
     def test_gemini_sdk_path(self, mock_get_sdk, mock_get_pod_logs_tool):
         # Setup
         # analyze_log_patterns calls get_pod_logs.invoke(...)
-        mock_get_pod_logs_tool.invoke.return_value = "ERROR: Connection failed\nStacktrace..." + (" " * 50)
+        mock_get_pod_logs_tool.invoke.return_value = "ERROR: Connection failed\nStacktrace..." + \
+            (" " * 50)
 
         mock_client = MagicMock()
         mock_response = MagicMock()
@@ -23,7 +25,8 @@ class TestLogAnalysis(unittest.TestCase):
 
         # Execute
         # Note: analyze_log_patterns is a tool, so we invoke it or call it if it's a function.
-        # LangChain @tool makes it a StructuredTool. We must invoke it with a dict.
+        # LangChain @tool makes it a StructuredTool. We must invoke it with a
+        # dict.
         result = real.analyze_log_patterns.invoke({"pod_name": "my-pod"})
 
         # Verify
@@ -34,10 +37,15 @@ class TestLogAnalysis(unittest.TestCase):
     @patch('app.tools.real.get_pod_logs')
     @patch('app.tools.real.get_google_sdk_client')
     @patch('app.tools.real.get_llm')
-    def test_ollama_fallback_path(self, mock_get_llm, mock_get_sdk, mock_get_pod_logs_tool):
+    def test_ollama_fallback_path(
+            self,
+            mock_get_llm,
+            mock_get_sdk,
+            mock_get_pod_logs_tool):
         # Setup
-        mock_get_pod_logs_tool.invoke.return_value = "ERROR: Timeout\nStacktrace..." + (" " * 50)
-        mock_get_sdk.return_value = None # Simulate no SDK/API Key
+        mock_get_pod_logs_tool.invoke.return_value = "ERROR: Timeout\nStacktrace..." + \
+            (" " * 50)
+        mock_get_sdk.return_value = None  # Simulate no SDK/API Key
 
         mock_llm = MagicMock()
         mock_res = MagicMock()

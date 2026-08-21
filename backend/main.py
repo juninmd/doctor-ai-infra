@@ -1,18 +1,19 @@
+from contextlib import asynccontextmanager
+import uuid
+import json
+from typing import List, Dict, Optional
+from pydantic import BaseModel
+from fastapi.responses import StreamingResponse
+from fastapi import FastAPI
 from dotenv import load_dotenv
+
+# load_dotenv MUST be called before importing app modules
 load_dotenv()
 
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
-from typing import List, Dict, Any, Optional
-import json
-import asyncio
-import uuid
-
-from app.graph import app_graph
-from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 from app.rag import initialize_rag
-from contextlib import asynccontextmanager
+from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
+from app.graph import app_graph
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -25,18 +26,22 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Infra Agent Manager", version="1.0", lifespan=lifespan)
 
+
 class ChatRequest(BaseModel):
     message: str
     history: Optional[List[Dict[str, str]]] = []
     thread_id: Optional[str] = None
 
+
 class ResumeRequest(BaseModel):
     thread_id: str
     action: str  # "approve" or "deny"
 
+
 @app.get("/")
 def read_root():
     return {"message": "Infrastructure Agent Manager is Running"}
+
 
 @app.post("/chat")
 async def chat_endpoint(request: ChatRequest):
@@ -91,7 +96,8 @@ async def chat_endpoint(request: ChatRequest):
 
                             for msg in msgs:
                                 # Check for tool calls (Request)
-                                if hasattr(msg, 'tool_calls') and msg.tool_calls:
+                                if hasattr(
+                                        msg, 'tool_calls') and msg.tool_calls:
                                     for tool_call in msg.tool_calls:
                                         yield json.dumps({
                                             "type": "tool_call",
@@ -109,7 +115,8 @@ async def chat_endpoint(request: ChatRequest):
                                         "content": msg.content
                                     }) + "\n"
 
-                                if msg.content and not isinstance(msg, ToolMessage):
+                                if msg.content and not isinstance(
+                                        msg, ToolMessage):
                                     yield json.dumps({
                                         "type": "message",
                                         "agent": node,
@@ -130,6 +137,7 @@ async def chat_endpoint(request: ChatRequest):
 
     return StreamingResponse(event_stream(), media_type="application/x-ndjson")
 
+
 @app.post("/chat/resume")
 async def resume_chat(request: ResumeRequest):
     """
@@ -146,7 +154,8 @@ async def resume_chat(request: ResumeRequest):
             as_node="Automation_Specialist"
         )
 
-    # Resume execution (with None input, as we just want to continue from where we left off)
+    # Resume execution (with None input, as we just want to continue from
+    # where we left off)
 
     async def event_stream():
         try:
@@ -163,9 +172,11 @@ async def resume_chat(request: ResumeRequest):
                     elif "_Specialist" in node:
                         msgs = output.get("messages", [])
                         if msgs:
-                            if not isinstance(msgs, list): msgs = [msgs]
+                            if not isinstance(msgs, list):
+                                msgs = [msgs]
                             for msg in msgs:
-                                if hasattr(msg, 'tool_calls') and msg.tool_calls:
+                                if hasattr(
+                                        msg, 'tool_calls') and msg.tool_calls:
                                     for tool_call in msg.tool_calls:
                                         yield json.dumps({
                                             "type": "tool_call",
@@ -180,7 +191,8 @@ async def resume_chat(request: ResumeRequest):
                                         "tool": msg.name or "unknown",
                                         "content": msg.content
                                     }) + "\n"
-                                if msg.content and not isinstance(msg, ToolMessage):
+                                if msg.content and not isinstance(
+                                        msg, ToolMessage):
                                     yield json.dumps({
                                         "type": "message",
                                         "agent": node,
@@ -190,9 +202,9 @@ async def resume_chat(request: ResumeRequest):
             # Check if finished
             final_state = app_graph.get_state(config)
             if final_state.next:
-                 yield json.dumps({"type": "approval_required", "thread_id": request.thread_id}) + "\n"
+                yield json.dumps({"type": "approval_required", "thread_id": request.thread_id}) + "\n"
             else:
-                 yield json.dumps({"type": "final"}) + "\n"
+                yield json.dumps({"type": "final"}) + "\n"
 
         except Exception as e:
             yield json.dumps({"type": "message", "agent": "System", "content": f"Error: {str(e)}"}) + "\n"

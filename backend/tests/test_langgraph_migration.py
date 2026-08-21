@@ -3,6 +3,7 @@ from langgraph.graph import StateGraph
 from langchain_core.messages import HumanMessage
 from app.graph import workflow, app_graph, members
 
+
 def test_langgraph_workflow_instantiation():
     """
     Verifies that the workflow is a valid LangGraph StateGraph
@@ -13,7 +14,9 @@ def test_langgraph_workflow_instantiation():
     # Check that all specialists and Supervisor are added as nodes
     expected_nodes = set(members) | {"Supervisor"}
     actual_nodes = set(workflow.nodes.keys())
-    assert expected_nodes.issubset(actual_nodes), f"Missing nodes: {expected_nodes - actual_nodes}"
+    assert expected_nodes.issubset(actual_nodes), f"Missing nodes: {
+        expected_nodes - actual_nodes}"
+
 
 def test_langgraph_compilation():
     """
@@ -24,6 +27,7 @@ def test_langgraph_compilation():
     # We interrupt before Automation_Specialist as per graph.py definition
     assert "Automation_Specialist" in app_graph.interrupt_before_nodes
 
+
 def test_initial_state_routing():
     """
     Verifies the basic state shape for the graph
@@ -32,6 +36,7 @@ def test_initial_state_routing():
     assert "messages" in state
     assert len(state["messages"]) == 1
     assert state["messages"][0].content == "System status"
+
 
 def test_supervisor_node_fallback():
     """
@@ -45,7 +50,9 @@ def test_supervisor_node_fallback():
 
     state = {"messages": [HumanMessage(content="System is very slow")]}
 
-    llm_output = {"next_agent": "Datadog_Specialist", "reasoning": "checking metrics"}
+    llm_output = {
+        "next_agent": "Datadog_Specialist",
+        "reasoning": "checking metrics"}
 
     class FakeLLM(FakeListChatModel):
         structured_output_called: bool = False
@@ -60,5 +67,6 @@ def test_supervisor_node_fallback():
         result = supervisor_node(state)
         assert result["next"] == "Datadog_Specialist"
 
-        # Verify that the structured output was attempted and failed, and the fallback was used.
+        # Verify that the structured output was attempted and failed, and the
+        # fallback was used.
         assert fake_llm.structured_output_called

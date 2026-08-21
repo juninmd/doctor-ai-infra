@@ -8,6 +8,7 @@ from app.tools.real import trace_service_health
 from app.db import Service, SessionLocal, init_db
 from app.tools.runbooks import bootstrap_catalog
 
+
 @pytest.fixture(scope="module")
 def db_session():
     # Ensure DB is initialized
@@ -19,13 +20,16 @@ def db_session():
     yield db
     db.close()
 
+
 def test_trace_service_health_db_integration(db_session):
     # Ensure service exists
-    service = db_session.query(Service).filter(Service.name == "payment-api").first()
+    service = db_session.query(Service).filter(
+        Service.name == "payment-api").first()
     if not service:
         pytest.skip("payment-api service not found in DB")
 
-    print(f"Service Found: {service.name} with deps: {[d.name for d in service.dependencies]}")
+    print(
+        f"Service Found: {service.name} with deps: {[d.name for d in service.dependencies]}")
 
     # Patch diagnose_service_health inside app.tools.real
     with patch("app.tools.real.diagnose_service_health") as mock_tool:
@@ -34,7 +38,8 @@ def test_trace_service_health_db_integration(db_session):
         # We need to ensure we call the function with the argument
         # invoke is called with {"service_name": ..., "namespace": ...}
 
-        report = trace_service_health.invoke({"service_name": "payment-api", "depth": 1})
+        report = trace_service_health.invoke(
+            {"service_name": "payment-api", "depth": 1})
 
         print(report)
 

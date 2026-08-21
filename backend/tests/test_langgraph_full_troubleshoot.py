@@ -4,6 +4,7 @@ from langchain_core.messages import HumanMessage, AIMessage
 from app.graph import app_graph, supervisor_node, datadog_agent, k8s_agent, incident_agent
 import json
 
+
 @pytest.mark.asyncio
 async def test_supervisor_routing_sequence():
     """
@@ -14,6 +15,7 @@ async def test_supervisor_routing_sequence():
 
     with patch("app.graph.ChatPromptTemplate") as MockPrompt:
         mock_chain = MagicMock()
+
         class MockRouterSchema:
             def __init__(self):
                 self.next_agent = "Datadog_Specialist"
