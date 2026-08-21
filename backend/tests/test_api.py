@@ -5,10 +5,13 @@ import json
 
 client = TestClient(app)
 
+
 def test_read_root():
     response = client.get("/")
     assert response.status_code == 200
-    assert response.json() == {"message": "Infrastructure Agent Manager is Running"}
+    assert response.json() == {
+        "message": "Infrastructure Agent Manager is Running"}
+
 
 @patch("app.graph.app_graph.get_state")
 @patch("app.graph.app_graph.astream")
@@ -42,8 +45,10 @@ def test_chat_endpoint_stream(mock_astream, mock_get_state):
     events = [json.loads(line) for line in lines if line]
 
     # Check for activity type
-    assert any(e.get("type") == "activity" and e.get("agent") == "K8s_Specialist" for e in events)
+    assert any(e.get("type") == "activity" and e.get(
+        "agent") == "K8s_Specialist" for e in events)
     # Check for message type
-    assert any(e.get("type") == "message" and e.get("content") == "Checking pods..." for e in events)
+    assert any(e.get("type") == "message" and e.get(
+        "content") == "Checking pods..." for e in events)
     # Check for final type
     assert any(e.get("type") == "final" for e in events)

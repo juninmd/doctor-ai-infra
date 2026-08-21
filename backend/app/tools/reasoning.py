@@ -2,6 +2,7 @@ from langchain_core.tools import tool
 from app.llm import get_llm, get_google_sdk_client
 import json
 
+
 @tool
 def generate_hypothesis(context: str) -> str:
     """
@@ -36,7 +37,9 @@ def generate_hypothesis(context: str) -> str:
     # Fallback
     llm = get_llm()
     try:
-        res = llm.invoke(prompt + "\n\nReturn ONLY raw JSON. Do not include markdown formatting like ```json ... ```.")
+        res = llm.invoke(
+            prompt +
+            "\n\nReturn ONLY raw JSON. Do not include markdown formatting like ```json ... ```.")
         content = res.content.strip()
         # Clean up common markdown if present
         if content.startswith("```json"):

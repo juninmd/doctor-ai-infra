@@ -7,9 +7,11 @@ from app.db import SessionLocal, Incident, Service, Runbook, PostMortem
 
 CHROMA_DB_DIR = "./chroma_db"
 
+
 class RAGEngine:
     def __init__(self):
-        self.embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+        self.embeddings = HuggingFaceEmbeddings(
+            model_name="sentence-transformers/all-MiniLM-L6-v2")
         self.vector_store = Chroma(
             collection_name="sre_knowledge_base",
             embedding_function=self.embeddings,
@@ -39,7 +41,9 @@ class RAGEngine:
             persist_directory=CHROMA_DB_DIR
         )
 
+
 rag_engine = RAGEngine()
+
 
 def initialize_rag():
     """
@@ -55,8 +59,9 @@ def initialize_rag():
         try:
             count = rag_engine.count()
             if count > 0:
-                 print(f"RAG Knowledge Base already contains {count} documents. Skipping re-indexing. Set FORCE_RAG_INDEX=true to overwrite.")
-                 return
+                print(
+                    f"RAG Knowledge Base already contains {count} documents. Skipping re-indexing. Set FORCE_RAG_INDEX=true to overwrite.")
+                return
         except Exception as e:
             print(f"Error checking RAG count (proceeding to index): {e}")
 
@@ -71,9 +76,13 @@ def initialize_rag():
         runbooks = db.query(Runbook).all()
         for r in runbooks:
             doc = Document(
-                page_content=f"Runbook: {r.name}\nDescription: {r.description}",
-                metadata={"type": "runbook", "name": r.name, "source": "automation_library"}
-            )
+                page_content=f"Runbook: {
+                    r.name}\nDescription: {
+                    r.description}",
+                metadata={
+                    "type": "runbook",
+                    "name": r.name,
+                    "source": "automation_library"})
             docs.append(doc)
 
         # 2. Index Service Catalog
@@ -89,8 +98,10 @@ def initialize_rag():
             )
             doc = Document(
                 page_content=content,
-                metadata={"type": "service", "name": s.name, "source": "service_catalog"}
-            )
+                metadata={
+                    "type": "service",
+                    "name": s.name,
+                    "source": "service_catalog"})
             docs.append(doc)
 
         # 3. Index Past Incidents (from SQLite)
@@ -105,8 +116,10 @@ def initialize_rag():
             )
             doc = Document(
                 page_content=content,
-                metadata={"type": "incident", "id": inc.id, "source": "incident_db"}
-            )
+                metadata={
+                    "type": "incident",
+                    "id": inc.id,
+                    "source": "incident_db"})
             docs.append(doc)
 
         # 4. Index Post-Mortems (Self-Learning from Past Analysis)
@@ -120,8 +133,10 @@ def initialize_rag():
             )
             doc = Document(
                 page_content=content,
-                metadata={"type": "post_mortem", "incident_id": pm.incident_id, "source": "post_mortem_db"}
-            )
+                metadata={
+                    "type": "post_mortem",
+                    "incident_id": pm.incident_id,
+                    "source": "post_mortem_db"})
             docs.append(doc)
 
     except Exception as e:

@@ -7,25 +7,28 @@ from kubernetes import client, config
 from google.auth import default
 from google.auth.transport.requests import Request as GoogleAuthRequest
 
+
 def _get_k8s_apps_client():
     try:
         config.load_kube_config()
-    except:
+    except BaseException:
         try:
             config.load_incluster_config()
-        except:
+        except BaseException:
             return None
     return client.AppsV1Api()
+
 
 def _get_k8s_autoscaling_client():
     try:
         config.load_kube_config()
-    except:
+    except BaseException:
         try:
             config.load_incluster_config()
-        except:
+        except BaseException:
             return None
     return client.AutoscalingV2Api()
+
 
 @tool
 def optimize_k8s_resources(namespace: str = "default") -> str:
@@ -45,8 +48,9 @@ def optimize_k8s_resources(namespace: str = "default") -> str:
         hpas = []
         if autoscaling_v2:
             try:
-                hpas = autoscaling_v2.list_namespaced_horizontal_pod_autoscaler(namespace).items
-            except:
+                hpas = autoscaling_v2.list_namespaced_horizontal_pod_autoscaler(
+                    namespace).items
+            except BaseException:
                 pass
 
         hpa_targets = [h.spec.scale_target_ref.name for h in hpas]
@@ -76,19 +80,24 @@ def optimize_k8s_resources(namespace: str = "default") -> str:
 
                 # 3. Best Practices (Tags)
                 if container.image and container.image.endswith(":latest"):
-                    issues.append("Using ':latest' tag (unreliable for production)")
+                    issues.append(
+                        "Using ':latest' tag (unreliable for production)")
 
                 # 4. Scalability (HPA)
                 if name not in hpa_targets:
-                    issues.append("No HPA configured (manual scaling detected)")
+                    issues.append(
+                        "No HPA configured (manual scaling detected)")
 
                 if issues:
-                    recommendations.append(f"**{name}** ({c_name}):\n  - " + "\n  - ".join(issues))
+                    recommendations.append(
+                        f"**{name}** ({c_name}):\n  - " +
+                        "\n  - ".join(issues))
 
         if not recommendations:
             return f"✅ All deployments in namespace '{namespace}' follow optimization best practices."
 
-        return f"### 🚀 K8s Optimization Audit: {namespace}\n\n" + "\n".join(recommendations)
+        return f"### 🚀 K8s Optimization Audit: {namespace}\n\n" + \
+            "\n".join(recommendations)
 
     except Exception as e:
         return f"K8s Optimization Error: {str(e)}"

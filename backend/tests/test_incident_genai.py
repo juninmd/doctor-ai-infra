@@ -3,6 +3,7 @@ from unittest.mock import patch, MagicMock
 from app.tools.incident import generate_postmortem
 from app.db import SessionLocal, Incident, PostMortem
 
+
 @pytest.fixture
 def mock_db_session():
     with patch("app.tools.incident.SessionLocal") as mock_session:
@@ -10,23 +11,31 @@ def mock_db_session():
         mock_session.return_value = session
         yield session
 
+
 @pytest.fixture
 def mock_google_client():
     with patch("app.tools.incident.get_google_sdk_client") as mock_client:
         yield mock_client
+
 
 @pytest.fixture
 def mock_get_llm():
     with patch("app.tools.incident.get_llm") as mock_llm:
         yield mock_llm
 
+
 def test_generate_postmortem_gemini_sdk(mock_db_session, mock_google_client):
     """Test that Google SDK is used when available."""
     # Setup Incident
     incident_id = "inc-123"
-    mock_incident = Incident(id=incident_id, title="Test Incident", severity="SEV-1", description="Test", status="RESOLVED")
+    mock_incident = Incident(
+        id=incident_id,
+        title="Test Incident",
+        severity="SEV-1",
+        description="Test",
+        status="RESOLVED")
     # Mock DB query
-    mock_db_session.query.return_value.filter.return_value.order_by.return_value.all.return_value = [] # No events
+    mock_db_session.query.return_value.filter.return_value.order_by.return_value.all.return_value = []  # No events
     mock_db_session.query.return_value.filter.return_value.first.return_value = mock_incident
 
     # Mock SDK Client
@@ -48,11 +57,20 @@ def test_generate_postmortem_gemini_sdk(mock_db_session, mock_google_client):
     assert isinstance(saved_obj, PostMortem)
     assert saved_obj.content == "SDK Generated Report"
 
-def test_generate_postmortem_fallback_llm(mock_db_session, mock_google_client, mock_get_llm):
+
+def test_generate_postmortem_fallback_llm(
+        mock_db_session,
+        mock_google_client,
+        mock_get_llm):
     """Test fallback to standard LLM when SDK is missing."""
     # Setup Incident
     incident_id = "inc-456"
-    mock_incident = Incident(id=incident_id, title="Test Incident Fallback", severity="SEV-2", description="Test", status="RESOLVED")
+    mock_incident = Incident(
+        id=incident_id,
+        title="Test Incident Fallback",
+        severity="SEV-2",
+        description="Test",
+        status="RESOLVED")
     mock_db_session.query.return_value.filter.return_value.order_by.return_value.all.return_value = []
     mock_db_session.query.return_value.filter.return_value.first.return_value = mock_incident
 
@@ -66,7 +84,8 @@ def test_generate_postmortem_fallback_llm(mock_db_session, mock_google_client, m
     # Mocking the chain execution is tricky because of the pipe operator.
     # We will assume the code reaches `res = chain.invoke(...)`.
     # If `prompt | llm` returns a mock, then calling invoke on it should work.
-    # To ensure `prompt | llm` returns a mock that we control, we might need to mock ChatPromptTemplate too.
+    # To ensure `prompt | llm` returns a mock that we control, we might need
+    # to mock ChatPromptTemplate too.
 
     with patch("app.tools.incident.ChatPromptTemplate") as MockPrompt:
         # prompt | llm -> chain

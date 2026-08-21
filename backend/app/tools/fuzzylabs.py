@@ -1,8 +1,15 @@
 from langchain_core.tools import tool
 import os
 
+
 @tool
-def fuzzylabs_sre_workflow(service_name: str, log_group: str = "", slack_channel: str = "#incidents", namespace: str = "default", owner: str = "my-org", repo: str = None) -> str:
+def fuzzylabs_sre_workflow(
+        service_name: str,
+        log_group: str = "",
+        slack_channel: str = "#incidents",
+        namespace: str = "default",
+        owner: str = "my-org",
+        repo: str = None) -> str:
     """
     Reads error logs (from CloudWatch/K8s), inspects source code via GitHub integration,
     produces a diagnosis/fix suggestion, and sends the results to Slack.
@@ -21,11 +28,13 @@ def fuzzylabs_sre_workflow(service_name: str, log_group: str = "", slack_channel
 
     try:
         # 1. Read error logs
-        logs = get_pod_logs.invoke({"pod_name": service_name, "namespace": namespace, "lines": 50})
+        logs = get_pod_logs.invoke(
+            {"pod_name": service_name, "namespace": namespace, "lines": 50})
 
         # 2. Inspect source code / recent commits
         repo_name = repo if repo else service_name
-        commits = list_recent_commits.invoke({"owner": owner, "repo": repo_name, "hours": 24})
+        commits = list_recent_commits.invoke(
+            {"owner": owner, "repo": repo_name, "hours": 24})
 
         # 3. Produce diagnosis and fix suggestions
         prompt = (
@@ -41,7 +50,8 @@ def fuzzylabs_sre_workflow(service_name: str, log_group: str = "", slack_channel
 
         # 4. Send results to Slack
         report_message = f"🚨 *FuzzyLabs SRE Agent Diagnosis for {service_name}* 🚨\n\n{diagnosis}"
-        slack_result = send_slack_notification.invoke({"channel": slack_channel, "message": report_message})
+        slack_result = send_slack_notification.invoke(
+            {"channel": slack_channel, "message": report_message})
 
         return (
             f"### 🕵️‍♀️ FuzzyLabs SRE Agent Workflow Complete\n\n"

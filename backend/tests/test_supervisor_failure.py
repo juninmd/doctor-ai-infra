@@ -2,6 +2,7 @@ import pytest
 from unittest.mock import MagicMock, patch
 from langchain_core.messages import HumanMessage, SystemMessage
 
+
 @patch("app.graph.llm")
 def test_supervisor_failure_fallback(mock_llm):
     # Strategy: Patch ChatPromptTemplate so we can control the pipe result.

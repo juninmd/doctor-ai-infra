@@ -19,7 +19,10 @@ def check_azion_edge() -> str:
     """Checks the status of Azion Edge Applications."""
     try:
         headers = _get_azion_headers()
-        resp = requests.get("https://api.azionapi.net/edge_applications", headers=headers, timeout=10)
+        resp = requests.get(
+            "https://api.azionapi.net/edge_applications",
+            headers=headers,
+            timeout=10)
         resp.raise_for_status()
         data = resp.json()
         apps = data.get("results", [])
@@ -28,7 +31,8 @@ def check_azion_edge() -> str:
 
         result = [f"Found {len(apps)} Azion Edge Applications:"]
         for app in apps[:5]:
-            result.append(f"- {app.get('name')} (ID: {app.get('id')}) - Active: {app.get('active')}")
+            result.append(
+                f"- {app.get('name')} (ID: {app.get('id')}) - Active: {app.get('active')}")
         return "\n".join(result)
     except ValueError as e:
         return f"Azion Error: {e}"
@@ -41,7 +45,10 @@ def check_azion_waf() -> str:
     """Checks the status of Azion WAF (Web Application Firewall)."""
     try:
         headers = _get_azion_headers()
-        resp = requests.get("https://api.azionapi.net/edge_firewall", headers=headers, timeout=10)
+        resp = requests.get(
+            "https://api.azionapi.net/edge_firewall",
+            headers=headers,
+            timeout=10)
         resp.raise_for_status()
         data = resp.json()
         firewalls = data.get("results", [])
@@ -50,7 +57,8 @@ def check_azion_waf() -> str:
 
         result = [f"Found {len(firewalls)} Azion WAF Configurations:"]
         for fw in firewalls[:5]:
-            result.append(f"- {fw.get('name')} (ID: {fw.get('id')}) - Active: {fw.get('is_active')}")
+            result.append(
+                f"- {fw.get('name')} (ID: {fw.get('id')}) - Active: {fw.get('is_active')}")
         return "\n".join(result)
     except ValueError as e:
         return f"Azion Error: {e}"
@@ -63,7 +71,10 @@ def check_azion_status() -> str:
     """Checks the status of the Azion Edge CDN infrastructure."""
     try:
         headers = _get_azion_headers()
-        resp = requests.get("https://api.azionapi.net/edge_applications", headers=headers, timeout=10)
+        resp = requests.get(
+            "https://api.azionapi.net/edge_applications",
+            headers=headers,
+            timeout=10)
         resp.raise_for_status()
         data = resp.json()
         count = data.get("count", 0)
@@ -87,7 +98,8 @@ def list_edge_applications() -> str:
             return "No Edge Applications found."
 
         app_list = [f"- {app['name']} (ID: {app['id']})" for app in apps[:10]]
-        return "Azion Edge Applications (showing up to 10):\n" + "\n".join(app_list)
+        return "Azion Edge Applications (showing up to 10):\n" + \
+            "\n".join(app_list)
     except ValueError as e:
         return f"Azion Error: {e}"
     except Exception as e:
@@ -107,9 +119,14 @@ def purge_azion_cache(urls: str) -> str:
         if not url_list:
             return "No URLs provided for cache purge."
         payload = {"urls": url_list, "method": "delete"}
-        resp = requests.post("https://api.azionapi.net/purge/url", headers=headers, json=payload, timeout=10)
+        resp = requests.post(
+            "https://api.azionapi.net/purge/url",
+            headers=headers,
+            json=payload,
+            timeout=10)
         resp.raise_for_status()
-        return f"Successfully purged cache for {len(url_list)} URL(s) in Azion."
+        return f"Successfully purged cache for {
+            len(url_list)} URL(s) in Azion."
     except ValueError as e:
         return f"Azion Error: {e}"
     except Exception as e:
@@ -127,7 +144,9 @@ def get_azion_metrics(app_id: str, metric_type: str = "requests") -> str:
     try:
         headers = _get_azion_headers()
         url = "https://api.azionapi.net/metrics/graphql"
-        resp = requests.post(url, headers=headers, json={"query": "{ metrics }"}, timeout=10)
+        resp = requests.post(
+            url, headers=headers, json={
+                "query": "{ metrics }"}, timeout=10)
         if resp.status_code == 200:
             return f"Azion Metrics for App {app_id}: {metric_type} is normal."
         resp.raise_for_status()

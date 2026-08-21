@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch
 from langchain_core.messages import HumanMessage
 from app.graph import supervisor_node
 
+
 @pytest.mark.parametrize("query, expected_agent", [
     ("Check pods status", "K8s_Specialist"),
     ("My website is slow", "Traefik_Specialist"),
@@ -18,6 +19,7 @@ from app.graph import supervisor_node
 def test_supervisor_routing_logic(query, expected_agent):
     with patch("app.graph.ChatPromptTemplate") as MockPrompt:
         mock_chain = MagicMock()
+
         class MockRouterSchema:
             def __init__(self, agent):
                 self.next_agent = agent
@@ -30,6 +32,7 @@ def test_supervisor_routing_logic(query, expected_agent):
         state = {"messages": [HumanMessage(content=query)]}
         result = supervisor_node(state)
         assert result["next"] == expected_agent
+
 
 def test_supervisor_fallback_on_error():
     with patch("app.graph.ChatPromptTemplate") as MockPrompt:

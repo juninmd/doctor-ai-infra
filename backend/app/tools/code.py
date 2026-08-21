@@ -4,6 +4,7 @@ import base64
 import os
 from app.llm import get_google_sdk_client, get_llm
 
+
 def _fetch_file_content(repo: str, file_path: str) -> str:
     token = os.getenv("GITHUB_TOKEN")
     if not token:
@@ -28,6 +29,7 @@ def _fetch_file_content(repo: str, file_path: str) -> str:
     except Exception as e:
         return f"Error reading file: {str(e)}"
 
+
 @tool
 def read_repo_file(repo: str, file_path: str) -> str:
     """
@@ -37,6 +39,7 @@ def read_repo_file(repo: str, file_path: str) -> str:
         file_path: The path to the file within the repository.
     """
     return _fetch_file_content(repo, file_path)
+
 
 @tool
 def list_repo_files(repo: str, path: str = "") -> str:
@@ -61,7 +64,7 @@ def list_repo_files(repo: str, path: str = "") -> str:
         resp.raise_for_status()
         items = resp.json()
 
-        if isinstance(items, dict): # Single file
+        if isinstance(items, dict):  # Single file
             return f"Item is a file: {items['name']}"
 
         file_list = []
@@ -73,8 +76,12 @@ def list_repo_files(repo: str, path: str = "") -> str:
     except Exception as e:
         return f"Error listing files: {str(e)}"
 
+
 @tool
-def generate_code_fix(repo: str, file_path: str, issue_description: str) -> str:
+def generate_code_fix(
+        repo: str,
+        file_path: str,
+        issue_description: str) -> str:
     """
     Generates a code fix for a specific file in a GitHub repository using AI.
     Fetches the file content, analyzes the issue, and returns the full fixed file content.
@@ -107,7 +114,7 @@ def generate_code_fix(repo: str, file_path: str, issue_description: str) -> str:
                 model="gemini-1.5-flash",
                 contents=prompt,
                 config={
-                    "temperature": 0.2, # Lower temperature for code precision
+                    "temperature": 0.2,  # Lower temperature for code precision
                 }
             )
             return response.text.strip().replace("```python", "").replace("```", "")
@@ -126,8 +133,15 @@ def generate_code_fix(repo: str, file_path: str, issue_description: str) -> str:
     except Exception as e:
         return f"Error generating fix: {str(e)}"
 
+
 @tool
-def create_github_pr(repo: str, file_path: str, new_content: str, title: str, body: str, branch_name: str) -> str:
+def create_github_pr(
+        repo: str,
+        file_path: str,
+        new_content: str,
+        title: str,
+        body: str,
+        branch_name: str) -> str:
     """
     Creates a Pull Request on GitHub with the specified file changes.
 
@@ -150,18 +164,24 @@ def create_github_pr(repo: str, file_path: str, new_content: str, title: str, bo
 
     try:
         # 1. Get default branch (usually main or master)
-        resp = requests.get(f"https://api.github.com/repos/{repo}", headers=headers)
+        resp = requests.get(
+            f"https://api.github.com/repos/{repo}",
+            headers=headers)
         resp.raise_for_status()
         default_branch = resp.json().get("default_branch", "main")
 
         # 2. Get SHA of the default branch
-        resp = requests.get(f"https://api.github.com/repos/{repo}/git/ref/heads/{default_branch}", headers=headers)
+        resp = requests.get(
+            f"https://api.github.com/repos/{repo}/git/ref/heads/{default_branch}",
+            headers=headers)
         resp.raise_for_status()
         base_sha = resp.json()["object"]["sha"]
 
         # 3. Create new branch
         # Check if branch exists first
-        branch_check = requests.get(f"https://api.github.com/repos/{repo}/git/ref/heads/{branch_name}", headers=headers)
+        branch_check = requests.get(
+            f"https://api.github.com/repos/{repo}/git/ref/heads/{branch_name}",
+            headers=headers)
         if branch_check.status_code == 404:
             resp = requests.post(
                 f"https://api.github.com/repos/{repo}/git/refs",
@@ -169,22 +189,26 @@ def create_github_pr(repo: str, file_path: str, new_content: str, title: str, bo
                 json={"ref": f"refs/heads/{branch_name}", "sha": base_sha}
             )
             if resp.status_code != 201:
-                 return f"Error creating branch '{branch_name}': {resp.text}"
+                return f"Error creating branch '{branch_name}': {resp.text}"
         else:
             # Branch exists, maybe update it? Or fail?
             # Ideally we'd use it.
             pass
 
         # 4. Get file SHA (needed for update)
-        # MUST fetch from the target branch to avoid 409 Conflict if file exists/changed there
-        resp = requests.get(f"https://api.github.com/repos/{repo}/contents/{file_path}?ref={branch_name}", headers=headers)
+        # MUST fetch from the target branch to avoid 409 Conflict if file
+        # exists/changed there
+        resp = requests.get(
+            f"https://api.github.com/repos/{repo}/contents/{file_path}?ref={branch_name}",
+            headers=headers)
         file_sha = None
         if resp.status_code == 200:
             file_sha = resp.json().get("sha")
 
         # 5. Update File
         # Content must be base64 encoded
-        encoded_content = base64.b64encode(new_content.encode("utf-8")).decode("utf-8")
+        encoded_content = base64.b64encode(
+            new_content.encode("utf-8")).decode("utf-8")
         payload = {
             "message": f"fix: update {file_path}",
             "content": encoded_content,

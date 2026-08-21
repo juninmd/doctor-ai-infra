@@ -8,6 +8,8 @@ from app.tools.runbooks import execute_runbook
 from app.tools.incident import create_incident
 
 # --- Test 1: Supervisor Smart Routing ---
+
+
 @patch("app.graph.llm")
 def test_supervisor_smart_routing(mock_llm):
     """
@@ -47,7 +49,12 @@ def test_supervisor_smart_routing(mock_llm):
 @patch("app.tools.query_gmp_prometheus")
 @patch("app.tools.get_active_alerts")
 @patch("app.tools.check_traefik_health")
-def test_scan_infrastructure_aggregation(mock_traefik, mock_alerts, mock_gmp, mock_gcp, mock_k8s):
+def test_scan_infrastructure_aggregation(
+        mock_traefik,
+        mock_alerts,
+        mock_gmp,
+        mock_gcp,
+        mock_k8s):
     """
     Verifies scan_infrastructure collects data from all sources and produces a report.
     """
@@ -68,6 +75,8 @@ def test_scan_infrastructure_aggregation(mock_traefik, mock_alerts, mock_gmp, mo
     assert "```json" in result
 
 # --- Test 3: Runbook Safety (Dry Run) ---
+
+
 @patch("app.tools.runbooks.SessionLocal")
 def test_execute_runbook_safety(mock_session_local):
     mock_db = MagicMock()
@@ -82,7 +91,8 @@ def test_execute_runbook_safety(mock_session_local):
     mock_runbook.description = "Restarts pods"
     mock_query = MagicMock()
     mock_db.query.return_value = mock_query
-    mock_query.filter.return_value.first.side_effect = [mock_service, mock_runbook]
+    mock_query.filter.return_value.first.side_effect = [
+        mock_service, mock_runbook]
 
     result = execute_runbook.invoke({
         "runbook_name": "restart_service",
@@ -92,7 +102,8 @@ def test_execute_runbook_safety(mock_session_local):
     assert "[DRY RUN]" in result
     assert "Would execute runbook 'restart_service'" in result
 
-    mock_query.filter.return_value.first.side_effect = [mock_service, mock_runbook]
+    mock_query.filter.return_value.first.side_effect = [
+        mock_service, mock_runbook]
     with patch("app.tools.runbooks._get_k8s_client") as mock_k8s_client_getter:
         mock_k8s = MagicMock()
         mock_k8s_client_getter.return_value = mock_k8s

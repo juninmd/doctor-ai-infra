@@ -12,12 +12,13 @@ sys_modules = {
 with patch.dict("sys.modules", sys_modules):
     from app.tools import observability
 
+
 def test_scan_infrastructure_robustness():
     with patch("app.tools.list_k8s_pods") as mock_k8s, \
-         patch("app.tools.check_gcp_status") as mock_gcp, \
-         patch("app.tools.query_gmp_prometheus") as mock_gmp, \
-         patch("app.tools.get_active_alerts") as mock_dd, \
-         patch("app.tools.check_traefik_health") as mock_traefik:
+            patch("app.tools.check_gcp_status") as mock_gcp, \
+            patch("app.tools.query_gmp_prometheus") as mock_gmp, \
+            patch("app.tools.get_active_alerts") as mock_dd, \
+            patch("app.tools.check_traefik_health") as mock_traefik:
 
         mock_k8s.invoke.side_effect = Exception("K8s Connection Failed")
         mock_gcp.invoke.return_value = "GCP Active"

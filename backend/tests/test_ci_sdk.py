@@ -5,6 +5,7 @@ import os
 import requests
 from app.tools.real import analyze_ci_failure
 
+
 def test_analyze_ci_failure_uses_sdk():
     # Mock environment variables
     with patch.dict("os.environ", {"GITHUB_TOKEN": "fake-token"}):
@@ -33,16 +34,19 @@ def test_analyze_ci_failure_uses_sdk():
             mock_response.text = "Gemini found the error."
             mock_client.models.generate_content.return_value = mock_response
 
-            # Patch get_google_sdk_client directly in app.llm where generate_diagnosis looks for it
+            # Patch get_google_sdk_client directly in app.llm where
+            # generate_diagnosis looks for it
             with patch("app.llm.get_google_sdk_client", return_value=mock_client) as mock_get_client:
 
-                result = analyze_ci_failure.invoke({"build_id": "999", "repo_name": "test-repo"})
+                result = analyze_ci_failure.invoke(
+                    {"build_id": "999", "repo_name": "test-repo"})
 
                 # Verify SDK was used
                 mock_get_client.assert_called_once()
                 mock_client.models.generate_content.assert_called_once()
 
                 assert "Gemini found the error" in result
+
 
 def test_analyze_ci_failure_fallback():
     # Same setup but SDK returns None
@@ -66,6 +70,7 @@ def test_analyze_ci_failure_fallback():
                     mock_llm.invoke.return_value.content = "Standard LLM Analysis"
                     mock_get_llm.return_value = mock_llm
 
-                    result = analyze_ci_failure.invoke({"build_id": "999", "repo_name": "test-repo"})
+                    result = analyze_ci_failure.invoke(
+                        {"build_id": "999", "repo_name": "test-repo"})
 
                     assert "Standard LLM Analysis" in result

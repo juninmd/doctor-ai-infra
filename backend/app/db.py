@@ -22,6 +22,7 @@ service_runbooks = Table(
     Column('runbook_name', String, ForeignKey('runbooks.name'))
 )
 
+
 class Incident(Base):
     __tablename__ = "incidents"
 
@@ -30,16 +31,26 @@ class Incident(Base):
     severity = Column(String)
     description = Column(Text)
     status = Column(String, default="OPEN")
-    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc))
+    created_at = Column(
+        DateTime,
+        default=lambda: datetime.datetime.now(
+            datetime.timezone.utc))
     updates = Column(Text, default="[]")  # JSON string of updates
 
-    post_mortem = relationship("PostMortem", back_populates="incident", uselist=False)
-    events = relationship("IncidentEvent", back_populates="incident", order_by="IncidentEvent.created_at")
+    post_mortem = relationship(
+        "PostMortem",
+        back_populates="incident",
+        uselist=False)
+    events = relationship(
+        "IncidentEvent",
+        back_populates="incident",
+        order_by="IncidentEvent.created_at")
     channels = relationship("IncidentChannel", back_populates="incident")
 
     def add_update(self, message: str):
         updates_list = json.loads(self.updates)
-        updates_list.append(f"{datetime.datetime.now().isoformat()}: {message}")
+        updates_list.append(
+            f"{datetime.datetime.now().isoformat()}: {message}")
         self.updates = json.dumps(updates_list)
 
     def to_dict(self):
@@ -50,8 +61,9 @@ class Incident(Base):
             "description": self.description,
             "status": self.status,
             "created_at": self.created_at.isoformat() if self.created_at else None,
-            "updates": json.loads(self.updates)
-        }
+            "updates": json.loads(
+                self.updates)}
+
 
 class IncidentChannel(Base):
     __tablename__ = "incident_channels"
@@ -61,9 +73,13 @@ class IncidentChannel(Base):
     platform = Column(String)  # Slack, Zoom
     channel_name = Column(String)
     url = Column(String, nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc))
+    created_at = Column(
+        DateTime,
+        default=lambda: datetime.datetime.now(
+            datetime.timezone.utc))
 
     incident = relationship("Incident", back_populates="channels")
+
 
 class PostMortem(Base):
     __tablename__ = "post_mortems"
@@ -71,9 +87,13 @@ class PostMortem(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     incident_id = Column(String, ForeignKey("incidents.id"), unique=True)
     content = Column(Text)
-    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc))
+    created_at = Column(
+        DateTime,
+        default=lambda: datetime.datetime.now(
+            datetime.timezone.utc))
 
     incident = relationship("Incident", back_populates="post_mortem")
+
 
 class IncidentEvent(Base):
     __tablename__ = "incident_events"
@@ -81,11 +101,16 @@ class IncidentEvent(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     incident_id = Column(String, ForeignKey("incidents.id"))
     source = Column(String)  # e.g., "Supervisor", "K8s_Specialist", "Human"
-    event_type = Column(String)  # e.g., "Hypothesis", "Action", "StatusChange", "Evidence"
+    # e.g., "Hypothesis", "Action", "StatusChange", "Evidence"
+    event_type = Column(String)
     content = Column(Text)
-    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc))
+    created_at = Column(
+        DateTime,
+        default=lambda: datetime.datetime.now(
+            datetime.timezone.utc))
 
     incident = relationship("Incident", back_populates="events")
+
 
 class Service(Base):
     __tablename__ = "services"
@@ -100,12 +125,15 @@ class Service(Base):
     dependencies = relationship(
         "Service",
         secondary=service_dependencies,
-        primaryjoin=name==service_dependencies.c.service_name,
-        secondaryjoin=name==service_dependencies.c.dependency_name,
+        primaryjoin=name == service_dependencies.c.service_name,
+        secondaryjoin=name == service_dependencies.c.dependency_name,
         backref="callers"
     )
 
-    runbooks = relationship("Runbook", secondary=service_runbooks, back_populates="services")
+    runbooks = relationship(
+        "Runbook",
+        secondary=service_runbooks,
+        back_populates="services")
 
     def to_dict(self):
         return {
@@ -118,15 +146,20 @@ class Service(Base):
             "runbooks": [r.name for r in self.runbooks]
         }
 
+
 class Runbook(Base):
     __tablename__ = "runbooks"
 
     name = Column(String, primary_key=True)
     description = Column(Text)
-    implementation_key = Column(String) # Maps to python function key in code
-    content = Column(Text, nullable=True) # Actual steps/script for the runbook
+    implementation_key = Column(String)  # Maps to python function key in code
+    # Actual steps/script for the runbook
+    content = Column(Text, nullable=True)
 
-    services = relationship("Service", secondary=service_runbooks, back_populates="runbooks")
+    services = relationship(
+        "Service",
+        secondary=service_runbooks,
+        back_populates="runbooks")
 
     def to_dict(self):
         return {
@@ -136,11 +169,14 @@ class Runbook(Base):
             "content": self.content
         }
 
+
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+
 def init_db():
     Base.metadata.create_all(bind=engine)
+
 
 def get_db():
     db = SessionLocal()

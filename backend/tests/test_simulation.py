@@ -1,6 +1,7 @@
 import pytest
 from app.graph import app_graph
 
+
 def test_graph_structure():
     """
     Verifies that the LangGraph is correctly constructed and compiled.

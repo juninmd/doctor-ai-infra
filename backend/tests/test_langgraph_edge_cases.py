@@ -1,7 +1,5 @@
-import pytest
-from langgraph.graph import StateGraph
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
-from app.graph import workflow, app_graph, members
+
 
 def test_supervisor_double_failure_fallback():
     """
@@ -10,7 +8,6 @@ def test_supervisor_double_failure_fallback():
     """
     from unittest.mock import patch
     from app.graph import supervisor_node
-    import json
     from langchain_core.language_models import FakeListChatModel
 
     state = {"messages": [HumanMessage(content="Random unrecognized issue")]}
@@ -24,9 +21,10 @@ def test_supervisor_double_failure_fallback():
             raise Exception("Structured parsing error")
 
         def invoke(self, *args, **kwargs):
-             # Simulating a total LLM failure that raises an error
-             # so the fallback routing logic fails and triggers the ultimate fallback
-             raise Exception("LLM Invoke failed")
+            # Simulating a total LLM failure that raises an error
+            # so the fallback routing logic fails and triggers the ultimate
+            # fallback
+            raise Exception("LLM Invoke failed")
 
     fake_llm = FakeLLM(responses=[])
 
@@ -39,6 +37,7 @@ def test_supervisor_double_failure_fallback():
         assert "messages" in result
         assert len(result["messages"]) == 1
         assert "Auto-Routing Error" in result["messages"][0].content
+
 
 def test_supervisor_state_passing():
     """
@@ -57,7 +56,9 @@ def test_supervisor_state_passing():
         ]
     }
 
-    llm_output = {"next_agent": "Datadog_Specialist", "reasoning": "Need metrics"}
+    llm_output = {
+        "next_agent": "Datadog_Specialist",
+        "reasoning": "Need metrics"}
 
     class FakeLLM(FakeListChatModel):
         def with_structured_output(self, *args, **kwargs):
@@ -69,6 +70,7 @@ def test_supervisor_state_passing():
         result = supervisor_node(state)
         assert result["next"] == "Datadog_Specialist"
 
+
 def test_supervisor_vague_request_routing():
     """
     Verifies the supervisor correctly routes vague requests like "Help" or "System is slow"
@@ -79,15 +81,18 @@ def test_supervisor_vague_request_routing():
     import json
     from langchain_core.language_models import FakeListChatModel
 
-    # Simulating a vague request where the LLM might be unsure, but should follow instruction #1
+    # Simulating a vague request where the LLM might be unsure, but should
+    # follow instruction #1
     state = {
         "messages": [
             HumanMessage(content="Help, nothing works")
         ]
     }
 
-    # We simulate the LLM following the instruction and routing to Topology_Specialist
-    llm_output = {"next_agent": "Topology_Specialist", "reasoning": "Vague request, scanning infrastructure"}
+    # We simulate the LLM following the instruction and routing to
+    # Topology_Specialist
+    llm_output = {"next_agent": "Topology_Specialist",
+                  "reasoning": "Vague request, scanning infrastructure"}
 
     class FakeLLM(FakeListChatModel):
         def with_structured_output(self, *args, **kwargs):

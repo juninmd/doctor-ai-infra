@@ -5,6 +5,7 @@ from io import StringIO
 from langchain_core.messages import AIMessage
 from cli import run_single_shot, run_interactive
 
+
 @patch("cli.app_graph")
 def test_run_single_shot(mock_graph, capsys):
     # Setup mock stream
@@ -19,6 +20,7 @@ def test_run_single_shot(mock_graph, capsys):
     assert "Processing: status" in captured.out
     assert "Routing to -> K8s_Specialist" in captured.out
     assert "Checking pods..." in captured.out
+
 
 @patch("cli.app_graph")
 @patch("builtins.input", side_effect=["status", "exit"])

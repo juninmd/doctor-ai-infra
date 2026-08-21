@@ -2,11 +2,8 @@ from langchain_core.tools import tool
 import os
 import datetime
 import requests
-import json
-from typing import List, Dict, Optional
 from app.db import SessionLocal, Service
 from app.llm import get_llm, get_google_sdk_client
-from langchain_core.prompts import ChatPromptTemplate
 
 # Infrastructure Libraries
 try:
@@ -34,17 +31,20 @@ except ImportError:
     ApiClient = None
 
 # --- Kubernetes Tools ---
+
+
 def _get_k8s_client():
     if not config:
         raise ImportError("Kubernetes library not installed.")
     try:
-        config.load_kube_config() # Try local config first
+        config.load_kube_config()  # Try local config first
     except config.ConfigException:
         try:
-            config.load_incluster_config() # Try inside pod
+            config.load_incluster_config()  # Try inside pod
         except config.ConfigException:
             return None
     return client.CoreV1Api()
+
 
 @tool
 def list_k8s_pods(namespace: str = "default") -> str:
@@ -66,6 +66,7 @@ def list_k8s_pods(namespace: str = "default") -> str:
     except Exception as e:
         return f"Error listing pods: {str(e)}"
 
+
 @tool
 def describe_pod(pod_name: str, namespace: str = "default") -> str:
     """Describes a specific pod to get details about its status and events."""
@@ -75,7 +76,8 @@ def describe_pod(pod_name: str, namespace: str = "default") -> str:
 
     try:
         pod = v1.read_namespaced_pod(name=pod_name, namespace=namespace)
-        events = v1.list_namespaced_event(namespace, field_selector=f"involvedObject.name={pod_name}")
+        events = v1.list_namespaced_event(
+            namespace, field_selector=f"involvedObject.name={pod_name}")
 
         event_msgs = [f"{e.type}: {e.message}" for e in events.items]
 
@@ -90,18 +92,24 @@ def describe_pod(pod_name: str, namespace: str = "default") -> str:
     except Exception as e:
         return f"Error describing pod {pod_name}: {str(e)}"
 
+
 @tool
-def get_pod_logs(pod_name: str, namespace: str = "default", lines: int = 50) -> str:
+def get_pod_logs(
+        pod_name: str,
+        namespace: str = "default",
+        lines: int = 50) -> str:
     """Retrieves the last N lines of logs from a pod."""
     v1 = _get_k8s_client()
     if not v1:
         return "Error: Could not load Kubernetes configuration."
 
     try:
-        logs = v1.read_namespaced_pod_log(name=pod_name, namespace=namespace, tail_lines=lines)
+        logs = v1.read_namespaced_pod_log(
+            name=pod_name, namespace=namespace, tail_lines=lines)
         return logs if logs else f"No logs found for pod {pod_name}."
     except Exception as e:
         return f"Error retrieving logs for {pod_name}: {str(e)}"
+
 
 @tool
 def get_cluster_events(namespace: str = "default") -> str:
@@ -115,10 +123,11 @@ def get_cluster_events(namespace: str = "default") -> str:
         event_list = []
         for e in events.items:
             # Format: [Warning] Pod/my-pod: Failed to pull image
-            event_list.append(f"[{e.type}] {e.involved_object.kind}/{e.involved_object.name}: {e.message}")
+            event_list.append(
+                f"[{e.type}] {e.involved_object.kind}/{e.involved_object.name}: {e.message}")
 
         if not event_list:
-             return f"No events found in namespace {namespace}."
+            return f"No events found in namespace {namespace}."
 
         # Return last 20 events
         return "\n".join(event_list[-20:])
@@ -126,6 +135,8 @@ def get_cluster_events(namespace: str = "default") -> str:
         return f"Error listing events: {str(e)}"
 
 # --- GCP Tools ---
+
+
 @tool
 def check_gcp_status(service: str = "compute") -> str:
     """Checks the status of Google Cloud Platform services via Resource Manager."""
@@ -139,9 +150,14 @@ def check_gcp_status(service: str = "compute") -> str:
         projects = rm_client.list_projects(request=request)
 
         project_list = [p.project_id for p in projects]
-        return f"GCP Connection Successful. Active Projects: {', '.join(project_list[:5])}..."
+        return f"GCP Connection Successful. Active Projects: {
+            ', '.join(
+                project_list[
+                    :5])}..."
     except Exception as e:
-        return f"Error checking GCP status: {str(e)}. Check GOOGLE_APPLICATION_CREDENTIALS."
+        return f"Error checking GCP status: {
+            str(e)}. Check GOOGLE_APPLICATION_CREDENTIALS."
+
 
 @tool
 def query_gmp_prometheus(query: str) -> str:
@@ -174,15 +190,17 @@ def query_gmp_prometheus(query: str) -> str:
 
         results = []
         for i, point in enumerate(page_result.time_series_data):
-            if i > 5: break # Limit output
+            if i > 5:
+                break  # Limit output
             # Extract basic value (assuming scalar or simple vector)
             val = "N/A"
             if point.point_data:
-                 # Check value type (double, int, etc.)
-                 pd = point.point_data[0]
-                 val = pd.values[0].double_value or pd.values[0].int64_value
+                # Check value type (double, int, etc.)
+                pd = point.point_data[0]
+                val = pd.values[0].double_value or pd.values[0].int64_value
 
-            label_desc = " ".join([f"{l.key}={l.value}" for l in point.label_values])
+            label_desc = " ".join(
+                [f"{label.key}={label.value}" for label in point.label_values])
             results.append(f"Metric: {label_desc} | Value: {val}")
 
         if not results:
@@ -190,7 +208,9 @@ def query_gmp_prometheus(query: str) -> str:
 
         return "\n".join(results)
     except Exception as e:
-        return f"Error querying GMP: {str(e)}. Ensure GOOGLE_APPLICATION_CREDENTIALS is set and the service account has 'Monitoring Viewer' role."
+        return f"Error querying GMP: {
+            str(e)}. Ensure GOOGLE_APPLICATION_CREDENTIALS is set and the service account has 'Monitoring Viewer' role."
+
 
 @tool
 def list_compute_instances(zone: str = "us-central1-a") -> str:
@@ -226,13 +246,17 @@ def list_compute_instances(zone: str = "us-central1-a") -> str:
         for inst in instances:
             name = inst.get("name")
             status = inst.get("status")
-            network_ip = inst.get("networkInterfaces", [{}])[0].get("networkIP", "N/A")
+            network_ip = inst.get(
+                "networkInterfaces", [
+                    {}])[0].get(
+                "networkIP", "N/A")
             result.append(f"{name} ({status}) - IP: {network_ip}")
 
         return "\n".join(result)
 
     except Exception as e:
         return f"Error listing compute instances: {str(e)}"
+
 
 @tool
 def get_gcp_sql_instances() -> str:
@@ -272,6 +296,7 @@ def get_gcp_sql_instances() -> str:
     except Exception as e:
         return f"Error listing SQL instances: {str(e)}"
 
+
 @tool
 def analyze_gcp_errors(days: int = 1) -> str:
     """
@@ -301,7 +326,10 @@ def analyze_gcp_errors(days: int = 1) -> str:
 
         filter_str = f"severity>=ERROR AND timestamp>=\"{timestamp}\""
 
-        entries = client.list_entries(filter_=filter_str, order_by=cloud_logging.DESCENDING, max_results=50)
+        entries = client.list_entries(
+            filter_=filter_str,
+            order_by=cloud_logging.DESCENDING,
+            max_results=50)
 
         error_summary = []
         count = 0
@@ -311,7 +339,8 @@ def analyze_gcp_errors(days: int = 1) -> str:
             # Payload can be dict, str, or None
             msg = "No message"
             if isinstance(payload, dict):
-                msg = payload.get("message") or payload.get("textPayload") or str(payload)
+                msg = payload.get("message") or payload.get(
+                    "textPayload") or str(payload)
             elif isinstance(payload, str):
                 msg = payload
 
@@ -322,12 +351,15 @@ def analyze_gcp_errors(days: int = 1) -> str:
         if not error_summary:
             return f"No errors found in GCP Cloud Logging for project {project_id} in the last {days} days."
 
-        return f"Found {count} errors in GCP Cloud Logging (Last {days} days):\n" + "\n".join(error_summary)
+        return f"Found {count} errors in GCP Cloud Logging (Last {days} days):\n" + "\n".join(
+            error_summary)
 
     except Exception as e:
         return f"Error analyzing GCP logs: {str(e)}"
 
 # --- Datadog Tools ---
+
+
 @tool
 def get_datadog_metrics(query: str) -> str:
     """Queries Datadog for specific metrics."""
@@ -355,6 +387,7 @@ def get_datadog_metrics(query: str) -> str:
             return str(response)
     except Exception as e:
         return f"Error querying Datadog: {str(e)}"
+
 
 @tool
 def get_active_alerts(tags: str = "") -> str:
@@ -387,7 +420,8 @@ def get_active_alerts(tags: str = "") -> str:
 
             alerts = []
             for monitor in response:
-                alerts.append(f"[Alert] {monitor.name} (ID: {monitor.id}) - Status: {monitor.overall_state}")
+                alerts.append(
+                    f"[Alert] {monitor.name} (ID: {monitor.id}) - Status: {monitor.overall_state}")
 
             if not alerts:
                 return "No active alerts found."
@@ -398,6 +432,7 @@ def get_active_alerts(tags: str = "") -> str:
         return f"Error fetching Datadog alerts: {str(e)}"
 
 # --- DevOps / Git / Security Tools (Simplified wrappers) ---
+
 
 @tool
 def list_recent_commits(owner: str, repo: str, hours: int = 24) -> str:
@@ -413,14 +448,17 @@ def list_recent_commits(owner: str, repo: str, hours: int = 24) -> str:
         return "Error: GITHUB_TOKEN is missing."
 
     headers = {"Authorization": f"token {token}"}
-    since = (datetime.datetime.now(datetime.UTC) - datetime.timedelta(hours=hours)).isoformat().replace("+00:00", "Z")
+    since = (
+        datetime.datetime.now(datetime.UTC) -
+        datetime.timedelta(hours=hours)
+    ).isoformat().replace("+00:00", "Z")
 
     try:
         url = f"https://api.github.com/repos/{owner}/{repo}/commits?since={since}"
         resp = requests.get(url, headers=headers, timeout=10)
 
         if resp.status_code == 404:
-             return f"Repository {owner}/{repo} not found."
+            return f"Repository {owner}/{repo} not found."
 
         resp.raise_for_status()
         commits = resp.json()
@@ -429,7 +467,7 @@ def list_recent_commits(owner: str, repo: str, hours: int = 24) -> str:
             return f"No commits found in {owner}/{repo} in the last {hours} hours."
 
         summary = [f"Recent commits for {owner}/{repo} (Last {hours}h):"]
-        for c in commits[:10]: # Limit to 10
+        for c in commits[:10]:  # Limit to 10
             sha = c['sha'][:7]
             msg = c['commit']['message'].split('\n')[0]
             author = c['commit']['author']['name']
@@ -440,6 +478,7 @@ def list_recent_commits(owner: str, repo: str, hours: int = 24) -> str:
     except Exception as e:
         return f"Error fetching commits: {str(e)}"
 
+
 @tool
 def check_github_repos(org: str = "my-org") -> str:
     """Checks the status of GitHub repositories and recent commits."""
@@ -449,7 +488,10 @@ def check_github_repos(org: str = "my-org") -> str:
 
     headers = {"Authorization": f"token {token}"}
     try:
-        resp = requests.get(f"https://api.github.com/orgs/{org}/repos", headers=headers, timeout=10)
+        resp = requests.get(
+            f"https://api.github.com/orgs/{org}/repos",
+            headers=headers,
+            timeout=10)
         if resp.status_code == 200:
             repos = resp.json()
             names = [r['name'] for r in repos[:5]]
@@ -458,6 +500,7 @@ def check_github_repos(org: str = "my-org") -> str:
     except Exception as e:
         return f"Error connecting to GitHub: {str(e)}"
 
+
 @tool
 def get_pr_status(owner: str, repo: str, pr_id: int) -> str:
     """Checks the status of a specific GitHub Pull Request."""
@@ -465,9 +508,13 @@ def get_pr_status(owner: str, repo: str, pr_id: int) -> str:
     if not token:
         return "Error: GITHUB_TOKEN missing."
 
-    headers = {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"}
+    headers = {"Authorization": f"token {token}",
+               "Accept": "application/vnd.github.v3+json"}
     try:
-        resp = requests.get(f"https://api.github.com/repos/{owner}/{repo}/pulls/{pr_id}", headers=headers, timeout=10)
+        resp = requests.get(
+            f"https://api.github.com/repos/{owner}/{repo}/pulls/{pr_id}",
+            headers=headers,
+            timeout=10)
         resp.raise_for_status()
         pr = resp.json()
         return (
@@ -475,13 +522,17 @@ def get_pr_status(owner: str, repo: str, pr_id: int) -> str:
             f"- **State**: {pr['state'].upper()}\n"
             f"- **Author**: {pr['user']['login']}\n"
             f"- **Mergeable**: {pr.get('mergeable_state', 'unknown')}\n"
-            f"- **Labels**: {', '.join([l['name'] for l in pr['labels']]) or 'None'}"
+            f"- **Labels**: {', '.join([label['name'] for label in pr['labels']]) or 'None'}"
         )
     except Exception as e:
         return f"GitHub PR Error: {str(e)}"
 
+
 @tool
-def check_pipeline_status(service: str, repo: str = "", owner: str = "my-org") -> str:
+def check_pipeline_status(
+        service: str,
+        repo: str = "",
+        owner: str = "my-org") -> str:
     """
     Checks the status of CI/CD pipelines (GitHub Actions) for a specific service/repo.
     """
@@ -490,14 +541,15 @@ def check_pipeline_status(service: str, repo: str = "", owner: str = "my-org") -
         return "Error: GITHUB_TOKEN is missing."
 
     target_repo = repo if repo else service
-    headers = {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"}
+    headers = {"Authorization": f"token {token}",
+               "Accept": "application/vnd.github.v3+json"}
 
     try:
         url = f"https://api.github.com/repos/{owner}/{target_repo}/actions/runs?per_page=5"
         resp = requests.get(url, headers=headers, timeout=10)
 
         if resp.status_code == 404:
-             return f"Repository {owner}/{target_repo} not found."
+            return f"Repository {owner}/{target_repo} not found."
 
         resp.raise_for_status()
         runs = resp.json().get("workflow_runs", [])
@@ -512,12 +564,15 @@ def check_pipeline_status(service: str, repo: str = "", owner: str = "my-org") -
             created_at = run.get("created_at")
             branch = run.get("head_branch")
             icon = "🟢" if conclusion == "success" else "🔴" if conclusion == "failure" else "🟡"
-            summary.append(f"{icon} ID: {run['id']} [{branch}] {status} -> {conclusion} ({created_at})")
+            summary.append(
+                f"{icon} ID: {
+                    run['id']} [{branch}] {status} -> {conclusion} ({created_at})")
 
         return "\n".join(summary)
 
     except Exception as e:
         return f"Error checking pipeline status: {str(e)}"
+
 
 @tool
 def get_argocd_sync_status(app_name: str, namespace: str = "argocd") -> str:
@@ -546,7 +601,9 @@ def get_argocd_sync_status(app_name: str, namespace: str = "argocd") -> str:
             f"- **Health Status**: {'✅' if health == 'Healthy' else '❌'} {health}"
         )
     except Exception as e:
-        return f"ArgoCD Status Error: {str(e)}. (Ensure ArgoCD is installed in the cluster)"
+        return f"ArgoCD Status Error: {
+            str(e)}. (Ensure ArgoCD is installed in the cluster)"
+
 
 @tool
 def check_vulnerabilities(image: str) -> str:
@@ -563,6 +620,7 @@ def check_vulnerabilities(image: str) -> str:
         f"Recommendation: Rebuild image with latest security patches."
     )
 
+
 @tool
 def analyze_iam_policy(user: str) -> str:
     """
@@ -571,13 +629,16 @@ def analyze_iam_policy(user: str) -> str:
     if resourcemanager_v3:
         try:
             credentials, project = default()
-            if not project: project = os.getenv("GOOGLE_CLOUD_PROJECT")
+            if not project:
+                project = os.getenv("GOOGLE_CLOUD_PROJECT")
             if project:
                 client = resourcemanager_v3.ProjectsClient()
                 policy = client.get_iam_policy(resource=f"projects/{project}")
-                roles = [b.role for b in policy.bindings if f"user:{user}" in b.members]
+                roles = [
+                    b.role for b in policy.bindings if f"user:{user}" in b.members]
                 if roles:
-                    return f"IAM Audit for {user} in {project}: {', '.join(roles)}"
+                    return f"IAM Audit for {user} in {project}: {
+                        ', '.join(roles)}"
                 return f"IAM Audit: No direct roles found for {user} in {project}."
         except Exception as e:
             return f"IAM Audit Error: {str(e)}"
@@ -585,6 +646,7 @@ def analyze_iam_policy(user: str) -> str:
     return f"IAM Audit: API access unavailable. Manual review required for {user}."
 
 # --- Advanced SRE Tools (New) ---
+
 
 @tool
 def analyze_log_patterns(pod_name: str, namespace: str = "default") -> str:
@@ -595,7 +657,8 @@ def analyze_log_patterns(pod_name: str, namespace: str = "default") -> str:
     """
     try:
         # Fetch logs (up to 500 lines for better context)
-        logs = get_pod_logs.invoke({"pod_name": pod_name, "namespace": namespace, "lines": 500})
+        logs = get_pod_logs.invoke(
+            {"pod_name": pod_name, "namespace": namespace, "lines": 500})
     except Exception as e:
         return f"Could not fetch logs for analysis: {str(e)}"
 
@@ -611,10 +674,11 @@ def analyze_log_patterns(pod_name: str, namespace: str = "default") -> str:
         "Identify unique error patterns, their frequency, and potential root causes.\n"
         "Ignore standard info/debug messages unless relevant to a failure.\n"
         "Format the output as a concise Markdown summary.\n\n"
-        f"LOGS:\n{logs[:100000]}" # Safety cap
+        f"LOGS:\n{logs[:100000]}"  # Safety cap
     )
 
-    # Strategy 1: Google GenAI SDK (Gemini 1.5 Flash) - Best for Speed & Context
+    # Strategy 1: Google GenAI SDK (Gemini 1.5 Flash) - Best for Speed &
+    # Context
     client = get_google_sdk_client()
     if client:
         try:
@@ -627,21 +691,26 @@ def analyze_log_patterns(pod_name: str, namespace: str = "default") -> str:
             # If SDK fails, fall through to standard LLM
             print(f"Gemini SDK failed: {e}. Falling back to standard LLM.")
 
-    # Strategy 2: Standard LLM (Ollama / LangChain Adapter) - "Run with Ollama" compatibility
+    # Strategy 2: Standard LLM (Ollama / LangChain Adapter) - "Run with
+    # Ollama" compatibility
     llm = get_llm()
     try:
-        # Truncate logs if using local LLM to avoid context overflow (approx 8k tokens safe limit)
-        safe_logs = logs[:12000] + ("...[TRUNCATED]" if len(logs) > 12000 else "")
+        # Truncate logs if using local LLM to avoid context overflow (approx 8k
+        # tokens safe limit)
+        safe_logs = logs[:12000] + \
+            ("...[TRUNCATED]" if len(logs) > 12000 else "")
         fallback_prompt = (
-            f"Analyze these logs for '{pod_name}'. Summarize errors and root causes.\n\n{safe_logs}"
-        )
+            f"Analyze these logs for '{pod_name}'. Summarize errors and root causes.\n\n{safe_logs}")
         response = llm.invoke(fallback_prompt)
         return f"**AI Log Analysis (Standard LLM):**\n{response.content}"
     except Exception as e:
         return f"Error during AI log analysis: {str(e)}"
 
+
 @tool
-def diagnose_service_health(service_name: str, namespace: str = "default") -> str:
+def diagnose_service_health(
+        service_name: str,
+        namespace: str = "default") -> str:
     """
     Performs a comprehensive health check on a service.
     Orchestrates: Pod listing, Event checking, and Log analysis for failing pods.
@@ -652,7 +721,7 @@ def diagnose_service_health(service_name: str, namespace: str = "default") -> st
     try:
         # FIX: Use invoke
         pods_output = list_k8s_pods.invoke({"namespace": namespace})
-    except:
+    except BaseException:
         pods_output = "Failed to list pods."
     report.append(f"\n1. Pod Status:\n{pods_output}")
 
@@ -660,7 +729,7 @@ def diagnose_service_health(service_name: str, namespace: str = "default") -> st
     try:
         # FIX: Use invoke
         events_output = get_cluster_events.invoke({"namespace": namespace})
-    except:
+    except BaseException:
         events_output = "Failed to list events."
     report.append(f"\n2. Recent Events:\n{events_output}")
 
@@ -673,15 +742,20 @@ def diagnose_service_health(service_name: str, namespace: str = "default") -> st
             report.append(f"\n3. Log Analysis for {pod_full_name}:")
             try:
                 # FIX: Use invoke
-                logs_analysis = analyze_log_patterns.invoke({"pod_name": pod_full_name, "namespace": namespace})
+                logs_analysis = analyze_log_patterns.invoke(
+                    {"pod_name": pod_full_name, "namespace": namespace})
                 report.append(logs_analysis)
-            except:
+            except BaseException:
                 report.append("Failed to analyze logs.")
 
     return "\n".join(report)
 
+
 @tool
-def analyze_ci_failure(build_id: str, repo_name: str = "", owner: str = "my-org") -> str:
+def analyze_ci_failure(
+        build_id: str,
+        repo_name: str = "",
+        owner: str = "my-org") -> str:
     """
     Analyzes a CI/CD build failure to pinpoint the cause.
     Fetches logs from GitHub Actions (if token available).
@@ -690,11 +764,13 @@ def analyze_ci_failure(build_id: str, repo_name: str = "", owner: str = "my-org"
     if not token:
         return "Error: GITHUB_TOKEN not set. Cannot fetch CI logs."
 
-    # If no repo name, try to infer or ask? For now, require it or use build_id context if possible
+    # If no repo name, try to infer or ask? For now, require it or use
+    # build_id context if possible
     if not repo_name:
         return "Error: Please provide 'repo_name' to analyze the build."
 
-    headers = {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"}
+    headers = {"Authorization": f"token {token}",
+               "Accept": "application/vnd.github.v3+json"}
 
     try:
         # 1. Get Job details to find failed step
@@ -726,10 +802,12 @@ def analyze_ci_failure(build_id: str, repo_name: str = "", owner: str = "my-org"
                     prompt = f"Analyze these CI/CD logs for job '{job_name}' and find the error:\n\n{logs}"
                     system_inst = "Identify the specific error message and the root cause. Suggest a fix if possible."
 
-                    analysis = generate_diagnosis(prompt=prompt, system_instruction=system_inst)
+                    analysis = generate_diagnosis(
+                        prompt=prompt, system_instruction=system_inst)
                     report.append(f"AI Analysis:\n{analysis}")
                 else:
-                    report.append("Could not fetch logs (Status: " + str(log_resp.status_code) + ")")
+                    report.append(
+                        "Could not fetch logs (Status: " + str(log_resp.status_code) + ")")
             except Exception as e:
                 report.append(f"Error fetching logs: {e}")
 
@@ -737,6 +815,7 @@ def analyze_ci_failure(build_id: str, repo_name: str = "", owner: str = "my-org"
 
     except Exception as e:
         return f"Error analyzing CI failure: {str(e)}"
+
 
 @tool
 def trace_service_health(service_name: str, depth: int = 1) -> str:
@@ -747,14 +826,16 @@ def trace_service_health(service_name: str, depth: int = 1) -> str:
         service_name: The root service to check.
         depth: How deep to traverse dependencies (default 1).
     """
-    report = [f"Dependency Health Trace for '{service_name}' (Depth: {depth}):"]
+    report = [
+        f"Dependency Health Trace for '{service_name}' (Depth: {depth}):"]
 
     # 1. Check Root Service
     report.append(f"\n--- Root: {service_name} ---")
     try:
         # Assuming namespace "default" for simplicity, or we could look it up
         # FIX: Use invoke
-        root_health = diagnose_service_health.invoke({"service_name": service_name, "namespace": "default"})
+        root_health = diagnose_service_health.invoke(
+            {"service_name": service_name, "namespace": "default"})
         report.append(root_health)
     except Exception as e:
         report.append(f"Error checking root service: {str(e)}")
@@ -763,7 +844,8 @@ def trace_service_health(service_name: str, depth: int = 1) -> str:
         # 2. Get Dependencies directly from DB
         db = SessionLocal()
         try:
-            service = db.query(Service).filter(Service.name == service_name).first()
+            service = db.query(Service).filter(
+                Service.name == service_name).first()
             if service and service.dependencies:
                 dependencies = [d.name for d in service.dependencies]
                 report.append(f"\n--- Dependencies ({len(dependencies)}) ---")
@@ -772,12 +854,16 @@ def trace_service_health(service_name: str, depth: int = 1) -> str:
                     report.append(f"\n[Dependency: {dep}]")
                     try:
                         # FIX: Use invoke
-                        dep_health = diagnose_service_health.invoke({"service_name": dep, "namespace": "default"})
+                        dep_health = diagnose_service_health.invoke(
+                            {"service_name": dep, "namespace": "default"})
                         report.append(dep_health)
                     except Exception as e:
-                        report.append(f"Error checking dependency {dep}: {str(e)}")
+                        report.append(
+                            f"Error checking dependency {dep}: {
+                                str(e)}")
             elif not service:
-                report.append(f"\nService '{service_name}' not found in catalog.")
+                report.append(
+                    f"\nService '{service_name}' not found in catalog.")
             else:
                 report.append(f"\nNo dependencies found for '{service_name}'.")
 
@@ -788,8 +874,15 @@ def trace_service_health(service_name: str, depth: int = 1) -> str:
 
     return "\n".join(report)
 
+
 @tool
-def create_issue(title: str, description: str, project: str = "SRE", severity: str = "Medium", system: str = "Jira", repo: str = "") -> str:
+def create_issue(
+        title: str,
+        description: str,
+        project: str = "SRE",
+        severity: str = "Medium",
+        system: str = "Jira",
+        repo: str = "") -> str:
     """
     Creates an issue/ticket in an external tracking system (Jira or GitHub).
     Args:
@@ -806,7 +899,7 @@ def create_issue(title: str, description: str, project: str = "SRE", severity: s
         jira_token = os.getenv("JIRA_API_TOKEN")
 
         if not (jira_url and jira_user and jira_token):
-             return "Error: JIRA credentials (URL/User/Token) not set."
+            return "Error: JIRA credentials (URL/User/Token) not set."
 
         payload = {
             "fields": {
@@ -831,14 +924,19 @@ def create_issue(title: str, description: str, project: str = "SRE", severity: s
 
     elif system.lower() == "github":
         token = os.getenv("GITHUB_TOKEN")
-        if not token: return "Error: GITHUB_TOKEN not set."
+        if not token:
+            return "Error: GITHUB_TOKEN not set."
 
         target = project if "/" in project else f"{project}/{repo}"
-        headers = {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"}
+        headers = {"Authorization": f"token {token}",
+                   "Accept": "application/vnd.github.v3+json"}
         payload = {"title": title, "body": description, "labels": [severity]}
 
         try:
-            resp = requests.post(f"https://api.github.com/repos/{target}/issues", json=payload, headers=headers)
+            resp = requests.post(
+                f"https://api.github.com/repos/{target}/issues",
+                json=payload,
+                headers=headers)
             resp.raise_for_status()
             issue_url = resp.json().get("html_url")
             return f"GitHub Issue created: {issue_url}"
@@ -849,6 +947,7 @@ def create_issue(title: str, description: str, project: str = "SRE", severity: s
 
 # --- Additional SRE Tools (PagerDuty, ChatOps, Extended Datadog) ---
 
+
 @tool
 def check_on_call_schedule(schedule_id: str) -> str:
     """Checks the current on-call schedule in PagerDuty."""
@@ -856,9 +955,13 @@ def check_on_call_schedule(schedule_id: str) -> str:
     if not token:
         return "Error: PAGERDUTY_TOKEN missing. Cannot fetch live on-call data."
 
-    headers = {"Authorization": f"Token token={token}", "Accept": "application/vnd.pagerduty+json;version=2"}
+    headers = {"Authorization": f"Token token={token}",
+               "Accept": "application/vnd.pagerduty+json;version=2"}
     try:
-        resp = requests.get(f"https://api.pagerduty.com/oncalls?schedule_ids[]={schedule_id}", headers=headers, timeout=10)
+        resp = requests.get(
+            f"https://api.pagerduty.com/oncalls?schedule_ids[]={schedule_id}",
+            headers=headers,
+            timeout=10)
         resp.raise_for_status()
         oncalls = resp.json().get("oncalls", [])
         if not oncalls:
@@ -869,6 +972,7 @@ def check_on_call_schedule(schedule_id: str) -> str:
     except Exception as e:
         return f"PagerDuty Error: {str(e)}"
 
+
 @tool
 def send_slack_notification(channel: str, message: str) -> str:
     """Sends a message to a Slack channel via Webhook."""
@@ -878,12 +982,14 @@ def send_slack_notification(channel: str, message: str) -> str:
 
     try:
         payload = {"text": message}
-        if channel.startswith("#"): payload["channel"] = channel
+        if channel.startswith("#"):
+            payload["channel"] = channel
         resp = requests.post(webhook_url, json=payload, timeout=5)
         resp.raise_for_status()
         return f"Notification sent to {channel}."
     except Exception as e:
         return f"Error sending notification: {e}"
+
 
 @tool
 def list_datadog_metrics(query_filter: str) -> str:
@@ -912,9 +1018,9 @@ def list_datadog_metrics(query_filter: str) -> str:
                 if not metrics:
                     return f"No metrics found for filter '{query_filter}'."
 
-                names = [m for m in metrics[:20]] # Limit to 20
+                names = [m for m in metrics[:20]]  # Limit to 20
                 return f"Found metrics (showing 20): {', '.join(names)}"
             except AttributeError:
-                 return "Error: list_metrics method not found on MetricsApi (version mismatch)."
+                return "Error: list_metrics method not found on MetricsApi (version mismatch)."
     except Exception as e:
         return f"Error listing metrics: {e}"

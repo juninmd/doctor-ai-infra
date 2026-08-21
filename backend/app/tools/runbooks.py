@@ -10,29 +10,32 @@ except ImportError:
     client = None
     config = None
 
+
 def _get_k8s_client():
     if not config:
         return None
     try:
         config.load_kube_config()
-    except:
+    except BaseException:
         try:
             config.load_incluster_config()
-        except:
+        except BaseException:
             return None
     return client.CoreV1Api()
+
 
 def _get_k8s_apps_client():
     if not config:
         return None
     try:
         config.load_kube_config()
-    except:
+    except BaseException:
         try:
             config.load_incluster_config()
-        except:
+        except BaseException:
             return None
     return client.AppsV1Api()
+
 
 # --- Initial Seed Data for Catalog Bootstrap ---
 INITIAL_SERVICE_CATALOG = {
@@ -83,15 +86,15 @@ INITIAL_RUNBOOKS = {
     "scale_up": "Increases replica count by 2. Use when CPU is > 80%.",
     "rollback_deploy": "Reverts to the previous stable docker image tag.",
     "flush_cache": "Clears Redis cache keys for the service.",
-    "refresh_traefik_routes": "Triggers a resync of Traefik dynamic configuration."
-}
+    "refresh_traefik_routes": "Triggers a resync of Traefik dynamic configuration."}
+
 
 def bootstrap_catalog():
     """Populates the database with initial services and runbooks if empty."""
     db = SessionLocal()
     try:
         if db.query(Service).first():
-            return # Already populated
+            return  # Already populated
 
         print("Bootstrapping Service Catalog and Runbooks...")
 
@@ -170,8 +173,12 @@ def list_runbooks() -> str:
     finally:
         db.close()
 
+
 @tool
-def execute_runbook(runbook_name: str, target_service: str, dry_run: bool = False) -> str:
+def execute_runbook(
+        runbook_name: str,
+        target_service: str,
+        dry_run: bool = False) -> str:
     """
     Executes a specific runbook against a target service.
     Args:
@@ -181,24 +188,27 @@ def execute_runbook(runbook_name: str, target_service: str, dry_run: bool = Fals
     """
     db = SessionLocal()
     try:
-        service = db.query(Service).filter(Service.name == target_service).first()
+        service = db.query(Service).filter(
+            Service.name == target_service).first()
         if not service:
-             # Check if it's an external service?
-             return f"Error: Service '{target_service}' not found in catalog."
+            # Check if it's an external service?
+            return f"Error: Service '{target_service}' not found in catalog."
 
-        runbook = db.query(Runbook).filter(Runbook.name == runbook_name).first()
+        runbook = db.query(Runbook).filter(
+            Runbook.name == runbook_name).first()
         if not runbook:
             return f"Error: Runbook '{runbook_name}' does not exist."
 
         # Verify association
         allowed_runbooks = [r.name for r in service.runbooks]
         if runbook_name not in allowed_runbooks:
-             msg_prefix = f"Warning: Runbook '{runbook_name}' is not linked to '{target_service}'. Executing anyway via override..."
+            msg_prefix = f"Warning: Runbook '{runbook_name}' is not linked to '{target_service}'. Executing anyway via override..."
         else:
-             msg_prefix = ""
+            msg_prefix = ""
 
         if dry_run:
-            return f"{msg_prefix}[DRY RUN] Would execute runbook '{runbook_name}' on '{target_service}'. Action Description: {runbook.description}"
+            return f"{msg_prefix}[DRY RUN] Would execute runbook '{runbook_name}' on '{target_service}'. Action Description: {
+                runbook.description}"
 
         # Execution Logic
         msg = [msg_prefix] if msg_prefix else []
@@ -217,42 +227,55 @@ def execute_runbook(runbook_name: str, target_service: str, dry_run: bool = Fals
             if v1:
                 try:
                     # Find pods with label app=target_service (convention)
-                    pods = v1.list_namespaced_pod("default", label_selector=f"app={target_service}")
+                    pods = v1.list_namespaced_pod(
+                        "default", label_selector=f"app={target_service}")
                     if pods.items:
                         for pod in pods.items:
-                            v1.delete_namespaced_pod(pod.metadata.name, "default")
-                        msg.append(f"K8s: Deleted {len(pods.items)} pods for '{target_service}'. Rollout restart triggered.")
+                            v1.delete_namespaced_pod(
+                                pod.metadata.name, "default")
+                        msg.append(
+                            f"K8s: Deleted {len(pods.items)} pods for '{target_service}'. Rollout restart triggered.")
                     else:
-                        msg.append(f"K8s: No pods found with label 'app={target_service}'.")
+                        msg.append(
+                            f"K8s: No pods found with label 'app={target_service}'.")
                 except Exception as e:
                     msg.append(f"K8s Error: {e}")
             else:
-                msg.append(f"Error: K8s client unavailable. Cannot execute 'restart_service'.")
+                msg.append(
+                    f"Error: K8s client unavailable. Cannot execute 'restart_service'.")
 
         elif runbook_name == "scale_up":
             apps_v1 = _get_k8s_apps_client()
             if apps_v1:
                 try:
                     # Assume deployment name matches service name
-                    deployment = apps_v1.read_namespaced_deployment(target_service, "default")
+                    deployment = apps_v1.read_namespaced_deployment(
+                        target_service, "default")
                     if deployment:
                         new_replicas = (deployment.spec.replicas or 1) + 2
                         patch = {"spec": {"replicas": new_replicas}}
-                        apps_v1.patch_namespaced_deployment(target_service, "default", patch)
-                        msg.append(f"K8s: Scaled '{target_service}' from {deployment.spec.replicas} to {new_replicas} replicas.")
+                        apps_v1.patch_namespaced_deployment(
+                            target_service, "default", patch)
+                        msg.append(
+                            f"K8s: Scaled '{target_service}' from {
+                                deployment.spec.replicas} to {new_replicas} replicas.")
                     else:
-                        msg.append(f"K8s: Deployment '{target_service}' not found.")
+                        msg.append(
+                            f"K8s: Deployment '{target_service}' not found.")
                 except Exception as e:
                     msg.append(f"K8s Error: {e}")
             else:
-                msg.append(f"Error: K8s client unavailable. Cannot execute 'scale_up'.")
+                msg.append(
+                    f"Error: K8s client unavailable. Cannot execute 'scale_up'.")
 
         else:
-            msg.append(f"SUCCESS: Executed runbook '{runbook_name}' on '{target_service}'. Operation completed.")
+            msg.append(
+                f"SUCCESS: Executed runbook '{runbook_name}' on '{target_service}'. Operation completed.")
 
         return "\n".join(msg)
     finally:
         db.close()
+
 
 @tool
 def lookup_service(service_name: str) -> str:
@@ -263,17 +286,28 @@ def lookup_service(service_name: str) -> str:
     """
     db = SessionLocal()
     try:
-        service = db.query(Service).filter(Service.name == service_name).first()
+        service = db.query(Service).filter(
+            Service.name == service_name).first()
         if not service:
             # Fuzzy search
-            partial = db.query(Service).filter(Service.name.contains(service_name)).first()
+            partial = db.query(Service).filter(
+                Service.name.contains(service_name)).first()
             if partial:
-                return f"Did you mean '{partial.name}'? \n{json.dumps(partial.to_dict(), indent=2)}"
+                return f"Did you mean '{
+                    partial.name}'? \n{
+                    json.dumps(
+                        partial.to_dict(),
+                        indent=2)}"
             return f"Service '{service_name}' not found."
 
-        return f"Service: {service.name}\nDetails: {json.dumps(service.to_dict(), indent=2)}"
+        return f"Service: {
+            service.name}\nDetails: {
+            json.dumps(
+                service.to_dict(),
+                indent=2)}"
     finally:
         db.close()
+
 
 @tool
 def get_service_dependencies(service_name: str) -> str:
@@ -282,7 +316,8 @@ def get_service_dependencies(service_name: str) -> str:
     """
     db = SessionLocal()
     try:
-        service = db.query(Service).filter(Service.name == service_name).first()
+        service = db.query(Service).filter(
+            Service.name == service_name).first()
         if not service:
             return f"Service '{service_name}' not found."
 
@@ -294,6 +329,7 @@ def get_service_dependencies(service_name: str) -> str:
     finally:
         db.close()
 
+
 @tool
 def get_service_topology(service_name: str) -> str:
     """
@@ -301,12 +337,14 @@ def get_service_topology(service_name: str) -> str:
     """
     db = SessionLocal()
     try:
-        service = db.query(Service).filter(Service.name == service_name).first()
+        service = db.query(Service).filter(
+            Service.name == service_name).first()
         if not service:
             return f"Service '{service_name}' not found."
 
         downstream = [d.name for d in service.dependencies]
-        upstream = [u.name for u in service.callers] # Relies on backref="callers"
+        # Relies on backref="callers"
+        upstream = [u.name for u in service.callers]
 
         return (
             f"Topology for {service_name}:\n"

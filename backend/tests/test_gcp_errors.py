@@ -2,14 +2,17 @@ import unittest
 from unittest.mock import MagicMock, patch
 import os
 import datetime
-# Import the tool object, we will access the underlying function for easier testing or use invoke
+# Import the tool object, we will access the underlying function for
+# easier testing or use invoke
 from app.tools.real import analyze_gcp_errors
+
 
 class TestGCPErrors(unittest.TestCase):
     @patch("app.tools.real.cloud_logging")
     @patch("app.tools.real.default")
     @patch.dict(os.environ, {"GOOGLE_CLOUD_PROJECT": "test-project"})
-    def test_analyze_gcp_errors_success(self, mock_default, mock_cloud_logging):
+    def test_analyze_gcp_errors_success(
+            self, mock_default, mock_cloud_logging):
         # Setup mock default auth to return creds and project
         mock_default.return_value = (MagicMock(), "test-project")
 
@@ -45,6 +48,7 @@ class TestGCPErrors(unittest.TestCase):
     def test_analyze_gcp_errors_not_installed(self):
         result = analyze_gcp_errors.invoke({"days": 1})
         self.assertIn("GCP Cloud Logging library not installed", result)
+
 
 if __name__ == "__main__":
     unittest.main()
