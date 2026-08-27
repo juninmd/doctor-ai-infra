@@ -15,6 +15,15 @@ The **Incident_Specialist** agent acts as an Incident Commander:
 - **Post-Mortems**: Generates blameless post-mortem reports using RAG (Retrieval Augmented Generation) to learn from past incidents.
 - **Remediation Plans**: Generates step-by-step runbooks for active issues using Gemini's reasoning.
 
+### 2.1 Advanced SRE Workflows
+The system integrates natively with highly advanced SRE concepts inspired by top industry tools. The Supervisor automatically routes complex tasks to the following specialized Copilots:
+- **Bits AI SRE Copilot**: Takes a monitor query or active alerts, correlates them with logs/metrics from Datadog, and generates incident summaries.
+- **SmythOS Resource Manager**: Provides a unified OS-level abstraction for interacting with AI resources (LLMs, VectorDBs, Storage) seamlessly.
+- **Opsy AI Assistant**: Analyzes failing pods, diagnoses them, automatically files Jira/GitHub tickets, and safely backs up deployment manifests.
+- **FuzzyLabs Agent**: Reads error logs (from K8s/CloudWatch), inspects recent source code commits via GitHub, and sends an intelligent diagnosis and suggested fix to Slack.
+- **OpsMate Copilot**: Takes a natural language query, scans infrastructure health, analyzes current Kubernetes pods, and produces a complete troubleshooting guide.
+- **IncidentFox Auto-Investigate**: Operates as a Slack-first incident responder, investigating alerts by analyzing deep backend telemetry and pushing concise root cause analyses back into Slack channels.
+
 ### 3. Knowledge Base (RAG)
 The system automatically indexes your:
 - **Service Catalog** (Services, Dependencies)
