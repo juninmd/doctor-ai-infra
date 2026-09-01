@@ -1,29 +1,11 @@
 from unittest.mock import patch, MagicMock
 from langchain_core.messages import HumanMessage
-from app.graph import supervisor_node, RouterSchema
+from app.graph import supervisor_node
 from app.tools.opsmate import opsmate_troubleshooting_workflow
 from app.tools.smythos import smythos_unified_resource_manager
-import json
-from langchain_core.language_models import FakeListChatModel
 
 
-def _create_mock_llm(next_agent: str, reasoning: str):
-    llm_output = {"next_agent": next_agent, "reasoning": reasoning}
-
-    class FakeLLM(FakeListChatModel):
-        structured_output_called: bool = False
-
-        def with_structured_output(self, *args, **kwargs):
-            self.structured_output_called = True
-
-            class InnerMock:
-                def invoke(self, *i_args, **i_kwargs):
-                    return RouterSchema(
-                        next_agent=next_agent, reasoning=reasoning)
-
-            return InnerMock()
-
-    return FakeLLM(responses=[json.dumps(llm_output)])
+from tests.test_langgraph_extra import _create_mock_llm
 
 
 def test_supervisor_opsmate_routing():
