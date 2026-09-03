@@ -48,7 +48,7 @@ from .incident import (
     generate_runbook_from_incident)
 from .runbooks import list_runbooks, execute_runbook, lookup_service, get_service_dependencies, get_service_topology
 from .visualizer import generate_topology_diagram
-from .knowledge import search_knowledge_base, generate_service_catalog_docs
+from .knowledge import add_knowledge_base_item, search_knowledge_base, generate_service_catalog_docs
 from .code import generate_code_fix, create_github_pr, read_repo_file, list_repo_files
 from .cost import estimate_gcp_cost
 from .reasoning import generate_hypothesis
