@@ -75,7 +75,7 @@ from .tools.incident import (
     generate_runbook_from_incident)
 from .tools.runbooks import list_runbooks, execute_runbook, lookup_service, get_service_dependencies, get_service_topology  # noqa: E501
 from .tools.visualizer import generate_topology_diagram
-from .tools.knowledge import search_knowledge_base, generate_service_catalog_docs
+from .tools.knowledge import add_knowledge_base_item, search_knowledge_base, generate_service_catalog_docs
 from .tools.code import generate_code_fix, create_github_pr, read_repo_file, list_repo_files
 from .tools.cost import estimate_gcp_cost
 from .tools.reasoning import generate_hypothesis
@@ -106,6 +106,7 @@ incident_tools = [
     get_incident_details,
     generate_postmortem,
     search_knowledge_base,
+    add_knowledge_base_item,
     create_issue,
     log_incident_event,
     build_incident_timeline,
@@ -132,7 +133,7 @@ topology_tools = [
     analyze_heavy_logs,
     generate_service_catalog_docs,
     predict_resource_exhaustion]
-planner_tools = [generate_hypothesis, search_knowledge_base]
+planner_tools = [generate_hypothesis, search_knowledge_base, add_knowledge_base_item]
 finops_tools = [
     analyze_cost_anomalies,
     suggest_spot_migrations,
