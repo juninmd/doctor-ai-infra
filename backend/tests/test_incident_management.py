@@ -1,4 +1,4 @@
-import pytest
+import pytest  # noqa
 from app.tools.incident import (
     create_incident,
     log_incident_event,

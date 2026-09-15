@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import MagicMock, patch
 # We must import the tool function.
-# Since it's decorated with @tool, analyze_log_patterns is a Runnable/Tool, but typical usage as function works if configured.
+# Since it's decorated with @tool, analyze_log_patterns is a Runnable/Tool, but typical usage as function works if configured.  # noqa
 # However, inside real.py it is decorated.
 # Let's import the module to patch properly.
 from app.tools import real

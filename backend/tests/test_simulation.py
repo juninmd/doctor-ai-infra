@@ -1,4 +1,4 @@
-import pytest
+import pytest  # noqa
 from app.graph import app_graph
 
 

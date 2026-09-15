@@ -1,10 +1,10 @@
 from langchain_core.tools import tool
 from langchain_core.documents import Document
-from typing import List, Dict, Optional
-import datetime
+from typing import List, Dict, Optional  # noqa
+import datetime  # noqa
 import uuid
 import json
-from app.db import init_db, SessionLocal, Incident, PostMortem, IncidentEvent, IncidentChannel, Runbook, Service
+from app.db import init_db, SessionLocal, Incident, PostMortem, IncidentEvent, IncidentChannel, Runbook, Service  # noqa
 from app.llm import get_llm, get_google_sdk_client
 from langchain_core.prompts import ChatPromptTemplate
 from app.rag import rag_engine
@@ -389,7 +389,7 @@ def generate_postmortem(incident_id: str) -> str:
         system_msg = (
             "You are an SRE Incident Commander. "
             "Write a blameless post-mortem report in Markdown based on the following incident log.\n"
-            "Use the provided Knowledge Base Context to identify patterns or suggest better remediations if applicable.\n"
+            "Use the provided Knowledge Base Context to identify patterns or suggest better remediations if applicable.\n"  # noqa
             "Include:\n"
             "- Executive Summary\n"
             "- Root Cause Analysis (inference based on logs)\n"

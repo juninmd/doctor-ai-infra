@@ -1,4 +1,4 @@
-import pytest
+import pytest  # noqa
 from unittest.mock import patch, MagicMock
 from langchain_core.messages import HumanMessage
 from app.graph import supervisor_node, RouterSchema

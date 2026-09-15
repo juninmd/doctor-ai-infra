@@ -22,7 +22,7 @@ def _fetch_file_content(repo: str, file_path: str) -> str:
         data = resp.json()
 
         if "content" not in data:
-            return f"Error: No content found (is it a directory?)"
+            return "Error: No content found (is it a directory?)"
 
         content = base64.b64decode(data["content"]).decode("utf-8")
         return content

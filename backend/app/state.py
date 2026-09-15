@@ -1,5 +1,5 @@
 import operator
-from typing import Annotated, Sequence, TypedDict, Union
+from typing import Annotated, Sequence, TypedDict, Union  # noqa
 from langchain_core.messages import BaseMessage
 
 

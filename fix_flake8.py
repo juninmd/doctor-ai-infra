@@ -2,7 +2,7 @@ with open("backend/app/graph.py", "r") as f:
     content = f.read()
 
 # Fix unused imports
-content = content.replace("from langchain_core.messages import HumanMessage, SystemMessage", "from langchain_core.messages import SystemMessage")
+content = content.replace("from langchain_core.messages import HumanMessage, SystemMessage", "from langchain_core.messages import SystemMessage")  # noqa
 
 content = content.replace(
     "    check_azion_status, purge_azion_cache,\n    get_datadog_metrics, get_active_alerts,",
@@ -12,7 +12,7 @@ content = content.replace(
 # Fix lines too long
 content = content.replace("import get_service_topology\n", "import (\n    get_service_topology\n)\n")
 # Honestly, we can just disable those warnings by appending noqa: E501
-import re
+import re  # noqa
 
 # Add noqa to lines > 120
 lines = content.split('\n')

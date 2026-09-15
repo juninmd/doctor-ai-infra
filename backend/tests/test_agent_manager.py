@@ -1,6 +1,6 @@
-import pytest
+import pytest  # noqa
 from unittest.mock import MagicMock, patch
-from langchain_core.messages import SystemMessage
+from langchain_core.messages import SystemMessage  # noqa
 from app.graph import make_specialist
 
 

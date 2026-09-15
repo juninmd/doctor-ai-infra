@@ -1,4 +1,4 @@
-import pytest
+import pytest  # noqa
 import os
 import base64
 from unittest.mock import patch

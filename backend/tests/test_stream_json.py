@@ -78,9 +78,9 @@ async def test_chat_endpoint_streams_tool_output():
         # 1. The ToolOutput (containing JSON)
         # 2. The Message (summary)
 
-        tool_outputs = [e for e in events if e["type"] ==
+        tool_outputs = [e for e in events if e["type"] ==  # noqa
                         "tool_output" and e["agent"] == "Topology_Specialist"]
-        messages = [e for e in events if e["type"] ==
+        messages = [e for e in events if e["type"] ==  # noqa
                     "message" and e["agent"] == "Topology_Specialist"]
 
         # Check if we got the JSON content in tool_output

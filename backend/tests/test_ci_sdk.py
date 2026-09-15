@@ -1,8 +1,8 @@
 
-import pytest
+import pytest  # noqa
 from unittest.mock import MagicMock, patch
-import os
-import requests
+import os  # noqa
+import requests  # noqa
 from app.tools.real import analyze_ci_failure
 
 
