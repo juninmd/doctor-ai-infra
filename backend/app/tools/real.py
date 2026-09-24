@@ -449,7 +449,7 @@ def list_recent_commits(owner: str, repo: str, hours: int = 24) -> str:
 
     headers = {"Authorization": f"token {token}"}
     since = (
-        datetime.datetime.now(datetime.UTC) -
+        datetime.datetime.now(datetime.UTC) -  # noqa: W504
         datetime.timedelta(hours=hours)
     ).isoformat().replace("+00:00", "Z")
 

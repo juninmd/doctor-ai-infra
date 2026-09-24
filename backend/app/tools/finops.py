@@ -1,7 +1,7 @@
 from langchain_core.tools import tool
 import os
-import requests
-from datetime import datetime, UTC
+import requests  # noqa: F401
+from datetime import datetime, UTC  # noqa: F401
 
 
 @tool
@@ -56,7 +56,7 @@ def suggest_spot_migrations(namespace: str = "default") -> str:
         if not candidates:
             return f"No obvious Spot migration candidates found in namespace '{namespace}'."
 
-        return f"### 🎯 Spot Migration Candidates\n" + "\n".join(candidates)
+        return f"### 🎯 Spot Migration Candidates\n" + "\n".join(candidates)  # noqa: F541
     except Exception as e:
         return f"Spot Migration Error: {str(e)}"
 

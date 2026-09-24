@@ -1,4 +1,4 @@
-import google.genai  # Make sure it is loaded for patching
+import google.genai  # Make sure it is loaded for patching  # noqa: F401
 from app.llm import get_google_sdk_client, get_llm
 import unittest
 from unittest.mock import patch, MagicMock

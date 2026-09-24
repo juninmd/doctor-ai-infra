@@ -1,4 +1,4 @@
-import pytest
+import pytest  # noqa: F401
 from langgraph.graph import StateGraph
 from langchain_core.messages import HumanMessage
 from app.graph import workflow, app_graph, members

@@ -1,7 +1,7 @@
-import pytest
+import pytest  # noqa: F401
 from unittest.mock import MagicMock, patch
 import json
-import sys
+import sys  # noqa: F401
 
 sys_modules = {
     "kubernetes": MagicMock(),

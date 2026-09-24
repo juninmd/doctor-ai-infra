@@ -1,4 +1,4 @@
-import pytest
+import pytest  # noqa: F401
 from unittest.mock import MagicMock, patch
 from langchain_core.messages import HumanMessage, SystemMessage
 

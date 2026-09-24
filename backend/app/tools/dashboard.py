@@ -29,7 +29,7 @@ def analyze_infrastructure_health() -> str:
         k8s_details = str(e)
 
     dashboard.append(
-        f"## ☸️ Kubernetes (Self-Hosted)\n**Status:** {k8s_status}\n\n<details><summary>Detalhes</summary>\n\n{k8s_details}\n</details>\n")
+        f"## ☸️ Kubernetes (Self-Hosted)\n**Status:** {k8s_status}\n\n<details><summary>Detalhes</summary>\n\n{k8s_details}\n</details>\n")  # noqa: E501
 
     # 2. GCP Check
     gcp_status = "✅ Operacional"

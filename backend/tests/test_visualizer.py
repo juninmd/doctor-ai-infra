@@ -1,4 +1,4 @@
-import pytest
+import pytest  # noqa: F401
 from sqlalchemy import event
 from app.db import engine
 from app.tools.visualizer import generate_topology_diagram

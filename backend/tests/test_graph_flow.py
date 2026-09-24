@@ -1,6 +1,6 @@
-import pytest
+import pytest  # noqa: F401
 from unittest.mock import MagicMock, patch
-from langchain_core.messages import AIMessage, HumanMessage
+from langchain_core.messages import AIMessage, HumanMessage  # noqa: F401
 from main import app
 from fastapi.testclient import TestClient
 

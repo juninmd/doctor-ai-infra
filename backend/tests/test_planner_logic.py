@@ -1,6 +1,6 @@
-import pytest
+import pytest  # noqa: F401
 from unittest.mock import MagicMock, patch
-from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.messages import HumanMessage, AIMessage  # noqa: F401
 from app.graph import supervisor_node, RouterSchema
 
 

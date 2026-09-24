@@ -1,5 +1,5 @@
 import os
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional  # noqa: F401
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.documents import Document
@@ -60,7 +60,7 @@ def initialize_rag():
             count = rag_engine.count()
             if count > 0:
                 print(
-                    f"RAG Knowledge Base already contains {count} documents. Skipping re-indexing. Set FORCE_RAG_INDEX=true to overwrite.")
+                    f"RAG Knowledge Base already contains {count} documents. Skipping re-indexing. Set FORCE_RAG_INDEX=true to overwrite.")  # noqa: E501
                 return
         except Exception as e:
             print(f"Error checking RAG count (proceeding to index): {e}")

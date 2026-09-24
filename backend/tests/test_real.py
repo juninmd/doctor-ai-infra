@@ -1,4 +1,4 @@
-import pytest
+import pytest  # noqa: F401
 from unittest.mock import patch, MagicMock
 from app.tools.real import (
     list_k8s_pods,

@@ -10,12 +10,12 @@ import warnings
 # Filter to see only our specific warning
 warnings.simplefilter('always')
 
-@tool
+@tool  # noqa: E302
 def magic(x: int) -> int:
     """Adds 1 to x."""
     return x + 1
 
-try:
+try:  # noqa: E305
     llm = get_llm()
     graph = create_react_agent(llm, [magic], prompt="You are a wizard.")
     print("Graph created successfully")

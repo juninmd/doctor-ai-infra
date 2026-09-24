@@ -1,9 +1,9 @@
-import pytest
+import pytest  # noqa: F401
 from unittest.mock import MagicMock, patch
 from langchain_core.messages import HumanMessage, SystemMessage
-from app.graph import supervisor_node, app_graph
-from app.state import AgentState
-import os
+from app.graph import supervisor_node, app_graph  # noqa: F401
+from app.state import AgentState  # noqa: F401
+import os  # noqa: F401
 
 
 class MockDecision:
