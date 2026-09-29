@@ -68,4 +68,40 @@ def opsy_backup_and_ticket_failing_pods(
     except Exception as e:
         return f"Error executing Opsy workflow: {e}"
 
+
+@tool
+def opsy_build_execution_plan(task_description: str) -> str:
+    """
+    Mimics Opsy's behavior of acting as an SRE colleague that builds an execution plan
+    using various command-line tools.
+
+    Args:
+        task_description: The natural language description of the task to perform.
+    """
+    from app.llm import generate_diagnosis
+
+    try:
+        # Prompt LLM to orchestrate agents and build a plan
+        prompt = (
+            f"You are the Opsy AI Assistant. Your job is to orchestrate specialized CLI tools.\n"
+            f"Given the user task: '{task_description}'\n\n"
+            f"1. Break the task down into a sequence of steps.\n"
+            f"2. For each step, determine which tool (e.g., kubectl, git, aws, helm) to execute as an agent.\n"
+            f"3. Output the step-by-step execution plan along with the simulated output of each tool."
+        )
+
+        plan_result = generate_diagnosis(
+            prompt=prompt,
+            system_instruction="You are an expert infrastructure CLI orchestrator (tools-as-agents)."
+        )
+
+        return (
+            f"### 🤖 Opsy Execution Plan\n\n"
+            f"**Task:** {task_description}\n\n"
+            f"{plan_result}"
+        )
+
+    except Exception as e:
+        return f"Error executing Opsy execution plan: {e}"
+
 # Verified implementation per documentation

@@ -29,14 +29,16 @@ def opsmate_troubleshooting_workflow(
             f"A user has provided the following query: '{query}'\n\n"
             f"Current Infrastructure Status:\n{scan_results}\n\n"
             f"Kubernetes Pod Info (Namespace: {namespace}):\n{pod_info}\n\n"
-            f"Please analyze the situation and provide a detailed troubleshooting report, "
-            f"including potential root causes and recommended commands to execute."
+            f"Please analyze the situation and generate an interactive, step-by-step troubleshooting guide. "
+            f"Instead of just a general analysis, provide concrete CLI commands (e.g., kubectl, gcloud) "
+            f"for each step so the user can easily copy and paste them to continue debugging."
         )
 
         # 3. Generate diagnosis using the AI Copilot
         diagnosis = generate_diagnosis(
             prompt=prompt,
-            system_instruction="You are an expert SRE log analyzer and copilot.")
+            system_instruction="You are an expert SRE copilot that generates interactive troubleshooting guides."
+        )
 
         return (
             f"### 🤖 OpsMate SRE Copilot Analysis\n\n"

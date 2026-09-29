@@ -1,5 +1,4 @@
 from langchain_core.tools import tool
-import os
 
 
 @tool
@@ -33,25 +32,36 @@ def bits_ai_investigate_monitor(
             except BaseException:
                 logs = "Log fetch failed or skipped."
 
-        # 3. Formulate the prompt for the Copilot
-        prompt = (
+        # 3. Generate initial hypotheses
+        hypothesis_prompt = (
             f"You are Bits AI, an expert Datadog SRE Copilot.\n"
-            f"Investigate the following monitor query: '{monitor_query}'\n\n"
-            f"Active Alerts:\n{alerts}\n\n"
-            f"Related Metrics:\n{metrics}\n\n"
-            f"Recent Logs (if any):\n{logs}\n\n"
-            f"Please analyze the situation, identify the root cause, and suggest remediation steps."
+            f"Given the monitor query: '{monitor_query}'\n"
+            f"Alerts: {alerts}\nMetrics: {metrics}\nLogs: {logs}\n"
+            f"Formulate 3 distinct hypotheses for the root cause."
+        )
+        hypotheses = generate_diagnosis(
+            prompt=hypothesis_prompt,
+            system_instruction="You are an expert SRE log analyzer."
         )
 
-        # 4. Generate diagnosis using the AI Copilot
+        # 4. Evaluate and generate deep sub-hypotheses/diagnosis
+        deep_prompt = (
+            f"You are Bits AI, using an iterative branching hypothesis strategy.\n"
+            f"Based on the data:\nAlerts: {alerts}\nMetrics: {metrics}\nLogs: {logs}\n\n"
+            f"And these initial hypotheses:\n{hypotheses}\n\n"
+            f"Test and validate each hypothesis. Break down the most likely one into sub-hypotheses, "
+            f"and follow the evidence to determine the true root cause. Then suggest remediation."
+        )
         diagnosis = generate_diagnosis(
-            prompt=prompt,
-            system_instruction="You are an expert SRE log analyzer and Datadog copilot.")
+            prompt=deep_prompt,
+            system_instruction="You are an expert Datadog copilot using branching logic."
+        )
 
         return (
             f"### 🐶 Bits AI SRE Copilot Investigation\n\n"
             f"**Query:** {monitor_query}\n\n"
-            f"{diagnosis}"
+            f"**Initial Hypotheses:**\n{hypotheses}\n\n"
+            f"**Deep Investigation & Root Cause:**\n{diagnosis}"
         )
 
     except Exception as e:

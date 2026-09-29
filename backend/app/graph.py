@@ -53,6 +53,7 @@ from .tools import (
     check_azion_waf,
     purge_azion_cache,
     opsy_backup_and_ticket_failing_pods,
+    opsy_build_execution_plan,
     fuzzylabs_sre_workflow,
     opsmate_troubleshooting_workflow,
     smythos_unified_resource_manager,
@@ -133,7 +134,8 @@ topology_tools = [
     analyze_heavy_logs,
     generate_service_catalog_docs,
     predict_resource_exhaustion]
-planner_tools = [generate_hypothesis, search_knowledge_base, add_knowledge_base_item]
+planner_tools = [generate_hypothesis,
+                 search_knowledge_base, add_knowledge_base_item]
 finops_tools = [
     analyze_cost_anomalies,
     suggest_spot_migrations,
@@ -239,11 +241,11 @@ chaos_agent = make_specialist(
 )
 
 
-opsy_tools = [opsy_backup_and_ticket_failing_pods]
+opsy_tools = [opsy_backup_and_ticket_failing_pods, opsy_build_execution_plan]
 opsy_agent = make_specialist(
     opsy_tools,
     "Opsy SRE AI (Mocked Operations)",
-    heuristics="SRE TIP: You use `opsy_backup_and_ticket_failing_pods` when asked to run the Opsy workflow."
+    heuristics="SRE TIP: You use `opsy_backup_and_ticket_failing_pods` or `opsy_build_execution_plan` when asked to run the Opsy workflow."
 )
 
 fuzzylabs_tools = [fuzzylabs_sre_workflow]

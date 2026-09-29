@@ -40,7 +40,8 @@ def fuzzylabs_sre_workflow(
         prompt = (
             f"You are the FuzzyLabs SRE Agent.\n"
             f"Analyze the following logs and recent commits to identify the root cause of the issue in '{service_name}' "
-            f"and suggest a fix.\n\n"
+            f"and suggest a fix.\n"
+            f"CRITICAL: You must explicitly include an automated code patch or a git diff in your response that addresses the root cause.\n\n"
             f"Logs:\n{logs}\n\n"
             f"Recent Commits:\n{commits}"
         )

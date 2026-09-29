@@ -52,7 +52,7 @@ from .knowledge import add_knowledge_base_item, search_knowledge_base, generate_
 from .code import generate_code_fix, create_github_pr, read_repo_file, list_repo_files
 from .cost import estimate_gcp_cost
 from .reasoning import generate_hypothesis
-from .opsy import opsy_backup_and_ticket_failing_pods
+from .opsy import opsy_backup_and_ticket_failing_pods, opsy_build_execution_plan
 from .fuzzylabs import fuzzylabs_sre_workflow
 from .opsmate import opsmate_troubleshooting_workflow
 from .smythos import smythos_unified_resource_manager
