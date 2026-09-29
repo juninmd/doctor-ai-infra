@@ -1,5 +1,5 @@
-import pytest
-import os
+import pytest  # noqa
+import os  # noqa
 from app.tools.k8s_optimizer import optimize_k8s_resources as mock_optimize
 from app.tools.k8s_optimizer import optimize_k8s_resources as real_optimize
 

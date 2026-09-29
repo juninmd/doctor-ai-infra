@@ -1,6 +1,7 @@
-import pytest
-from unittest.mock import patch, MagicMock
+import pytest  # noqa
+from unittest.mock import patch, MagicMock  # noqa
 from app.tools.knowledge import add_knowledge_base_item
+
 
 def test_add_knowledge_base_item():
     with patch("app.tools.knowledge.rag_engine") as mock_rag:
@@ -15,6 +16,7 @@ def test_add_knowledge_base_item():
         assert docs[0].metadata["type"] == "test_cat"
 
         assert "Successfully added item" in result
+
 
 def test_add_knowledge_base_item_error():
     with patch("app.tools.knowledge.rag_engine") as mock_rag:

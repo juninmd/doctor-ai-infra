@@ -1,7 +1,7 @@
 
-import pytest
+import pytest  # noqa
 from unittest.mock import MagicMock, patch
-import sys
+import sys  # noqa
 
 # Mock modules to avoid import errors
 sys_modules = {

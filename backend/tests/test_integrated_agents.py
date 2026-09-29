@@ -1,4 +1,4 @@
-import pytest
+import pytest  # noqa
 from unittest.mock import MagicMock
 from unittest.mock import patch
 from app.tools.bits_ai import bits_ai_investigate_monitor

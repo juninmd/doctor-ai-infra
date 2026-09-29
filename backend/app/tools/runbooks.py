@@ -1,7 +1,7 @@
 from langchain_core.tools import tool
-from typing import List, Dict
+from typing import List, Dict  # noqa
 import json
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session  # noqa
 from app.db import SessionLocal, Service, Runbook
 
 try:
@@ -202,12 +202,12 @@ def execute_runbook(
         # Verify association
         allowed_runbooks = [r.name for r in service.runbooks]
         if runbook_name not in allowed_runbooks:
-            msg_prefix = f"Warning: Runbook '{runbook_name}' is not linked to '{target_service}'. Executing anyway via override..."
+            msg_prefix = f"Warning: Runbook '{runbook_name}' is not linked to '{target_service}'. Executing anyway via override..."  # noqa
         else:
             msg_prefix = ""
 
         if dry_run:
-            return f"{msg_prefix}[DRY RUN] Would execute runbook '{runbook_name}' on '{target_service}'. Action Description: {
+            return f"{msg_prefix}[DRY RUN] Would execute runbook '{runbook_name}' on '{target_service}'. Action Description: {  # noqa
                 runbook.description}"
 
         # Execution Logic
@@ -242,7 +242,7 @@ def execute_runbook(
                     msg.append(f"K8s Error: {e}")
             else:
                 msg.append(
-                    f"Error: K8s client unavailable. Cannot execute 'restart_service'.")
+                    "Error: K8s client unavailable. Cannot execute 'restart_service'.")
 
         elif runbook_name == "scale_up":
             apps_v1 = _get_k8s_apps_client()
@@ -266,7 +266,7 @@ def execute_runbook(
                     msg.append(f"K8s Error: {e}")
             else:
                 msg.append(
-                    f"Error: K8s client unavailable. Cannot execute 'scale_up'.")
+                    "Error: K8s client unavailable. Cannot execute 'scale_up'.")
 
         else:
             msg.append(

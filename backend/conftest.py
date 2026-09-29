@@ -87,7 +87,7 @@ def mock_llm():
     mock_chat.invoke.return_value = MagicMock(content="Mocked LLM Response")
 
     # Patch get_llm to return our mock
-    with patch("app.llm.get_llm", return_value=mock_chat) as mock_get_llm:
+    with patch("app.llm.get_llm", return_value=mock_chat) as mock_get_llm:  # noqa
         with patch("app.tools.incident.get_llm", return_value=mock_chat):
             yield mock_chat
 
@@ -100,6 +100,6 @@ def mock_google_sdk():
     mock_response.text = "Mocked Gemini Response"
     mock_client.models.generate_content.return_value = mock_response
 
-    with patch("app.llm.get_google_sdk_client", return_value=mock_client) as mock_get_sdk:
+    with patch("app.llm.get_google_sdk_client", return_value=mock_client) as mock_get_sdk:  # noqa
         with patch("app.tools.incident.get_google_sdk_client", return_value=mock_client):
             yield mock_client

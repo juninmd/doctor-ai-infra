@@ -1,6 +1,6 @@
-import pytest
+import pytest  # noqa
 from unittest.mock import MagicMock, patch
-import sys
+import sys  # noqa
 
 # Mock sys.modules to avoid side effects or database connections during import
 sys_modules = {

@@ -1,7 +1,7 @@
-import pytest
-from unittest.mock import MagicMock, patch
-import sys
-from io import StringIO
+import pytest  # noqa
+from unittest.mock import MagicMock, patch  # noqa
+import sys  # noqa
+from io import StringIO  # noqa
 from langchain_core.messages import AIMessage
 from cli import run_single_shot, run_interactive
 

@@ -10,10 +10,12 @@ import warnings
 # Filter to see only our specific warning
 warnings.simplefilter('always')
 
+
 @tool
 def magic(x: int) -> int:
     """Adds 1 to x."""
     return x + 1
+
 
 try:
     llm = get_llm()

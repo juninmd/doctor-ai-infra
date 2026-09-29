@@ -1,4 +1,4 @@
-import pytest
+import pytest  # noqa
 from unittest.mock import patch
 from langchain_core.messages import HumanMessage
 from app.graph import supervisor_node, RouterSchema
@@ -34,7 +34,7 @@ def test_supervisor_k8s_routing():
     state = {
         "messages": [
             HumanMessage(
-                content="The payment pod is crashlooping. Analyze the heavy logs and diagnose the service health to see if it's OOMKilled.")]}
+                content="The payment pod is crashlooping. Analyze the heavy logs and diagnose the service health to see if it's OOMKilled.")]}  # noqa
 
     fake_llm = _create_mock_llm(
         "K8s_Specialist",
@@ -53,7 +53,7 @@ def test_supervisor_automation_routing():
     state = {
         "messages": [
             HumanMessage(
-                content="The service is down. Please execute the restart_service runbook for the payment-gateway in the prod namespace.")]}
+                content="The service is down. Please execute the restart_service runbook for the payment-gateway in the prod namespace.")]}  # noqa
 
     fake_llm = _create_mock_llm(
         "Automation_Specialist",
@@ -72,7 +72,7 @@ def test_supervisor_incident_routing():
     state = {
         "messages": [
             HumanMessage(
-                content="We just resolved the outage. Please generate a postmortem and build an incident timeline using mermaid format.")]}
+                content="We just resolved the outage. Please generate a postmortem and build an incident timeline using mermaid format.")]}  # noqa
 
     fake_llm = _create_mock_llm(
         "Incident_Specialist",

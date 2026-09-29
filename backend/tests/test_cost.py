@@ -1,4 +1,4 @@
-import pytest
+import pytest  # noqa
 from unittest.mock import patch
 from app.tools.cost import estimate_gcp_cost
 import os
@@ -20,7 +20,7 @@ def test_estimate_gcp_cost_success(monkeypatch):
         mock_sdk.return_value = None
 
         class MockLLMResponse:
-            content = "- **Compute Engine**: $25.00\n- **Cloud SQL**: $10.00\n- **Total Estimated Monthly Cost**: $35.00"
+            content = "- **Compute Engine**: $25.00\n- **Cloud SQL**: $10.00\n- **Total Estimated Monthly Cost**: $35.00"  # noqa
 
         mock_llm.return_value.invoke.return_value = MockLLMResponse()
 

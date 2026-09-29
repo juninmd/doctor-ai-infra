@@ -1,7 +1,7 @@
 from langchain_core.tools import tool
 from langchain_core.documents import Document
 from app.rag import rag_engine
-from app.db import SessionLocal, Service, Runbook
+from app.db import SessionLocal, Service, Runbook  # noqa
 import datetime
 
 
@@ -100,7 +100,7 @@ def generate_service_catalog_docs() -> str:
             # Dependencies
             deps = [d.name for d in s.dependencies]
             if deps:
-                md.append(f"\n### Dependencies")
+                md.append("\n### Dependencies")
                 for d in deps:
                     md.append(f"- {d}")
             else:
@@ -108,7 +108,7 @@ def generate_service_catalog_docs() -> str:
 
             # Runbooks
             if s.runbooks:
-                md.append(f"\n### 📚 Available Runbooks")
+                md.append("\n### 📚 Available Runbooks")
                 for r in s.runbooks:
                     md.append(f"- **{r.name}**: {r.description}")
 

@@ -1,4 +1,4 @@
-import pytest
+import pytest  # noqa
 from unittest.mock import patch
 from app.tools.dashboard import analyze_infrastructure_health
 

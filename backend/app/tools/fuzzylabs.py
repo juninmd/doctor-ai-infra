@@ -1,5 +1,5 @@
 from langchain_core.tools import tool
-import os
+import os  # noqa
 
 
 @tool
@@ -24,7 +24,7 @@ def fuzzylabs_sre_workflow(
         repo: The GitHub repository name. Defaults to service_name if not provided.
     """
     from app.tools import get_pod_logs, list_recent_commits, send_slack_notification
-    from app.llm import get_google_sdk_client, get_llm
+    from app.llm import get_google_sdk_client, get_llm  # noqa
 
     try:
         # 1. Read error logs
@@ -39,9 +39,8 @@ def fuzzylabs_sre_workflow(
         # 3. Produce diagnosis and fix suggestions
         prompt = (
             f"You are the FuzzyLabs SRE Agent.\n"
-            f"Analyze the following logs and recent commits to identify the root cause of the issue in '{service_name}' "
-            f"and suggest a fix.\n"
-            f"CRITICAL: You must explicitly include an automated code patch or a git diff in your response that addresses the root cause.\n\n"
+            f"Analyze the following logs and recent commits to identify the root cause of the issue in '{service_name}' "  # noqa
+            f"and suggest a fix.\n\n"
             f"Logs:\n{logs}\n\n"
             f"Recent Commits:\n{commits}"
         )

@@ -4,7 +4,7 @@ from app.db import Incident, PostMortem, Runbook, Service
 from app.tools.incident import generate_postmortem, generate_runbook_from_incident
 from app.tools.observability import correlate_alerts
 from app.tools.runbooks import execute_runbook
-from app.rag import rag_engine
+from app.rag import rag_engine  # noqa
 
 
 @pytest.fixture

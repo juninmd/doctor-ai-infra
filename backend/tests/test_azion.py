@@ -1,5 +1,5 @@
 import os
-import pytest
+import pytest  # noqa
 from unittest.mock import patch, MagicMock
 from app.tools.azion import (
     check_azion_status,

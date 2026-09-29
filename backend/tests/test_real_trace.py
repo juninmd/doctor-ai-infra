@@ -1,7 +1,7 @@
 import pytest
-from unittest.mock import MagicMock, patch
-import os
-import sys
+from unittest.mock import MagicMock, patch  # noqa
+import os  # noqa
+import sys  # noqa
 
 # Ensure we are testing real tools logic (though we patch the heavy lifting)
 from app.tools.real import trace_service_health

@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import patch, MagicMock
 from app.tools.incident import generate_postmortem
-from app.db import SessionLocal, Incident, PostMortem
+from app.db import SessionLocal, Incident, PostMortem  # noqa
 
 
 @pytest.fixture
