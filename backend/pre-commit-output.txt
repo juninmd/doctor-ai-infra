@@ -1,0 +1,238 @@
+trim trailing whitespace.................................................Passed
+fix end of files.........................................................Passed
+check yaml...............................................................Passed
+check for added large files..............................................Passed
+flake8...................................................................Failed
+- hook id: flake8
+- exit code: 1
+
+backend/app/agents/__init__.py:1:1: F401 '.utils.create_agent' imported but unused
+backend/app/agents/__init__.py:1:1: F401 '.utils.SYSTEM_PROMPT' imported but unused
+backend/app/agents/utils.py:2:1: F401 '...llm.get_llm' imported but unused
+backend/app/rag.py:2:1: F401 'typing.Dict' imported but unused
+backend/app/rag.py:2:1: F401 'typing.Optional' imported but unused
+backend/app/rag.py:63:121: E501 line too long (139 > 120 characters)
+backend/app/state.py:2:1: F401 'typing.Union' imported but unused
+backend/app/tools/__init__.py:1:1: F401 '.k8s_optimizer.optimize_k8s_resources' imported but unused
+backend/app/tools/__init__.py:2:1: F401 '.gcp_optimizer.optimize_gcp_resources' imported but unused
+backend/app/tools/__init__.py:3:1: F401 '.finops.analyze_cost_anomalies' imported but unused
+backend/app/tools/__init__.py:3:1: F401 '.finops.suggest_spot_migrations' imported but unused
+backend/app/tools/__init__.py:3:1: F401 '.finops.predict_resource_exhaustion' imported but unused
+backend/app/tools/__init__.py:4:1: F401 '.chaos.run_chaos_experiment' imported but unused
+backend/app/tools/__init__.py:4:1: F401 '.chaos.analyze_chaos_results' imported but unused
+backend/app/tools/__init__.py:5:1: F401 '.traefik.check_traefik_health' imported but unused
+backend/app/tools/__init__.py:5:1: F401 '.traefik.list_traefik_routes' imported but unused
+backend/app/tools/__init__.py:5:1: F401 '.traefik.diagnose_traefik_ingress' imported but unused
+backend/app/tools/__init__.py:6:1: F401 '.azion.check_azion_edge' imported but unused
+backend/app/tools/__init__.py:6:1: F401 '.azion.check_azion_waf' imported but unused
+backend/app/tools/__init__.py:6:1: F401 '.azion.purge_azion_cache' imported but unused
+backend/app/tools/__init__.py:6:1: F401 '.azion.list_edge_applications' imported but unused
+backend/app/tools/__init__.py:6:1: F401 '.azion.check_azion_status' imported but unused
+backend/app/tools/__init__.py:6:1: F401 '.azion.get_azion_metrics' imported but unused
+backend/app/tools/__init__.py:6:121: E501 line too long (134 > 120 characters)
+backend/app/tools/__init__.py:7:1: F401 '.real.list_k8s_pods' imported but unused
+backend/app/tools/__init__.py:7:1: F401 '.real.describe_pod' imported but unused
+backend/app/tools/__init__.py:7:1: F401 '.real.get_pod_logs' imported but unused
+backend/app/tools/__init__.py:7:1: F401 '.real.get_cluster_events' imported but unused
+backend/app/tools/__init__.py:7:1: F401 '.real.check_gcp_status' imported but unused
+backend/app/tools/__init__.py:7:1: F401 '.real.query_gmp_prometheus' imported but unused
+backend/app/tools/__init__.py:7:1: F401 '.real.list_compute_instances' imported but unused
+backend/app/tools/__init__.py:7:1: F401 '.real.get_gcp_sql_instances' imported but unused
+backend/app/tools/__init__.py:7:1: F401 '.real.get_datadog_metrics' imported but unused
+backend/app/tools/__init__.py:7:1: F401 '.real.get_active_alerts' imported but unused
+backend/app/tools/__init__.py:7:1: F401 '.real.check_github_repos' imported but unused
+backend/app/tools/__init__.py:7:1: F401 '.real.get_pr_status' imported but unused
+backend/app/tools/__init__.py:7:1: F401 '.real.list_recent_commits' imported but unused
+backend/app/tools/__init__.py:7:1: F401 '.real.check_pipeline_status' imported but unused
+backend/app/tools/__init__.py:7:1: F401 '.real.get_argocd_sync_status' imported but unused
+backend/app/tools/__init__.py:7:1: F401 '.real.check_vulnerabilities' imported but unused
+backend/app/tools/__init__.py:7:1: F401 '.real.analyze_iam_policy' imported but unused
+backend/app/tools/__init__.py:7:1: F401 '.real.analyze_log_patterns' imported but unused
+backend/app/tools/__init__.py:7:1: F401 '.real.diagnose_service_health' imported but unused
+backend/app/tools/__init__.py:7:1: F401 '.real.analyze_ci_failure' imported but unused
+backend/app/tools/__init__.py:7:1: F401 '.real.trace_service_health' imported but unused
+backend/app/tools/__init__.py:7:1: F401 '.real.create_issue' imported but unused
+backend/app/tools/__init__.py:7:1: F401 '.real.check_on_call_schedule' imported but unused
+backend/app/tools/__init__.py:7:1: F401 '.real.send_slack_notification' imported but unused
+backend/app/tools/__init__.py:7:1: F401 '.real.list_datadog_metrics' imported but unused
+backend/app/tools/__init__.py:7:1: F401 '.real.analyze_gcp_errors' imported but unused
+backend/app/tools/__init__.py:34:1: F401 '.observability.investigate_root_cause' imported but unused
+backend/app/tools/__init__.py:34:1: F401 '.observability.scan_infrastructure' imported but unused
+backend/app/tools/__init__.py:34:1: F401 '.observability.analyze_heavy_logs' imported but unused
+backend/app/tools/__init__.py:34:1: F401 '.observability.correlate_alerts' imported but unused
+backend/app/tools/__init__.py:35:1: F401 '.dashboard.analyze_infrastructure_health' imported but unused
+backend/app/tools/__init__.py:36:1: F401 '.incident.create_incident' imported but unused
+backend/app/tools/__init__.py:36:1: F401 '.incident.update_incident_status' imported but unused
+backend/app/tools/__init__.py:36:1: F401 '.incident.list_incidents' imported but unused
+backend/app/tools/__init__.py:36:1: F401 '.incident.get_incident_details' imported but unused
+backend/app/tools/__init__.py:36:1: F401 '.incident.generate_postmortem' imported but unused
+backend/app/tools/__init__.py:36:1: F401 '.incident.log_incident_event' imported but unused
+backend/app/tools/__init__.py:36:1: F401 '.incident.build_incident_timeline' imported but unused
+backend/app/tools/__init__.py:36:1: F401 '.incident.manage_incident_channels' imported but unused
+backend/app/tools/__init__.py:36:1: F401 '.incident.list_incident_channels' imported but unused
+backend/app/tools/__init__.py:36:1: F401 '.incident.suggest_remediation' imported but unused
+backend/app/tools/__init__.py:36:1: F401 '.incident.generate_remediation_plan' imported but unused
+backend/app/tools/__init__.py:36:1: F401 '.incident.generate_runbook_from_incident' imported but unused
+backend/app/tools/__init__.py:49:1: F401 '.runbooks.list_runbooks' imported but unused
+backend/app/tools/__init__.py:49:1: F401 '.runbooks.execute_runbook' imported but unused
+backend/app/tools/__init__.py:49:1: F401 '.runbooks.lookup_service' imported but unused
+backend/app/tools/__init__.py:49:1: F401 '.runbooks.get_service_dependencies' imported but unused
+backend/app/tools/__init__.py:49:1: F401 '.runbooks.get_service_topology' imported but unused
+backend/app/tools/__init__.py:50:1: F401 '.visualizer.generate_topology_diagram' imported but unused
+backend/app/tools/__init__.py:51:1: F401 '.knowledge.add_knowledge_base_item' imported but unused
+backend/app/tools/__init__.py:51:1: F401 '.knowledge.search_knowledge_base' imported but unused
+backend/app/tools/__init__.py:51:1: F401 '.knowledge.generate_service_catalog_docs' imported but unused
+backend/app/tools/__init__.py:52:1: F401 '.code.generate_code_fix' imported but unused
+backend/app/tools/__init__.py:52:1: F401 '.code.create_github_pr' imported but unused
+backend/app/tools/__init__.py:52:1: F401 '.code.read_repo_file' imported but unused
+backend/app/tools/__init__.py:52:1: F401 '.code.list_repo_files' imported but unused
+backend/app/tools/__init__.py:53:1: F401 '.cost.estimate_gcp_cost' imported but unused
+backend/app/tools/__init__.py:54:1: F401 '.reasoning.generate_hypothesis' imported but unused
+backend/app/tools/__init__.py:55:1: F401 '.opsy.opsy_backup_and_ticket_failing_pods' imported but unused
+backend/app/tools/__init__.py:56:1: F401 '.fuzzylabs.fuzzylabs_sre_workflow' imported but unused
+backend/app/tools/__init__.py:57:1: F401 '.opsmate.opsmate_troubleshooting_workflow' imported but unused
+backend/app/tools/__init__.py:58:1: F401 '.smythos.smythos_unified_resource_manager' imported but unused
+backend/app/tools/__init__.py:59:1: F401 '.bits_ai.bits_ai_investigate_monitor' imported but unused
+backend/app/tools/__init__.py:60:1: F401 '.incidentfox.incidentfox_auto_investigate' imported but unused
+backend/app/tools/bits_ai.py:2:1: F401 'os' imported but unused
+backend/app/tools/chaos.py:2:1: F401 'os' imported but unused
+backend/app/tools/chaos.py:3:1: F401 'requests' imported but unused
+backend/app/tools/code.py:25:20: F541 f-string is missing placeholders
+backend/app/tools/cost.py:4:1: F401 'os' imported but unused
+backend/app/tools/dashboard.py:32:121: E501 line too long (139 > 120 characters)
+backend/app/tools/finops.py:3:1: F401 'requests' imported but unused
+backend/app/tools/finops.py:4:1: F401 'datetime.datetime' imported but unused
+backend/app/tools/finops.py:4:1: F401 'datetime.UTC' imported but unused
+backend/app/tools/finops.py:59:16: F541 f-string is missing placeholders
+backend/app/tools/fuzzylabs.py:2:1: F401 'os' imported but unused
+backend/app/tools/fuzzylabs.py:27:5: F401 'app.llm.get_google_sdk_client' imported but unused
+backend/app/tools/fuzzylabs.py:27:5: F401 'app.llm.get_llm' imported but unused
+backend/app/tools/fuzzylabs.py:42:121: E501 line too long (121 > 120 characters)
+backend/app/tools/gcp_optimizer.py:2:1: F401 'os' imported but unused
+backend/app/tools/incident.py:3:1: F401 'typing.List' imported but unused
+backend/app/tools/incident.py:3:1: F401 'typing.Dict' imported but unused
+backend/app/tools/incident.py:4:1: F401 'datetime' imported but unused
+backend/app/tools/incident.py:7:1: F401 'app.db.Service' imported but unused
+backend/app/tools/incident.py:392:121: E501 line too long (122 > 120 characters)
+backend/app/tools/incidentfox.py:2:1: F401 'os' imported but unused
+backend/app/tools/k8s_optimizer.py:2:1: F401 'os' imported but unused
+backend/app/tools/k8s_optimizer.py:3:1: F401 'requests' imported but unused
+backend/app/tools/k8s_optimizer.py:4:1: F401 'json' imported but unused
+backend/app/tools/k8s_optimizer.py:5:1: F401 'typing.List' imported but unused
+backend/app/tools/k8s_optimizer.py:5:1: F401 'typing.Dict' imported but unused
+backend/app/tools/k8s_optimizer.py:5:1: F401 'typing.Optional' imported but unused
+backend/app/tools/k8s_optimizer.py:7:1: F401 'google.auth.default' imported but unused
+backend/app/tools/k8s_optimizer.py:8:1: F401 'google.auth.transport.requests.Request as GoogleAuthRequest' imported but unused
+backend/app/tools/k8s_optimizer.py:93:57: W504 line break after binary operator
+backend/app/tools/knowledge.py:4:1: F401 'app.db.Runbook' imported but unused
+backend/app/tools/knowledge.py:103:27: F541 f-string is missing placeholders
+backend/app/tools/knowledge.py:111:27: F541 f-string is missing placeholders
+backend/app/tools/opsmate.py:2:1: F401 'os' imported but unused
+backend/app/tools/real.py:452:45: W504 line break after binary operator
+backend/app/tools/reasoning.py:3:1: F401 'json' imported but unused
+backend/app/tools/reasoning.py:41:20: W504 line break after binary operator
+backend/app/tools/runbooks.py:2:1: F401 'typing.List' imported but unused
+backend/app/tools/runbooks.py:2:1: F401 'typing.Dict' imported but unused
+backend/app/tools/runbooks.py:4:1: F401 'sqlalchemy.orm.Session' imported but unused
+backend/app/tools/runbooks.py:205:121: E501 line too long (131 > 120 characters)
+backend/app/tools/runbooks.py:210:121: E501 line too long (126 > 120 characters)
+backend/app/tools/runbooks.py:210:121: E501 line too long (126 > 120 characters)
+backend/app/tools/runbooks.py:245:21: F541 f-string is missing placeholders
+backend/app/tools/runbooks.py:269:21: F541 f-string is missing placeholders
+backend/app/tools/smythos.py:2:1: F401 'os' imported but unused
+backend/app/tools/traefik.py:4:1: F401 'typing.List' imported but unused
+backend/app/tools/traefik.py:4:1: F401 'typing.Dict' imported but unused
+backend/app/tools/traefik.py:4:1: F401 'typing.Optional' imported but unused
+backend/app/tools/traefik.py:95:17: F841 local variable 'rule' is assigned to but never used
+backend/app/tools/traefik.py:147:25: F841 local variable 'svc' is assigned to but never used
+backend/conftest.py:90:62: F841 local variable 'mock_get_llm' is assigned to but never used
+backend/conftest.py:103:78: F841 local variable 'mock_get_sdk' is assigned to but never used
+backend/tests/test_2026_features.py:1:1: F401 'pytest' imported but unused
+backend/tests/test_2026_features.py:3:1: F401 'langchain_core.messages.SystemMessage' imported but unused
+backend/tests/test_2026_features.py:5:1: F401 'app.state.AgentState' imported but unused
+backend/tests/test_additional_coverage.py:1:1: F401 'pytest' imported but unused
+backend/tests/test_advanced_features.py:7:1: F401 'app.rag.rag_engine' imported but unused
+backend/tests/test_agent_manager.py:1:1: F401 'pytest' imported but unused
+backend/tests/test_agent_manager.py:3:1: F401 'langchain_core.messages.SystemMessage' imported but unused
+backend/tests/test_api.py:3:1: F401 'unittest.mock.AsyncMock' imported but unused
+backend/tests/test_async_graph.py:2:1: F401 'asyncio' imported but unused
+backend/tests/test_async_graph.py:3:1: F401 'unittest.mock.patch' imported but unused
+backend/tests/test_async_graph.py:6:1: F401 'app.state.AgentState' imported but unused
+backend/tests/test_async_graph.py:23:5: F811 redefinition of unused 'patch' from line 3
+backend/tests/test_async_graph.py:31:121: E501 line too long (137 > 120 characters)
+backend/tests/test_async_graph.py:32:121: E501 line too long (137 > 120 characters)
+backend/tests/test_azion.py:2:1: F401 'pytest' imported but unused
+backend/tests/test_ci_sdk.py:2:1: F401 'pytest' imported but unused
+backend/tests/test_ci_sdk.py:4:1: F401 'os' imported but unused
+backend/tests/test_ci_sdk.py:5:1: F401 'requests' imported but unused
+backend/tests/test_cli_interaction.py:1:1: F401 'pytest' imported but unused
+backend/tests/test_cli_interaction.py:2:1: F401 'unittest.mock.MagicMock' imported but unused
+backend/tests/test_cli_interaction.py:3:1: F401 'sys' imported but unused
+backend/tests/test_cli_interaction.py:4:1: F401 'io.StringIO' imported but unused
+backend/tests/test_cost.py:1:1: F401 'pytest' imported but unused
+backend/tests/test_cost.py:23:121: E501 line too long (121 > 120 characters)
+backend/tests/test_dashboard.py:1:1: F401 'pytest' imported but unused
+backend/tests/test_full_workflow.py:1:1: F401 'pytest' imported but unused
+backend/tests/test_full_workflow.py:4:1: F401 'app.graph.app_graph' imported but unused
+backend/tests/test_full_workflow.py:5:1: F401 'app.state.AgentState' imported but unused
+backend/tests/test_full_workflow.py:6:1: F401 'os' imported but unused
+backend/tests/test_google_genai_sdk.py:1:1: F401 'google.genai' imported but unused
+backend/tests/test_graph_flow.py:1:1: F401 'pytest' imported but unused
+backend/tests/test_graph_flow.py:3:1: F401 'langchain_core.messages.AIMessage' imported but unused
+backend/tests/test_graph_transitions.py:1:1: F401 'pytest' imported but unused
+backend/tests/test_hypothesis_tool.py:1:1: F401 'pytest' imported but unused
+backend/tests/test_hypothesis_tool.py:14:121: E501 line too long (124 > 120 characters)
+backend/tests/test_incident_fallback.py:1:1: F401 'pytest' imported but unused
+backend/tests/test_incident_fallback.py:3:1: F401 'sys' imported but unused
+backend/tests/test_incident_genai.py:4:1: F401 'app.db.SessionLocal' imported but unused
+backend/tests/test_incident_management.py:1:1: F401 'pytest' imported but unused
+backend/tests/test_integrated_agents.py:1:1: F401 'pytest' imported but unused
+backend/tests/test_knowledge_tools.py:1:1: F401 'pytest' imported but unused
+backend/tests/test_knowledge_tools.py:2:1: F401 'unittest.mock.MagicMock' imported but unused
+backend/tests/test_knowledge_tools.py:5:1: E302 expected 2 blank lines, found 1
+backend/tests/test_knowledge_tools.py:19:1: E302 expected 2 blank lines, found 1
+backend/tests/test_langgraph_extra.py:1:1: F401 'pytest' imported but unused
+backend/tests/test_langgraph_extra.py:37:121: E501 line too long (142 > 120 characters)
+backend/tests/test_langgraph_extra.py:56:121: E501 line too long (139 > 120 characters)
+backend/tests/test_langgraph_extra.py:75:121: E501 line too long (139 > 120 characters)
+backend/tests/test_langgraph_full_troubleshoot.py:4:1: F401 'app.graph.app_graph' imported but unused
+backend/tests/test_langgraph_full_troubleshoot.py:4:1: F401 'app.graph.k8s_agent' imported but unused
+backend/tests/test_langgraph_full_troubleshoot.py:4:1: F401 'app.graph.incident_agent' imported but unused
+backend/tests/test_langgraph_full_troubleshoot.py:5:1: F401 'json' imported but unused
+backend/tests/test_langgraph_migration.py:1:1: F401 'pytest' imported but unused
+backend/tests/test_log_analysis.py:4:121: E501 line too long (126 > 120 characters)
+backend/tests/test_observability_fallback.py:1:1: F401 'pytest' imported but unused
+backend/tests/test_observability_fallback.py:3:1: F401 'json' imported but unused
+backend/tests/test_observability_fallback.py:4:1: F401 'sys' imported but unused
+backend/tests/test_opsy_fuzzylabs.py:1:1: F401 'pytest' imported but unused
+backend/tests/test_optimization.py:1:1: F401 'pytest' imported but unused
+backend/tests/test_optimization.py:2:1: F401 'os' imported but unused
+backend/tests/test_persistence.py:2:1: F401 'asyncio' imported but unused
+backend/tests/test_persistence.py:3:1: F401 'sys' imported but unused
+backend/tests/test_persistence.py:5:1: F401 'unittest.mock.AsyncMock' imported but unused
+backend/tests/test_persistence.py:6:1: F401 'langchain_core.messages.SystemMessage' imported but unused
+backend/tests/test_planner_logic.py:1:1: F401 'pytest' imported but unused
+backend/tests/test_planner_logic.py:3:1: F401 'langchain_core.messages.AIMessage' imported but unused
+backend/tests/test_rag_system.py:1:1: F401 'pytest' imported but unused
+backend/tests/test_rag_system.py:5:1: F401 'app.db.Incident' imported but unused
+backend/tests/test_rag_system.py:6:1: F401 'os' imported but unused
+backend/tests/test_real.py:1:1: F401 'pytest' imported but unused
+backend/tests/test_real_trace.py:2:1: F401 'unittest.mock.MagicMock' imported but unused
+backend/tests/test_real_trace.py:3:1: F401 'os' imported but unused
+backend/tests/test_real_trace.py:4:1: F401 'sys' imported but unused
+backend/tests/test_root_cause.py:5:1: F401 'os' imported but unused
+backend/tests/test_runbooks_k8s.py:2:1: F401 'pytest' imported but unused
+backend/tests/test_runbooks_k8s.py:4:1: F401 'sys' imported but unused
+backend/tests/test_scan_robustness.py:1:1: F401 'pytest' imported but unused
+backend/tests/test_scan_robustness.py:4:1: F401 'sys' imported but unused
+backend/tests/test_simulation.py:1:1: F401 'pytest' imported but unused
+backend/tests/test_stream_json.py:81:56: W504 line break after binary operator
+backend/tests/test_stream_json.py:83:52: W504 line break after binary operator
+backend/tests/test_supervisor_failure.py:1:1: F401 'pytest' imported but unused
+backend/tests/test_visualizer.py:1:1: F401 'pytest' imported but unused
+check_warning.py:13:1: E302 expected 2 blank lines, found 1
+check_warning.py:18:1: E305 expected 2 blank lines after class or function definition, found 1
+fix_flake8.py:5:121: E501 line too long (145 > 120 characters)
+fix_flake8.py:15:1: F401 're' imported but unused
+fix_flake8_2.py:4:121: E501 line too long (224 > 120 characters)
+fix_flake8_2.py:5:121: E501 line too long (240 > 120 characters)
