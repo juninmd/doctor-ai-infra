@@ -1,7 +1,7 @@
 from langchain_core.tools import tool
 import os
 import requests
-from typing import List, Dict, Optional  # noqa
+from typing import List, Dict, Optional  # noqa: F401
 from kubernetes import client, config
 
 
@@ -92,7 +92,7 @@ def list_traefik_routes(namespace: str = "") -> str:
                 if namespace and ns != namespace:
                     continue
                 name = r['metadata']['name']
-                rule = r['spec'].get('routes', [{}])[0].get('kind', 'Rule')  # noqa
+                rule = r['spec'].get('routes', [{}])[0].get('kind', 'Rule')  # noqa: F841
                 match = r['spec'].get('routes', [{}])[0].get('match', 'N/A')
                 report.append(f"- [IngressRoute] {ns}/{name}: `{match}`")
         except BaseException:
@@ -144,7 +144,7 @@ def diagnose_traefik_ingress(
                 for path in rule.http.paths:
                     svc_name = path.backend.service.name
                     try:
-                        svc = v1_core.read_namespaced_service(  # noqa
+                        svc = v1_core.read_namespaced_service(  # noqa: F841
                             svc_name, namespace)
                         report.append(f"- Service '{svc_name}': 🟢 Found")
                         # Check endpoint health

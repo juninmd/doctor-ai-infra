@@ -1,3 +1,4 @@
+import pytest  # noqa: F401
 from unittest.mock import patch
 from app.tools.dashboard import analyze_infrastructure_health
 

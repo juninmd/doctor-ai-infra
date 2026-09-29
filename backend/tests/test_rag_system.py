@@ -1,9 +1,9 @@
-import pytest  # noqa
+import pytest  # noqa: F401
 from unittest.mock import MagicMock, patch
 import app.rag  # Import the module directly
 from app.rag import initialize_rag
-from app.db import Service, Runbook, Incident  # noqa
-import os  # noqa
+from app.db import Service, Runbook, Incident  # noqa: F401
+import os  # noqa: F401
 
 
 def test_rag_initialization(db_session, mock_rag_engine):

@@ -1,4 +1,4 @@
-import pytest  # noqa
+import pytest  # noqa: F401
 from app.graph import app_graph
 
 

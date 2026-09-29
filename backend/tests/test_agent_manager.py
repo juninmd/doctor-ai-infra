@@ -1,6 +1,6 @@
-import pytest  # noqa
+import pytest  # noqa: F401
 from unittest.mock import MagicMock, patch
-from langchain_core.messages import SystemMessage  # noqa
+from langchain_core.messages import SystemMessage  # noqa: F401
 from app.graph import make_specialist
 
 

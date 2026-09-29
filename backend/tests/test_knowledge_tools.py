@@ -1,9 +1,8 @@
-import pytest  # noqa
-from unittest.mock import patch, MagicMock  # noqa
+import pytest  # noqa: F401
+from unittest.mock import patch, MagicMock  # noqa: F401
 from app.tools.knowledge import add_knowledge_base_item
 
-
-def test_add_knowledge_base_item():
+def test_add_knowledge_base_item():  # noqa: E302
     with patch("app.tools.knowledge.rag_engine") as mock_rag:
         # Mock successful addition
         result = add_knowledge_base_item.invoke({"content": "This is a test note", "category": "test_cat"})
@@ -17,8 +16,7 @@ def test_add_knowledge_base_item():
 
         assert "Successfully added item" in result
 
-
-def test_add_knowledge_base_item_error():
+def test_add_knowledge_base_item_error():  # noqa: E302
     with patch("app.tools.knowledge.rag_engine") as mock_rag:
         mock_rag.add_documents.side_effect = Exception("RAG error")
         result = add_knowledge_base_item.invoke({"content": "Fail me"})

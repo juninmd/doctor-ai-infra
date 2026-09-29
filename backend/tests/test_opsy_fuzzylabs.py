@@ -1,4 +1,4 @@
-import pytest  # noqa
+import pytest  # noqa: F401
 from unittest.mock import patch, MagicMock
 from langchain_core.messages import HumanMessage
 from app.graph import supervisor_node, RouterSchema

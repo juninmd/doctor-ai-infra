@@ -1,4 +1,4 @@
-import pytest  # noqa
+import pytest  # noqa: F401
 from unittest.mock import MagicMock, patch
 from app.tools.reasoning import generate_hypothesis
 
@@ -11,7 +11,7 @@ def test_generate_hypothesis_gemini(mock_get_llm, mock_get_client):
     mock_get_client.return_value = mock_client
 
     mock_response = MagicMock()
-    mock_response.text = '[{"hypothesis": "Network Issue", "validation_step": "Check connectivity", "probability": "High"}]'  # noqa
+    mock_response.text = '[{"hypothesis": "Network Issue", "validation_step": "Check connectivity", "probability": "High"}]'  # noqa: E501
     mock_client.models.generate_content.return_value = mock_response
 
     # Invoke

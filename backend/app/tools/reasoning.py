@@ -1,6 +1,6 @@
 from langchain_core.tools import tool
 from app.llm import get_llm, get_google_sdk_client
-import json  # noqa
+import json  # noqa: F401
 
 
 @tool
@@ -38,7 +38,7 @@ def generate_hypothesis(context: str) -> str:
     llm = get_llm()
     try:
         res = llm.invoke(
-            prompt +  # noqa
+            prompt +  # noqa: W504
             "\n\nReturn ONLY raw JSON. Do not include markdown formatting like ```json ... ```.")
         content = res.content.strip()
         # Clean up common markdown if present

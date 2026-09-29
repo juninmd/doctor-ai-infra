@@ -1,11 +1,11 @@
 from langchain_core.tools import tool
-import os  # noqa
-import requests  # noqa
-import json  # noqa
-from typing import List, Dict, Optional  # noqa
+import os  # noqa: F401
+import requests  # noqa: F401
+import json  # noqa: F401
+from typing import List, Dict, Optional  # noqa: F401
 from kubernetes import client, config
-from google.auth import default  # noqa
-from google.auth.transport.requests import Request as GoogleAuthRequest  # noqa
+from google.auth import default  # noqa: F401
+from google.auth.transport.requests import Request as GoogleAuthRequest  # noqa: F401
 
 
 def _get_k8s_apps_client():
@@ -90,7 +90,7 @@ def optimize_k8s_resources(namespace: str = "default") -> str:
 
                 if issues:
                     recommendations.append(
-                        f"**{name}** ({c_name}):\n  - " +  # noqa
+                        f"**{name}** ({c_name}):\n  - " +  # noqa: W504
                         "\n  - ".join(issues))
 
         if not recommendations:

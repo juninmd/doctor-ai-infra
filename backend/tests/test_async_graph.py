@@ -1,9 +1,9 @@
 import pytest
-import asyncio  # noqa
-from unittest.mock import patch  # noqa
+import asyncio  # noqa: F401
+from unittest.mock import patch  # noqa: F401
 from langchain_core.messages import HumanMessage
 from app.graph import app_graph
-from app.state import AgentState  # noqa
+from app.state import AgentState  # noqa: F401
 
 
 @pytest.mark.asyncio
@@ -20,6 +20,7 @@ async def test_async_workflow_astream():
     config = {"configurable": {"thread_id": "test_async_thread"}}
 
     events = []
+    from unittest.mock import patch  # noqa: F811
 
     # To test async workflow, we can use a smaller test graph
     # or mock the whole graph's runner instead. But a cleaner way is just to mock the actual LLM
@@ -28,7 +29,7 @@ async def test_async_workflow_astream():
     from langchain_core.messages import AIMessage
 
     with patch("langchain_ollama.ChatOllama.ainvoke", return_value=AIMessage(content='{"reasoning": "done", "next_agent": "FINISH"}')), \
-            patch("langchain_ollama.ChatOllama.invoke", return_value=AIMessage(content='{"reasoning": "done", "next_agent": "FINISH"}')):  # noqa
+            patch("langchain_ollama.ChatOllama.invoke", return_value=AIMessage(content='{"reasoning": "done", "next_agent": "FINISH"}')):  # noqa: E501
 
         async for event in app_graph.astream(state, config, stream_mode="values"):
             events.append(event)

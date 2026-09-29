@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
 from main import app
-from unittest.mock import patch, AsyncMock, MagicMock  # noqa
+from unittest.mock import patch, AsyncMock, MagicMock  # noqa: F401
 import json
 
 client = TestClient(app)

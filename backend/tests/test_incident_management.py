@@ -1,4 +1,4 @@
-import pytest  # noqa
+import pytest  # noqa: F401
 from app.tools.incident import (
     create_incident,
     log_incident_event,

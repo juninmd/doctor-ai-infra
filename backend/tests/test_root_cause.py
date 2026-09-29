@@ -2,7 +2,7 @@ from app.tools.observability import investigate_root_cause, scan_infrastructure
 import unittest
 from unittest.mock import patch, MagicMock
 import sys
-import os  # noqa
+import os  # noqa: F401
 
 # Ensure backend/app is in path
 sys.path.append('/app/backend')

@@ -1,8 +1,8 @@
 import pytest
 from unittest.mock import patch, MagicMock
 from langchain_core.messages import HumanMessage, AIMessage
-from app.graph import app_graph, supervisor_node, datadog_agent, k8s_agent, incident_agent  # noqa
-import json  # noqa
+from app.graph import app_graph, supervisor_node, datadog_agent, k8s_agent, incident_agent  # noqa: F401
+import json  # noqa: F401
 
 
 @pytest.mark.asyncio

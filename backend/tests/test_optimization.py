@@ -1,5 +1,5 @@
-import pytest  # noqa
-import os  # noqa
+import pytest  # noqa: F401
+import os  # noqa: F401
 from app.tools.k8s_optimizer import optimize_k8s_resources as mock_optimize
 from app.tools.k8s_optimizer import optimize_k8s_resources as real_optimize
 

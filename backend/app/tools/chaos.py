@@ -1,6 +1,6 @@
 from langchain_core.tools import tool
-import os  # noqa
-import requests  # noqa
+import os  # noqa: F401
+import requests  # noqa: F401
 
 
 @tool
