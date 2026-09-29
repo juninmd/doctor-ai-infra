@@ -1,18 +1,18 @@
-import pytest  # noqa
 from unittest.mock import patch
 from app.tools.dashboard import analyze_infrastructure_health
 
 
 def test_analyze_infrastructure_health_success():
     """
-    Test when all integrations (k8s, GCP, Datadog, Traefik) return healthy status.
+    Test when all integrations (k8s, GCP, Datadog, Traefik, Azion) return healthy status.
     """
     with patch("app.tools.dashboard.list_k8s_pods") as mock_k8s, \
             patch("app.tools.dashboard.get_cluster_events") as mock_events, \
             patch("app.tools.dashboard.check_gcp_status") as mock_gcp, \
             patch("app.tools.dashboard.query_gmp_prometheus") as mock_gmp, \
             patch("app.tools.dashboard.get_active_alerts") as mock_alerts, \
-            patch("app.tools.dashboard.check_traefik_health") as mock_traefik:
+            patch("app.tools.dashboard.check_traefik_health") as mock_traefik, \
+            patch("app.tools.dashboard.check_azion_status") as mock_azion:
 
         mock_k8s.invoke.return_value = "pod1, pod2"
         mock_events.invoke.return_value = "event1"
@@ -20,6 +20,7 @@ def test_analyze_infrastructure_health_success():
         mock_gmp.invoke.return_value = "up == 1"
         mock_alerts.invoke.return_value = "No active alerts"
         mock_traefik.invoke.return_value = "🟢 Traefik: Active"
+        mock_azion.invoke.return_value = "🟢 Azion Edge is running smoothly"
 
         result = analyze_infrastructure_health.invoke({})
 
@@ -35,6 +36,9 @@ def test_analyze_infrastructure_health_success():
         assert "## 🚦 Traefik Ingress" in result
         assert "✅ Online" in result
 
+        assert "## 🌐 Azion Edge" in result
+        assert "✅ Edge Online" in result
+
 
 def test_analyze_infrastructure_health_failure():
     """
@@ -45,7 +49,8 @@ def test_analyze_infrastructure_health_failure():
             patch("app.tools.dashboard.check_gcp_status") as mock_gcp, \
             patch("app.tools.dashboard.query_gmp_prometheus") as mock_gmp, \
             patch("app.tools.dashboard.get_active_alerts") as mock_alerts, \
-            patch("app.tools.dashboard.check_traefik_health") as mock_traefik:
+            patch("app.tools.dashboard.check_traefik_health") as mock_traefik, \
+            patch("app.tools.dashboard.check_azion_status") as mock_azion:
 
         mock_k8s.invoke.return_value = "CrashLoopBackOff"
         mock_events.invoke.return_value = "Error syncing"
@@ -53,6 +58,7 @@ def test_analyze_infrastructure_health_failure():
         mock_gmp.invoke.side_effect = Exception("Failed")
         mock_alerts.invoke.return_value = "Alert: High latency"
         mock_traefik.invoke.return_value = "🔴 Error"
+        mock_azion.invoke.return_value = "🔴 Error accessing Edge Applications"
 
         result = analyze_infrastructure_health.invoke({})
 
@@ -69,6 +75,9 @@ def test_analyze_infrastructure_health_failure():
         assert "## 🚦 Traefik Ingress" in result
         assert "❌ Erro" in result
 
+        assert "## 🌐 Azion Edge" in result
+        assert "❌ Erro" in result
+
 
 def test_analyze_infrastructure_health_exception():
     """
@@ -77,12 +86,14 @@ def test_analyze_infrastructure_health_exception():
     with patch("app.tools.dashboard.list_k8s_pods") as mock_k8s, \
             patch("app.tools.dashboard.check_gcp_status") as mock_gcp, \
             patch("app.tools.dashboard.get_active_alerts") as mock_alerts, \
-            patch("app.tools.dashboard.check_traefik_health") as mock_traefik:
+            patch("app.tools.dashboard.check_traefik_health") as mock_traefik, \
+            patch("app.tools.dashboard.check_azion_status") as mock_azion:
 
         mock_k8s.invoke.side_effect = Exception("Timeout")
         mock_gcp.invoke.side_effect = Exception("Timeout")
         mock_alerts.invoke.side_effect = Exception("Timeout")
         mock_traefik.invoke.side_effect = Exception("Timeout")
+        mock_azion.invoke.side_effect = Exception("Timeout")
 
         result = analyze_infrastructure_health.invoke({})
 
@@ -96,4 +107,7 @@ def test_analyze_infrastructure_health_exception():
         assert "❌ Erro" in result
 
         assert "## 🚦 Traefik Ingress" in result
+        assert "❌ Erro" in result
+
+        assert "## 🌐 Azion Edge" in result
         assert "❌ Erro" in result

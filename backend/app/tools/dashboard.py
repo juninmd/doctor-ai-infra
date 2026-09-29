@@ -1,12 +1,13 @@
 from langchain_core.tools import tool
 from .real import list_k8s_pods, check_gcp_status, get_active_alerts, get_cluster_events, query_gmp_prometheus
 from .traefik import check_traefik_health
+from .azion import check_azion_status
 
 
 @tool
 def analyze_infrastructure_health() -> str:
     """
-    Performs a holistic health check across all infrastructure domains (K8s, GCP, Datadog, Traefik).
+    Performs a holistic health check across all infrastructure domains (K8s, GCP, Datadog, Traefik, Azion).
     Returns a dashboard-style Markdown report.
     """
     dashboard = ["# 🔍 Relatório de Integridade da Infraestrutura (2026)\n"]
@@ -29,7 +30,9 @@ def analyze_infrastructure_health() -> str:
         k8s_details = str(e)
 
     dashboard.append(
-        f"## ☸️ Kubernetes (Self-Hosted)\n**Status:** {k8s_status}\n\n<details><summary>Detalhes</summary>\n\n{k8s_details}\n</details>\n")  # noqa
+        f"## ☸️ Kubernetes (Self-Hosted)\n**Status:** {k8s_status}\n\n"
+        f"<details><summary>Detalhes</summary>\n\n{k8s_details}\n</details>\n"
+    )
 
     # 2. GCP Check
     gcp_status = "✅ Operacional"
@@ -85,6 +88,23 @@ def analyze_infrastructure_health() -> str:
 
     dashboard.append(
         f"## 🚦 Traefik Ingress\n**Status:** {traefik_status}\n\n{traefik_details}\n")
+
+    # 5. Azion Edge
+    azion_status = "✅ Edge Online"
+    azion_details = ""
+    try:
+        azion_res = check_azion_status.invoke({})
+        if "🔴" in azion_res or "Error" in azion_res:
+            azion_status = "❌ Erro"
+        elif "🟡" in azion_res:
+            azion_status = "⚠️ Atenção"
+        azion_details = azion_res
+    except Exception as e:
+        azion_status = "❌ Erro"
+        azion_details = str(e)
+
+    dashboard.append(
+        f"## 🌐 Azion Edge\n**Status:** {azion_status}\n\n{azion_details}\n")
 
     dashboard.append(
         "\n---\n*Gerado automaticamente pelo Agente Supervisor 2026*")
