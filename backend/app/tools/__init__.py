@@ -52,7 +52,7 @@ from .knowledge import add_knowledge_base_item, search_knowledge_base, generate_
 from .code import generate_code_fix, create_github_pr, read_repo_file, list_repo_files  # noqa: F401
 from .cost import estimate_gcp_cost  # noqa: F401
 from .reasoning import generate_hypothesis  # noqa: F401
-from .opsy import opsy_backup_and_ticket_failing_pods  # noqa: F401
+from .opsy import opsy_backup_and_ticket_failing_pods, opsy_build_execution_plan  # noqa: F401
 from .fuzzylabs import fuzzylabs_sre_workflow  # noqa: F401
 from .opsmate import opsmate_troubleshooting_workflow  # noqa: F401
 from .smythos import smythos_unified_resource_manager  # noqa: F401

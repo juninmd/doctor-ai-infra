@@ -245,7 +245,7 @@ opsy_tools = [opsy_backup_and_ticket_failing_pods, opsy_build_execution_plan]
 opsy_agent = make_specialist(
     opsy_tools,
     "Opsy SRE AI (Mocked Operations)",
-    heuristics="SRE TIP: You use `opsy_backup_and_ticket_failing_pods` or `opsy_build_execution_plan` when asked to run the Opsy workflow."
+    heuristics="SRE TIP: Use Opsy tools when asked to run the Opsy workflow."
 )
 
 fuzzylabs_tools = [fuzzylabs_sre_workflow]
