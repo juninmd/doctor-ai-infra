@@ -2,7 +2,7 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "backend"))
 
-from langgraph.prebuilt import create_react_agent
+from langchain.agents import create_agent
 from langchain_core.tools import tool
 from app.llm import get_llm
 import warnings
@@ -17,7 +17,7 @@ def magic(x: int) -> int:
 
 try:  # noqa: E305
     llm = get_llm()
-    graph = create_react_agent(llm, [magic], prompt="You are a wizard.")
+    graph = create_agent(llm, [magic], system_prompt="You are a wizard.")
     print("Graph created successfully")
 except Exception as e:
     print(f"Error: {e}")

@@ -17,18 +17,18 @@ def test_make_specialist_configuration(mock_llm):
     test_heuristics = "Test Heuristics: Do X, Y, Z."
 
     # 2. Call the function
-    # Note: make_specialist calls create_react_agent, which returns a CompiledGraph.
-    # We mock create_react_agent to inspect arguments passed to it.
-    with patch("app.graph.create_react_agent") as mock_create_agent:
+    # Note: make_specialist calls create_agent, which returns a CompiledGraph.
+    # We mock create_agent to inspect arguments passed to it.
+    with patch("app.graph.create_agent") as mock_create_agent:
         mock_graph = MagicMock()
         mock_create_agent.return_value = mock_graph
 
         agent = make_specialist(test_tools, test_persona, test_heuristics)
 
-        # 3. Verify create_react_agent was called
+        # 3. Verify create_agent was called
         mock_create_agent.assert_called_once()
 
-        # Inspect arguments: (llm, tools, prompt=...)
+        # Inspect arguments: (llm, tools, system_prompt=...)
         args, kwargs = mock_create_agent.call_args
 
         # Verify LLM and Tools
@@ -36,7 +36,7 @@ def test_make_specialist_configuration(mock_llm):
         assert args[1] == test_tools
 
         # Verify System Prompt content
-        system_msg = kwargs.get("prompt")
+        system_msg = kwargs.get("system_prompt")
         assert system_msg is not None
         assert "Test Persona" in system_msg
         assert "Test Heuristics: Do X, Y, Z." in system_msg
