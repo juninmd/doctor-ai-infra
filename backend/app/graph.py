@@ -1,7 +1,7 @@
 from typing import Literal
 from langchain_core.messages import SystemMessage
 from langgraph.graph import StateGraph, END, START
-from langgraph.prebuilt import create_react_agent
+from langchain.agents import create_agent
 from langgraph.checkpoint.memory import MemorySaver
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import JsonOutputParser
@@ -157,7 +157,7 @@ def make_specialist(tools, persona, heuristics=""):
         f"{heuristics}\n"
     )
 
-    return create_react_agent(llm, tools, prompt=system_msg)
+    return create_agent(llm, tools, system_prompt=system_msg)
 
 
 k8s_agent = make_specialist(
