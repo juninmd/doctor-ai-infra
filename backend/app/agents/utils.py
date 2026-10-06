@@ -1,5 +1,5 @@
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from ...llm import get_llm  # noqa: F401
+from app.llm import get_llm  # noqa: F401
 
 SYSTEM_PROMPT = """You are a top-tier Infrastructure Reliability Engineer.
 Your goal is to troubleshoot and analyze infrastructure resources (K8s, GCP, Datadog, Traefik).

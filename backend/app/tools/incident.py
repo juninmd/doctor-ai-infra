@@ -436,7 +436,8 @@ def generate_postmortem(incident_id: str) -> str:
         try:
             doc = Document(
                 page_content=f"Post-Mortem for Incident: {inc.title}\nReport Content:\n{report_content}",
-                metadata={"type": "post_mortem", "incident_id": inc.id, "source": "post_mortem_gen"}
+                metadata={"type": "post_mortem",
+                          "incident_id": inc.id, "source": "post_mortem_gen"}
             )
             rag_engine.add_documents([doc])
             learn_msg = "\n(Self-Learning: Added to Knowledge Base)"

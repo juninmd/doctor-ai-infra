@@ -31,9 +31,13 @@ async def test_supervisor_routing_sequence():
         assert result["next"] == "Datadog_Specialist"
 
     # Mock Datadog Agent
-    with patch.object(datadog_agent, "invoke", return_value={"messages": [AIMessage(content="Latency is high")]}):
-        res = datadog_agent.invoke(state)
-        assert "Latency is high" in res["messages"][0].content
+    mock_dd_response = {"messages": [AIMessage(content="Latency is high")]}
+    with patch("app.agents.utils.create_agent"):
+        mock_agent_instance = MagicMock()
+        mock_agent_instance.invoke.return_value = mock_dd_response
+        with patch("app.graph.datadog_agent", mock_agent_instance):
+            res = mock_agent_instance.invoke(state)
+            assert "Latency is high" in res["messages"][0].content
 
     # And so on.
     assert True

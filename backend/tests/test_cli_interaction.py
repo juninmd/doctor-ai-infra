@@ -11,7 +11,8 @@ def test_run_single_shot(mock_graph, capsys):
     # Setup mock stream
     mock_graph.stream.return_value = [
         {"Supervisor": {"next": "K8s_Specialist"}},
-        {"K8s_Specialist": {"messages": [AIMessage(content="Checking pods...")]}}
+        {"K8s_Specialist": {"messages": [
+            AIMessage(content="Checking pods...")]}}
     ]
 
     run_single_shot("status")

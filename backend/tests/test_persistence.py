@@ -70,7 +70,8 @@ async def test_persistence_interrupt_resume():
 
         app_graph.update_state(
             config,
-            {"messages": [AIMessage(content="Automation Task Complete (Simulated)")]},
+            {"messages": [
+                AIMessage(content="Automation Task Complete (Simulated)")]},
             as_node="Automation_Specialist"
         )
 
