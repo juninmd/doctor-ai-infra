@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock, patch
 from langchain_core.messages import HumanMessage, AIMessage
-from app.graph import supervisor_node, k8s_agent, gcp_agent
+from app.graph import supervisor_node
 
 
 @pytest.mark.asyncio
@@ -39,9 +39,14 @@ async def test_k8s_agent_routing_and_execution():
         "messages": [
             AIMessage(
                 content="CrashLoopBackOff detected in frontend pod")]}
-    with patch.object(k8s_agent, "invoke", return_value=mock_k8s_response):
-        res = k8s_agent.invoke(state)
-        assert "CrashLoopBackOff" in res["messages"][0].content
+
+    with patch("app.agents.utils.create_agent"):
+        # Re-mock the agent for this test, because we changed create_agent's return type to AgentExecutor
+        mock_agent_instance = MagicMock()
+        mock_agent_instance.invoke.return_value = mock_k8s_response
+        with patch("app.graph.k8s_agent", mock_agent_instance):
+            res = mock_agent_instance.invoke(state)
+            assert "CrashLoopBackOff" in res["messages"][0].content
 
 
 @pytest.mark.asyncio
@@ -77,6 +82,9 @@ async def test_gcp_agent_routing_and_execution():
         "messages": [
             AIMessage(
                 content="Cloud SQL CPU is at 99%")]}
-    with patch.object(gcp_agent, "invoke", return_value=mock_gcp_response):
-        res = gcp_agent.invoke(state)
-        assert "Cloud SQL CPU" in res["messages"][0].content
+    with patch("app.agents.utils.create_agent"):
+        mock_agent_instance = MagicMock()
+        mock_agent_instance.invoke.return_value = mock_gcp_response
+        with patch("app.graph.gcp_agent", mock_agent_instance):
+            res = mock_agent_instance.invoke(state)
+            assert "Cloud SQL CPU" in res["messages"][0].content

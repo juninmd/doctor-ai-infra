@@ -2,10 +2,12 @@ import pytest  # noqa: F401
 from unittest.mock import patch, MagicMock  # noqa: F401
 from app.tools.knowledge import add_knowledge_base_item
 
+
 def test_add_knowledge_base_item():  # noqa: E302
     with patch("app.tools.knowledge.rag_engine") as mock_rag:
         # Mock successful addition
-        result = add_knowledge_base_item.invoke({"content": "This is a test note", "category": "test_cat"})
+        result = add_knowledge_base_item.invoke(
+            {"content": "This is a test note", "category": "test_cat"})
 
         # Verify rag_engine.add_documents was called
         assert mock_rag.add_documents.called
@@ -15,6 +17,7 @@ def test_add_knowledge_base_item():  # noqa: E302
         assert docs[0].metadata["type"] == "test_cat"
 
         assert "Successfully added item" in result
+
 
 def test_add_knowledge_base_item_error():  # noqa: E302
     with patch("app.tools.knowledge.rag_engine") as mock_rag:

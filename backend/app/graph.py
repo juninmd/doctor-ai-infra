@@ -1,7 +1,7 @@
 from typing import Literal
 from langchain_core.messages import SystemMessage
 from langgraph.graph import StateGraph, END, START
-from langchain.agents import create_agent
+from app.agents.utils import create_agent
 from langgraph.checkpoint.memory import MemorySaver
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import JsonOutputParser
