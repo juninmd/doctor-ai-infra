@@ -2,7 +2,7 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "backend"))
 
-from langchain.agents import create_agent
+from app.agents.utils import create_agent
 from langchain_core.tools import tool
 from app.llm import get_llm
 import warnings
