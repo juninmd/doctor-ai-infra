@@ -32,7 +32,8 @@ describe('AgentNetwork Component', () => {
     const agentsLabels = [
       "Kubernetes", "Google Cloud", "Datadog", "Traefik", "Azion Edge",
       "Code/Git", "CI/CD", "Security", "Incident", "Automation", "Topology",
-      "Planner", "FinOps", "Chaos"
+      "Planner", "FinOps", "Chaos", "Opsy", "FuzzyLabs", "OpsMate",
+      "SmythOS", "IncidentFox", "Bits AI"
     ];
 
     agentsLabels.forEach(label => {
